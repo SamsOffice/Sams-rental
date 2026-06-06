@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sams Construction Services LTD — RentalHQ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:#F9FAFB;color:#111827;}
+input,select,textarea,button{font-family:'DM Sans',sans-serif;}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.spinner{width:32px;height:32px;border:3px solid #E5E7EB;border-top-color:#2563EB;border-radius:50%;animation:spin 1s linear infinite;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const SUPABASE_URL = 'https://bxrqnisgplsgnzxzugbd.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4cnFuaXNncGxzZ256eHp1Z2JkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1ODkwNzYsImV4cCI6MjA5NjE2NTA3Nn0.xtaxorZdkFBn-RkUGnPg9MU6bkIW1fEionyxFVxO1VI';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const COMPANY = 'Sams Construction Services LTD';
+const APP_URL = 'https://sams-rental.vercel.app';
+const WORKERS = ['Sams','Samu','Jose Luis'];
+const ASSETS = [
+  {name:'Caterpillar Excavator CAT 320',category:'Machine'},
+  {name:'Kubota Skid Steer',category:'Machine'},
+  {name:'Scissor Lift 26ft',category:'Machine'},
+  {name:'Mini Excavator',category:'Machine'},
+  {name:'Telescopic Forklift',category:'Machine'},
+  {name:'Demolition Hammer Set',category:'Tool'},
+  {name:'Concrete Mixer',category:'Tool'},
+  {name:'Pressure Washer',category:'Tool'},
+  {name:'Generator 10kW',category:'Tool'},
+  {name:'Pipe Threader',category:'Tool'},
+];
+
+const USERS = [
+  {email:'secretary@samsconstruction.com',password:'sams2024',role:'secretary',name:'Secretary'},
+  {email:'owner@samsconstruction.com',password:'owner2024',role:'owner',name:'Owner'},
+];
+
+function daysUntil(d){return Math.ceil((new Date(d)-new Date().setHours(0,0,0,0))/86400000);}
+function fmtDate(s){if(!s)return'—';return new Date(s+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+
+function PayBadge({status}){
+  const c={paid:{bg:'#ECFDF5',text:'#065F46',dot:'#10B981',label:'Paid'},unpaid:{bg:'#FEF2F2',text:'#991B1B',dot:'#EF4444',label:'Unpaid'},partial:{bg:'#FFFBEB',text:'#92400E',dot:'#F59E0B',label:'Partial'}}[status]||{bg:'#F3F4F6',text:'#374151',dot:'#9CA3AF',label:status};
+  return <span style={{display:'inline-flex',alignItems:'center',gap:5,background:c.bg,color:c.text,padding:'2px 8px',borderRadius:20,fontSize:11,fontWeight:600}}><span style={{width:6,height:6,borderRadius:'50%',background:c.dot,display:'inline-block'}}/>{c.label}</span>;
+}
+
+function App(){
+  const [user,setUser] = React.useState(null);
+  const [tab,setTab] = React.useState('dashboard');
+  const [rentals,setRentals] = React.useState([]);
+  const [loading,setLoading] = React.useState(false);
+  const [toast,setToast] = React.useState('');
+  const [showForm,setShowForm] = React.useState(false);
+  const [clientPanel,setClientPanel] = React.useState(null);
+  const [extensions,setExtensions] = React.useState([]);
+
+  React.useEffect(()=>{
+    const u = localStorage.getItem('sams_user');
+    if(u) setUser(JSON.parse(u));
+  },[]);
+
+  React.useEffect(()=>{
+    if(user) loadData();
+  },[user]);
+
+  const loadData = async()=>{
+    setLoading(true);
+    const [{data:r},{data:e}] = await Promise.all([
+      sb.from('rentals').select('*').order('created_at',{ascending:false}),
+      sb.from('extension_requests').select('*').eq('status','pending'),
+    ]);
+    if(r) setRentals(r);
+    if(e) setExtensions(e);
+    setLoading(false);
+  };
+
+  const showToast=(msg)=>{setToast(msg);setTimeout(()=>setToast(''),3000);};
+  const copyLink=(token)=>{navigator.clipboard.writeText(`${APP_URL}/portal/${token}`);showToast('Portal link copied!');};
+  const markPaid=async(id)=>{await sb.from('rentals').update({payment_status:'paid'}).eq('id',id);showToast('Marked as paid ✓');loadData();};
+
+  const approveExt=async(ext)=>{
+    const r=rentals.find(x=>x.id===ext.rental_id);
+    if(!r)return;
+    const d=new Date(r.due_date);d.setDate(d.getDate()+ext.extra_days);
+    await sb.from('rentals').update({due_date:d.toISOString().slice(0,10),price:r.price+ext.extra_cost}).eq('id',ext.rental_id);
+    await sb.from('extension_requests').update({status:'approved'}).eq('id',ext.id);
+    showToast('Extension approved ✓');loadData();
+  };
+  const denyExt=async(id)=>{await sb.from('extension_requests').update({status:'denied'}).eq('id',id);showToast('Denied');loadData();};
+
+  if(!user) return <Login onLogin={u=>{localStorage.setItem('sams_user',JSON.stringify(u));setUser(u);}}/>;
+
+  const active=rentals.filter(r=>r.rental_status==='active').length;
+  const overdue=rentals.filter(r=>daysUntil(r.due_date)<0&&r.payment_status!=='paid').length;
+  const revenue=rentals.filter(r=>r.payment_status==='paid').reduce((s,r)=>s+r.price,0);
+
+  const s={inp:{width:'100%',background:'#FAFAFA',border:'1px solid #E5E7EB',borderRadius:8,padding:'9px 12px',fontSize:13,color:'#111827',outline:'none',boxSizing:'border-box'}};
+
+  return (
+    <div style={{minHeight:'100vh',background:'#F9FAFB'}}>
+      {toast&&<div style={{position:'fixed',bottom:24,right:24,background:'#111827',color:'#fff',padding:'12px 20px',borderRadius:10,fontWeight:600,fontSize:14,zIndex:500,animation:'fadeIn 0.3s ease'}}>{toast}</div>}
+
+      {showForm&&<NewRentalForm onSaved={()=>{setShowForm(false);loadData();showToast('Rental saved! Portal link ready.');}} onClose={()=>setShowForm(false)} sb={sb}/>}
+      {clientPanel&&<ClientPanel client={clientPanel} rentals={rentals} onClose={()=>setClientPanel(null)} APP_URL={APP_URL}/>}
+
+      {/* Header */}
+      <header style={{background:'#fff',borderBottom:'1px solid #E5E7EB',padding:'0 24px',display:'flex',alignItems:'center',justifyContent:'space-between',height:56,position:'sticky',top:0,zIndex:100}}>
+        <div style={{display:'flex',alignItems:'center',gap:16}}>
+          <span style={{fontSize:14,fontWeight:700}}>{COMPANY}</span>
+          <span style={{fontSize:10,fontWeight:600,color:'#2563EB',background:'#EFF6FF',padding:'2px 6px',borderRadius:4}}>RentalHQ</span>
+          <nav style={{display:'flex',gap:2}}>
+            {[{id:'dashboard',label:'Dashboard'},{id:'drivers',label:'🚛 Drivers'},{id:'collections',label:'⚖️ Collections'},{id:'invoice',label:'📄 Invoice'}].map(t=>(
+              <button key={t.id} onClick={()=>setTab(t.id)} style={{padding:'5px 12px',borderRadius:6,fontSize:12,fontWeight:500,cursor:'pointer',border:'none',background:tab===t.id?'#F3F4F6':'transparent',color:tab===t.id?'#111827':'#6B7280'}}>{t.label}</button>
+            ))}
+          </nav>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:10}}>
+          {overdue>0&&<span style={{padding:'4px 10px',borderRadius:20,background:'#FEF2F2',border:'1px solid #FCA5A5',fontSize:11,fontWeight:600,color:'#991B1B'}}>{overdue} overdue</span>}
+          {extensions.length>0&&<span style={{padding:'4px 10px',borderRadius:20,background:'#FFFBEB',border:'1px solid #FCD34D',fontSize:11,fontWeight:600,color:'#92400E'}}>{extensions.length} ext req</span>}
+          <button onClick={()=>setShowForm(true)} style={{padding:'7px 14px',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer',border:'none',background:'#2563EB',color:'#fff'}}>+ New Rental</button>
+          <button onClick={()=>{localStorage.removeItem('sams_user');setUser(null);}} style={{padding:'7px 12px',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer',border:'1px solid #E5E7EB',background:'#fff',color:'#374151'}}>Sign Out</button>
+        </div>
+      </header>
+
+      <main style={{padding:'24px',maxWidth:1400,margin:'0 auto'}}>
+        {loading&&<div style={{textAlign:'center',padding:48}}><div className="spinner" style={{margin:'0 auto'}}/></div>}
+
+        {!loading && tab==='dashboard'&&(
+          <div>
+            {/* Stats */}
+            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:16,marginBottom:22}}>
+              {[{l:'Active Rentals',v:active,sub:'Equipment out',a:false},{l:'Overdue',v:overdue,sub:'Need action',a:overdue>0},{l:'Total Rentals',v:rentals.length,sub:'All time',a:false},{l:'Revenue',v:`$${revenue.toLocaleString()}`,sub:'Paid',a:false}].map((s,i)=>(
+                <div key={i} style={{background:'#fff',borderRadius:10,padding:'16px 18px',boxShadow:'0 1px 3px rgba(0,0,0,0.05)',border:'1px solid #F3F4F6'}}>
+                  <p style={{fontSize:10,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.07em',color:'#9CA3AF',marginBottom:6}}>{s.l}</p>
+                  <p style={{fontSize:26,fontWeight:700,color:s.a?'#DC2626':'#111827',lineHeight:1}}>{s.v}</p>
+                  <p style={{fontSize:11,color:'#9CA3AF',marginTop:4}}>{s.sub}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Extension requests */}
+            {extensions.length>0&&(
+              <div style={{background:'#FFFBEB',border:'1px solid #FCD34D',borderRadius:10,padding:'14px 18px',marginBottom:18}}>
+                <h4 style={{fontSize:13,fontWeight:700,color:'#92400E',marginBottom:10}}>📅 Pending Extensions ({extensions.length})</h4>
+                {extensions.map(ext=>(
+                  <div key={ext.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid #FDE68A',flexWrap:'wrap',gap:8}}>
+                    <span style={{fontSize:13}}><strong>{ext.client_name}</strong> — {ext.rental_id} — +{ext.extra_days} days (+${ext.extra_cost})</span>
+                    <div style={{display:'flex',gap:8}}>
+                      <button onClick={()=>approveExt(ext)} style={{padding:'5px 12px',borderRadius:6,fontSize:12,fontWeight:600,cursor:'pointer',border:'none',background:'#ECFDF5',color:'#065F46'}}>✓ Approve</button>
+                      <button onClick={()=>denyExt(ext.id)} style={{padding:'5px 12px',borderRadius:6,fontSize:12,fontWeight:600,cursor:'pointer',border:'none',background:'#FEF2F2',color:'#991B1B'}}>✕ Deny</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Table */}
+            <div style={{background:'#fff',borderRadius:11,overflow:'hidden',boxShadow:'0 1px 3px rgba(0,0,0,0.05)',border:'1px solid #F3F4F6'}}>
+              <div style={{padding:'14px 18px',borderBottom:'1px solid #F3F4F6',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <h3 style={{fontSize:14,fontWeight:700}}>All Rentals ({rentals.length})</h3>
+              </div>
+              {rentals.length===0?(
+                <div style={{padding:'48px',textAlign:'center',color:'#9CA3AF'}}>
+                  <div style={{fontSize:32,marginBottom:8}}>📋</div>
+                  <div style={{fontSize:14,fontWeight:600,color:'#374151',marginBottom:4}}>No rentals yet</div>
+                  <div style={{fontSize:12}}>Click "+ New Rental" to get started</div>
+                </div>
+              ):(
+                <div style={{overflowX:'auto'}}>
+                  <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+                    <thead>
+                      <tr style={{background:'#FAFAFA'}}>
+                        {['ID','Asset','Client','Driver','Due','Price','Payment','Actions'].map(h=>(
+                          <th key={h} style={{padding:'9px 12px',textAlign:'left',fontSize:10,fontWeight:700,textTransform:'uppercase',color:'#9CA3AF',borderBottom:'1px solid #F3F4F6',whiteSpace:'nowrap'}}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rentals.map((r,i)=>{
+                        const d=daysUntil(r.due_date);
+                        const bg=i%2===0?'#fff':'#FAFAFA';
+                        return(
+                          <tr key={r.id} style={{background:bg}} onMouseEnter={e=>e.currentTarget.style.background='#F0F7FF'} onMouseLeave={e=>e.currentTarget.style.background=bg}>
+                            <td style={{padding:'10px 12px',fontSize:11,color:'#9CA3AF',borderBottom:'1px solid #F3F4F6',fontFamily:'monospace'}}>{r.id}</td>
+                            <td style={{padding:'10px 12px',borderBottom:'1px solid #F3F4F6'}}>
+                              <div style={{fontWeight:600}}>{r.asset}</div>
+                              <div style={{fontSize:10,color:'#9CA3AF'}}>{r.category}</div>
+                            </td>
+                            <td style={{padding:'10px 12px',borderBottom:'1px solid #F3F4F6'}}>
+                              <button onClick={()=>setClientPanel(r.client_name)} style={{background:'none',border:'none',padding:0,cursor:'pointer',fontWeight:600,color:'#2563EB',fontSize:13,textDecoration:'underline',textDecorationColor:'#BFDBFE'}}>{r.client_name}</button>
+                              <div style={{fontSize:10,color:'#9CA3AF'}}><a href={`tel:${(r.client_phone||'').replace(/\D/g,'')}`} style={{color:'#9CA3AF',textDecoration:'none'}}>📞 {r.client_phone}</a></div>
+                            </td>
+                            <td style={{padding:'10px 12px',borderBottom:'1px solid #F3F4F6',fontSize:12}}>{r.assigned_driver}</td>
+                            <td style={{padding:'10px 12px',borderBottom:'1px solid #F3F4F6'}}>
+                              <div style={{fontSize:11,fontFamily:'monospace'}}>{r.due_date}</div>
+                              <div style={{fontSize:10,fontWeight:d<=1?600:400,color:d<0?'#DC2626':d<=2?'#D97706':'#9CA3AF'}}>{d<0?`${Math.abs(d)}d overdue`:d===0?'Due today':`${d}d left`}</div>
+                            </td>
+                            <td style={{padding:'10px 12px',borderBottom:'1px solid #F3F4F6',fontFamily:'monospace',fontWeight:600,fontSize:12}}>${r.price.toLocaleString()}</td>
+                            <td style={{padding:'10px 12px',borderBottom:'1px solid #F3F4F6'}}><PayBadge status={r.payment_status}/></td>
+                            <td style={{padding:'10px 12px',borderBottom:'1px solid #F3F4F6'}}>
+                              <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+                                <button onClick={()=>copyLink(r.portal_token)} style={{padding:'4px 8px',borderRadius:5,fontSize:11,fontWeight:600,background:'#F0F7FF',color:'#2563EB',border:'1px solid #BFDBFE',cursor:'pointer',whiteSpace:'nowrap'}}>🔗 Link</button>
+                                {r.payment_status!=='paid'&&<button onClick={()=>markPaid(r.id)} style={{padding:'4px 8px',borderRadius:5,fontSize:11,fontWeight:600,background:'#ECFDF5',color:'#065F46',border:'none',cursor:'pointer'}}>✓ Paid</button>}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {!loading && tab==='drivers'&&(
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:20}}>
+            {WORKERS.map(driver=>{
+              const jobs=rentals.filter(r=>r.assigned_driver===driver&&r.rental_status!=='completed');
+              return(
+                <div key={driver} style={{background:'#fff',borderRadius:12,border:'1px solid #F3F4F6',overflow:'hidden'}}>
+                  <div style={{padding:'14px 18px',background:'#111827',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                    <div style={{display:'flex',alignItems:'center',gap:10}}>
+                      <div style={{width:32,height:32,borderRadius:'50%',background:'#374151',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:700,color:'#fff'}}>{driver[0]}</div>
+                      <div><div style={{fontSize:14,fontWeight:700,color:'#fff'}}>{driver}</div><div style={{fontSize:10,color:'#9CA3AF'}}>Driver</div></div>
+                    </div>
+                    <span style={{background:'#374151',padding:'3px 10px',borderRadius:20,fontSize:11,color:'#9CA3AF'}}>{jobs.length} job{jobs.length!==1?'s':''}</span>
+                  </div>
+                  <div style={{padding:12}}>
+                    {jobs.length===0?<div style={{textAlign:'center',padding:'20px',color:'#9CA3AF',fontSize:12}}>No active jobs</div>
+                    :jobs.map(r=>(
+                      <div key={r.id} style={{background:'#F9FAFB',borderRadius:8,padding:12,marginBottom:8,border:'1px solid #F3F4F6'}}>
+                        <div style={{fontWeight:700,marginBottom:4}}>{r.asset}</div>
+                        <div style={{fontSize:11,color:'#6B7280',marginBottom:6}}>{r.client_name} · {r.client_address}</div>
+                        <div style={{fontSize:11,fontFamily:'monospace',color:daysUntil(r.due_date)<0?'#DC2626':'#374151',marginBottom:8}}>Due: {r.due_date} · {daysUntil(r.due_date)<0?`${Math.abs(daysUntil(r.due_date))}d overdue`:`${daysUntil(r.due_date)}d left`}</div>
+                        <div style={{display:'flex',gap:6}}>
+                          <a href={`tel:${(r.client_phone||'').replace(/\D/g,'')}`} style={{padding:'5px 10px',borderRadius:5,fontSize:11,fontWeight:600,background:'#EFF6FF',color:'#1D4ED8',textDecoration:'none'}}>📞 Call</a>
+                          <a href={`https://maps.google.com?q=${encodeURIComponent(r.client_address||'')}`} target="_blank" style={{padding:'5px 10px',borderRadius:5,fontSize:11,fontWeight:600,background:'#ECFDF5',color:'#065F46',textDecoration:'none'}}>🗺 Map</a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{padding:'10px 12px',borderTop:'1px solid #F3F4F6'}}>
+                    <a href={`/driver/${encodeURIComponent(driver)}`} target="_blank" style={{display:'block',textAlign:'center',padding:'8px',borderRadius:7,fontSize:12,fontWeight:600,background:'#2563EB',color:'#fff',textDecoration:'none'}}>Open Driver App →</a>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {!loading && tab==='collections'&&(
+          <div>
+            <div style={{background:'#FEF2F2',border:'1px solid #FCA5A5',borderRadius:10,padding:'14px 18px',marginBottom:20}}>
+              <p style={{fontSize:14,fontWeight:700,color:'#991B1B'}}>⚖️ Total Outstanding: <strong>${rentals.filter(r=>r.payment_status!=='paid').reduce((s,r)=>s+r.price,0).toLocaleString()}</strong></p>
+            </div>
+            {rentals.filter(r=>r.payment_status!=='paid').map(r=>{
+              const d=daysUntil(r.due_date);
+              const od=d<0?Math.abs(d):0;
+              const lienBody=`NOTICE OF INTENT TO FILE MECHANIC'S LIEN\n\nDate: ${new Date().toLocaleDateString()}\n\nTO: ${r.client_name}\n${r.client_address}\n\nFROM: ${COMPANY}\n188-16 Woodhull Ave, Hollis NY 11423\nTel: 646-529-8499\n\nRE: Unpaid rental invoice ${r.id}\n\nAmount Due: $${r.price.toLocaleString()}\nEquipment: ${r.asset}\nPeriod: ${fmtDate(r.start_date)} to ${fmtDate(r.due_date)}\n\nPlease be advised that ${COMPANY} intends to file a Mechanic's Lien against the property at:\n${r.client_address}\n\nFull payment of $${r.price.toLocaleString()} must be received within 10 days to avoid this filing.\n\nPayment via:\n- Zelle: 646-529-8499\n- Check payable to: ${COMPANY}\n\nSincerely,\n${COMPANY}\n646-529-8499`;
+              return(
+                <div key={r.id} style={{background:'#fff',borderRadius:11,border:'1px solid #F3F4F6',padding:'16px 18px',marginBottom:12}}>
+                  <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',flexWrap:'wrap',gap:10}}>
+                    <div>
+                      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6,flexWrap:'wrap'}}>
+                        <span style={{fontSize:15,fontWeight:700}}>{r.client_name}</span>
+                        <span style={{fontSize:11,color:'#9CA3AF',fontFamily:'monospace'}}>{r.id}</span>
+                        <span style={{fontSize:12,fontWeight:600,color:od>14?'#991B1B':od>7?'#D97706':'#374151'}}>{od>14?'⛔ Lien Stage':od>7?'🔴 Final Notice':od>0?'🟡 Overdue':'⏳ Not Yet Due'}</span>
+                      </div>
+                      <div style={{fontSize:13,fontWeight:700,color:'#DC2626',marginBottom:4}}>${r.price.toLocaleString()} {od>0&&<span style={{fontSize:12,fontWeight:400,color:'#DC2626'}}>— {od} days overdue</span>}</div>
+                      <div style={{fontSize:12,color:'#6B7280'}}>{r.asset} · {r.client_phone}</div>
+                    </div>
+                    <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                      <a href={`tel:${(r.client_phone||'').replace(/\D/g,'')}`} style={{padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#EFF6FF',color:'#1D4ED8',textDecoration:'none',border:'1px solid #BFDBFE'}}>📞 Call</a>
+                      <button onClick={()=>copyLink(r.portal_token)} style={{padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#F0F7FF',color:'#2563EB',border:'1px solid #BFDBFE',cursor:'pointer'}}>🔗 Portal</button>
+                      {od>=7&&<a href={`mailto:${r.client_email}?subject=NOTICE OF INTENT TO FILE MECHANIC'S LIEN — ${r.id}&body=${encodeURIComponent(lienBody)}`} style={{padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#FEF2F2',color:'#991B1B',textDecoration:'none',border:'1px solid #FCA5A5'}}>⚖️ Lien Notice</a>}
+                      <button onClick={()=>markPaid(r.id)} style={{padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#ECFDF5',color:'#065F46',border:'none',cursor:'pointer'}}>✓ Mark Paid</button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {!loading && tab==='invoice'&&<InvoiceTab rentals={rentals}/>}
+      </main>
+    </div>
+  );
+}
+
+function Login({onLogin}){
+  const [email,setEmail]=React.useState('');
+  const [password,setPassword]=React.useState('');
+  const [error,setError]=React.useState('');
+  const [loading,setLoading]=React.useState(false);
+  const USERS=[{email:'secretary@samsconstruction.com',password:'sams2024',role:'secretary',name:'Secretary'},{email:'owner@samsconstruction.com',password:'owner2024',role:'owner',name:'Owner'}];
+  const handleLogin=async(e)=>{
+    e.preventDefault();setLoading(true);setError('');
+    await new Promise(r=>setTimeout(r,500));
+    const u=USERS.find(u=>u.email===email&&u.password===password);
+    if(u)onLogin(u);else{setError('Invalid email or password.');setLoading(false);}
+  };
+  return(
+    <div style={{minHeight:'100vh',background:'#F9FAFB',display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+      <div style={{width:'100%',maxWidth:400}}>
+        <div style={{textAlign:'center',marginBottom:32}}>
+          <div style={{fontSize:20,fontWeight:700,marginBottom:4}}>Sams Construction Services LTD</div>
+          <div style={{fontSize:12,color:'#9CA3AF'}}>Private Internal System — Staff Only</div>
+        </div>
+        <div style={{background:'#fff',borderRadius:14,padding:'32px 28px',boxShadow:'0 4px 24px rgba(0,0,0,0.07)',border:'1px solid #F3F4F6'}}>
+          <h1 style={{fontSize:18,fontWeight:700,marginBottom:20}}>Sign In</h1>
+          <form onSubmit={handleLogin} style={{display:'flex',flexDirection:'column',gap:16}}>
+            <div>
+              <label style={{fontSize:11,fontWeight:700,color:'#6B7280',textTransform:'uppercase',letterSpacing:'0.06em',display:'block',marginBottom:6}}>Email</label>
+              <input style={{width:'100%',background:'#FAFAFA',border:'1px solid #E5E7EB',borderRadius:8,padding:'10px 12px',fontSize:14,color:'#111827',outline:'none'}} type="email" value={email} onChange={e=>setEmail(e.target.value)} required placeholder="your@email.com"/>
+            </div>
+            <div>
+              <label style={{fontSize:11,fontWeight:700,color:'#6B7280',textTransform:'uppercase',letterSpacing:'0.06em',display:'block',marginBottom:6}}>Password</label>
+              <input style={{width:'100%',background:'#FAFAFA',border:'1px solid #E5E7EB',borderRadius:8,padding:'10px 12px',fontSize:14,color:'#111827',outline:'none'}} type="password" value={password} onChange={e=>setPassword(e.target.value)} required placeholder="••••••••"/>
+            </div>
+            {error&&<div style={{background:'#FEF2F2',border:'1px solid #FCA5A5',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#991B1B'}}>{error}</div>}
+            <button type="submit" disabled={loading} style={{padding:12,borderRadius:9,background:loading?'#9CA3AF':'#2563EB',color:'#fff',border:'none',fontSize:14,fontWeight:700,cursor:loading?'not-allowed':'pointer'}}>{loading?'Signing in...':'Sign In'}</button>
+          </form>
+          <div style={{marginTop:20,padding:'12px 14px',background:'#F9FAFB',borderRadius:8,fontSize:12,color:'#9CA3AF',lineHeight:1.7}}>
+            <strong style={{color:'#374151'}}>Credentials:</strong><br/>
+            Secretary: secretary@samsconstruction.com / sams2024<br/>
+            Owner: owner@samsconstruction.com / owner2024
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NewRentalForm({onSaved,onClose,sb}){
+  const [step,setStep]=React.useState(1);
+  const [saving,setSaving]=React.useState(false);
+  const [form,setForm]=React.useState({client_name:'',client_phone:'',client_email:'',client_address:'',asset:'',assigned_driver:'',start_date:'',start_time:'08:00',duration_days:'',price:'',payment_status:'unpaid',payment_method:'',notes:''});
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  const dueDate=()=>{if(!form.start_date||!form.duration_days)return'';const d=new Date(form.start_date);d.setDate(d.getDate()+parseInt(form.duration_days));return d.toISOString().slice(0,10);};
+  const inp={width:'100%',background:'#FAFAFA',border:'1px solid #E5E7EB',borderRadius:8,padding:'10px 12px',fontSize:13,color:'#111827',outline:'none',boxSizing:'border-box'};
+  const lbl={fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#9CA3AF',display:'block',marginBottom:6};
+  const handleSave=async()=>{
+    if(!form.client_name||!form.asset||!form.start_date||!form.duration_days||!form.price){alert('Please fill in all required fields.');return;}
+    setSaving(true);
+    const cat=ASSETS.find(a=>a.name===form.asset)?.category||'Machine';
+    const {error}=await sb.from('rentals').insert({client_name:form.client_name,client_phone:form.client_phone,client_email:form.client_email,client_address:form.client_address,asset:form.asset,category:cat,assigned_driver:form.assigned_driver,start_date:form.start_date,start_time:form.start_time,due_date:dueDate(),duration_days:parseInt(form.duration_days),price:parseFloat(form.price),payment_status:form.payment_status,payment_method:form.payment_method,rental_status:'active',driver_status:'assigned',notes:form.notes});
+    setSaving(false);
+    if(error){alert('Error: '+error.message);return;}
+    onSaved();
+  };
+  return(
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.4)',zIndex:300,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+      <div style={{background:'#fff',borderRadius:14,width:'100%',maxWidth:580,maxHeight:'90vh',overflowY:'auto',boxShadow:'0 20px 60px rgba(0,0,0,0.2)'}}>
+        <div style={{padding:'18px 22px',borderBottom:'1px solid #F3F4F6',display:'flex',justifyContent:'space-between',alignItems:'center',position:'sticky',top:0,background:'#fff',zIndex:1}}>
+          <h2 style={{fontSize:16,fontWeight:700}}>New Rental — Step {step} of 4</h2>
+          <button onClick={onClose} style={{width:28,height:28,borderRadius:'50%',border:'1px solid #E5E7EB',background:'#F9FAFB',cursor:'pointer',fontSize:16,color:'#6B7280'}}>×</button>
+        </div>
+        <div style={{padding:22}}>
+          {step===1&&<div style={{display:'flex',flexDirection:'column',gap:14}}>
+            <h3 style={{fontSize:15,fontWeight:700}}>Client Information</h3>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+              {[['client_name','Client Name *','Stallion Construction'],['client_phone','Phone','(646) 000-0000'],['client_email','Email','billing@company.com'],['client_address','Address','459 Underhill Ave, Bronx']].map(([k,l,p])=>(
+                <div key={k}><label style={lbl}>{l}</label><input style={inp} placeholder={p} value={form[k]} onChange={e=>set(k,e.target.value)}/></div>
+              ))}
+            </div>
+          </div>}
+          {step===2&&<div style={{display:'flex',flexDirection:'column',gap:14}}>
+            <h3 style={{fontSize:15,fontWeight:700}}>Equipment & Driver</h3>
+            <div><label style={lbl}>Equipment *</label>
+              <select style={{...inp,cursor:'pointer'}} value={form.asset} onChange={e=>set('asset',e.target.value)}>
+                <option value="">Select...</option>
+                <optgroup label="Machines">{ASSETS.filter(a=>a.category==='Machine').map(a=><option key={a.name}>{a.name}</option>)}</optgroup>
+                <optgroup label="Tools">{ASSETS.filter(a=>a.category==='Tool').map(a=><option key={a.name}>{a.name}</option>)}</optgroup>
+              </select>
+            </div>
+            <div><label style={lbl}>Assigned Driver *</label>
+              <select style={{...inp,cursor:'pointer'}} value={form.assigned_driver} onChange={e=>set('assigned_driver',e.target.value)}>
+                <option value="">Select...</option>
+                {WORKERS.map(d=><option key={d}>{d}</option>)}
+              </select>
+            </div>
+          </div>}
+          {step===3&&<div style={{display:'flex',flexDirection:'column',gap:14}}>
+            <h3 style={{fontSize:15,fontWeight:700}}>Timeframe</h3>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+              <div><label style={lbl}>Start Date *</label><input type="date" style={inp} value={form.start_date} onChange={e=>set('start_date',e.target.value)}/></div>
+              <div><label style={lbl}>Start Time</label><input type="time" style={inp} value={form.start_time} onChange={e=>set('start_time',e.target.value)}/></div>
+              <div><label style={lbl}>Duration (days) *</label><input type="number" min="1" style={inp} placeholder="3" value={form.duration_days} onChange={e=>set('duration_days',e.target.value)}/></div>
+              <div><label style={lbl}>Due Date (auto)</label><div style={{...inp,background:'#F9FAFB',fontSize:12,fontFamily:'monospace'}}>{dueDate()||'Fill above'}</div></div>
+            </div>
+          </div>}
+          {step===4&&<div style={{display:'flex',flexDirection:'column',gap:14}}>
+            <h3 style={{fontSize:15,fontWeight:700}}>Payment & Notes</h3>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+              <div><label style={lbl}>Price ($) *</label><input type="number" style={inp} placeholder="4500" value={form.price} onChange={e=>set('price',e.target.value)}/></div>
+              <div><label style={lbl}>Payment Status</label>
+                <select style={{...inp,cursor:'pointer'}} value={form.payment_status} onChange={e=>set('payment_status',e.target.value)}>
+                  <option value="unpaid">Unpaid</option><option value="partial">Partial</option><option value="paid">Paid</option>
+                </select>
+              </div>
+              <div><label style={lbl}>Payment Method</label>
+                <select style={{...inp,cursor:'pointer'}} value={form.payment_method} onChange={e=>set('payment_method',e.target.value)}>
+                  <option value="">Select...</option>
+                  {['Cash','Check','Zelle','Venmo','Card','Bank Transfer'].map(m=><option key={m}>{m}</option>)}
+                </select>
+              </div>
+              <div style={{gridColumn:'1/-1'}}><label style={lbl}>Notes</label><textarea style={{...inp,minHeight:70,resize:'vertical'}} placeholder="RENT CAT 320 - 3 DAYS..." value={form.notes} onChange={e=>set('notes',e.target.value)}/></div>
+            </div>
+          </div>}
+        </div>
+        <div style={{padding:'14px 22px',borderTop:'1px solid #F3F4F6',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <button onClick={()=>setStep(s=>Math.max(1,s-1))} disabled={step===1} style={{padding:'8px 16px',borderRadius:8,fontSize:13,fontWeight:600,cursor:step===1?'not-allowed':'pointer',border:'1px solid #E5E7EB',background:'#fff',color:step===1?'#D1D5DB':'#374151'}}>← Back</button>
+          <span style={{fontSize:11,color:'#9CA3AF'}}>{step}/4</span>
+          {step<4?<button onClick={()=>setStep(s=>s+1)} style={{padding:'8px 16px',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',border:'none',background:'#2563EB',color:'#fff'}}>Continue →</button>
+          :<button onClick={handleSave} disabled={saving} style={{padding:'8px 18px',borderRadius:8,fontSize:13,fontWeight:600,cursor:saving?'not-allowed':'pointer',border:'none',background:saving?'#9CA3AF':'#111827',color:'#fff'}}>{saving?'Saving...':'Save Rental'}</button>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ClientPanel({client,rentals,onClose,APP_URL}){
+  const history=rentals.filter(r=>r.client_name===client);
+  const paid=history.filter(r=>r.payment_status==='paid').reduce((s,r)=>s+r.price,0);
+  const owed=history.filter(r=>r.payment_status!=='paid').reduce((s,r)=>s+r.price,0);
+  const r0=history[0];
+  return(
+    <>
+      <div onClick={onClose} style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.25)',zIndex:200,backdropFilter:'blur(2px)'}}/>
+      <div style={{position:'fixed',top:0,right:0,bottom:0,width:440,background:'#fff',zIndex:201,boxShadow:'-8px 0 40px rgba(0,0,0,0.12)',overflowY:'auto'}}>
+        <div style={{padding:'20px 22px',borderBottom:'1px solid #F3F4F6',position:'sticky',top:0,background:'#fff',zIndex:1}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+            <div>
+              <p style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'#9CA3AF',marginBottom:4}}>Client Profile</p>
+              <h2 style={{fontSize:18,fontWeight:700}}>{client}</h2>
+            </div>
+            <button onClick={onClose} style={{width:28,height:28,borderRadius:'50%',border:'1px solid #E5E7EB',background:'#F9FAFB',cursor:'pointer',fontSize:15,color:'#6B7280'}}>×</button>
+          </div>
+          {r0&&<div style={{display:'flex',gap:8,marginTop:12}}>
+            <a href={`tel:${(r0.client_phone||'').replace(/\D/g,'')}`} style={{display:'inline-flex',alignItems:'center',gap:5,padding:'6px 12px',borderRadius:7,fontSize:12,fontWeight:600,background:'#EFF6FF',color:'#1D4ED8',textDecoration:'none',border:'1px solid #BFDBFE'}}>📞 Call</a>
+            <a href={`mailto:${r0.client_email}`} style={{display:'inline-flex',alignItems:'center',gap:5,padding:'6px 12px',borderRadius:7,fontSize:12,fontWeight:600,background:'#F9FAFB',color:'#374151',textDecoration:'none',border:'1px solid #E5E7EB'}}>✉ Email</a>
+          </div>}
+        </div>
+        <div style={{padding:'16px 22px',display:'flex',flexDirection:'column',gap:14}}>
+          {r0&&<div style={{background:'#F9FAFB',borderRadius:8,padding:'12px 14px',fontSize:12,lineHeight:1.8}}>
+            <div><strong style={{color:'#6B7280'}}>Phone:</strong> {r0.client_phone||'—'}</div>
+            <div><strong style={{color:'#6B7280'}}>Email:</strong> {r0.client_email||'—'}</div>
+            <div><strong style={{color:'#6B7280'}}>Address:</strong> {r0.client_address||'—'}</div>
+          </div>}
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>
+            {[{l:'Rentals',v:history.length,c:'#111827'},{l:'Total Paid',v:`$${paid.toLocaleString()}`,c:'#065F46'},{l:'Owed',v:`$${owed.toLocaleString()}`,c:owed>0?'#991B1B':'#065F46'}].map(s=>(
+              <div key={s.l} style={{background:'#fff',border:'1px solid #F3F4F6',borderRadius:8,padding:'10px 12px'}}>
+                <p style={{fontSize:10,fontWeight:700,textTransform:'uppercase',color:'#9CA3AF',marginBottom:5}}>{s.l}</p>
+                <p style={{fontSize:18,fontWeight:700,color:s.c}}>{s.v}</p>
+              </div>
+            ))}
+          </div>
+          <h4 style={{fontSize:13,fontWeight:700}}>Rental History ({history.length})</h4>
+          {history.map(r=>(
+            <div key={r.id} style={{background:'#fff',border:'1px solid #F3F4F6',borderRadius:8,padding:'12px 14px',marginBottom:6}}>
+              <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+                <span style={{fontSize:13,fontWeight:700}}>{r.asset}</span>
+                <PayBadge status={r.payment_status}/>
+              </div>
+              <div style={{fontSize:11,color:'#6B7280',lineHeight:1.8}}>
+                <div>Due: {fmtDate(r.due_date)} · ${r.price.toLocaleString()}</div>
+                <div>Driver: {r.assigned_driver} · {r.payment_method||'—'}</div>
+              </div>
+              <div style={{marginTop:8}}>
+                <a href={`${APP_URL}/portal/${r.portal_token}`} target="_blank" style={{display:'inline-flex',alignItems:'center',gap:4,padding:'4px 10px',borderRadius:5,fontSize:11,fontWeight:600,background:'#F0F7FF',color:'#2563EB',textDecoration:'none',border:'1px solid #BFDBFE'}}>🔗 Portal Link</a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function InvoiceTab({rentals}){
+  const [invNo,setInvNo]=React.useState('');
+  const [invDate,setInvDate]=React.useState(new Date().toISOString().slice(0,10));
+  const [client,setClient]=React.useState('');
+  const [addr,setAddr]=React.useState('');
+  const [city,setCity]=React.useState('');
+  const [phone,setPhone]=React.useState('');
+  const [method,setMethod]=React.useState('');
+  const [notes,setNotes]=React.useState('');
+  const [tax,setTax]=React.useState('');
+  const [other,setOther]=React.useState('');
+  const [items,setItems]=React.useState([{id:1,desc:'',date:'',amount:''},{id:2,desc:'',date:'',amount:''}]);
+  const [nextId,setNextId]=React.useState(3);
+  const [preview,setPreview]=React.useState(false);
+  const [prefill,setPrefill]=React.useState('');
+  const inp={width:'100%',background:'#FAFAFA',border:'1px solid #E5E7EB',borderRadius:7,padding:'9px 11px',fontSize:13,color:'#111827',outline:'none',boxSizing:'border-box'};
+  const lbl={fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#9CA3AF',display:'block',marginBottom:5};
+  const sub=items.reduce((s,i)=>s+(parseFloat(i.amount)||0),0);
+  const taxAmt=parseFloat(tax)||0;
+  const otherAmt=parseFloat(other)||0;
+  const total=sub+taxAmt+otherAmt;
+  const fmt=n=>`$ ${n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`;
+  const fmtD=s=>{if(!s)return'';return new Date(s+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});};
+  const doPrefill=rid=>{
+    setPrefill(rid);const r=rentals.find(x=>x.id===rid);if(!r)return;
+    setInvNo(rid);setInvDate(r.start_date||'');setClient(r.client_name||'');setAddr(r.client_address||'');setCity('');setPhone(r.client_phone||'');setMethod(r.payment_method||'');setNotes(r.notes||'');
+    setItems([{id:1,desc:r.asset||'',date:r.start_date||'',amount:String(r.price||'')},{id:2,desc:'',date:'',amount:''}]);
+  };
+  const lineItems=items.filter(i=>i.desc||i.amount);
+
+  if(preview)return(
+    <div style={{maxWidth:720,margin:'0 auto'}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20,flexWrap:'wrap',gap:10}}>
+        <button onClick={()=>setPreview(false)} style={{padding:'8px 16px',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',border:'1px solid #E5E7EB',background:'#fff',color:'#374151'}}>← Edit</button>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <span style={{fontSize:12,color:'#9CA3AF'}}>Ctrl+P → Save as PDF</span>
+          <button onClick={()=>window.print()} style={{padding:'8px 18px',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',border:'none',background:'#1D4ED8',color:'#fff'}}>🖨 Print / PDF</button>
+        </div>
+      </div>
+      <div id="printable" style={{background:'#fff',border:'1px solid #ccc',padding:'32px 36px',fontFamily:'Arial,sans-serif',fontSize:13,color:'#111'}}>
+        <div style={{fontSize:20,fontWeight:700,color:'#1D4ED8',marginBottom:12}}>SAMS CONSTRUCTION SERVICES LTD</div>
+        <hr style={{border:'none',borderTop:'2px solid #1D4ED8',marginBottom:16}}/>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:0,marginBottom:16}}>
+          <div style={{fontSize:12,lineHeight:2}}>
+            <div>188-16 WOODHULL AVE</div><div>Hollis NY 11423</div>
+            <div style={{marginTop:6}}>646 529 8499</div><div>BIC#4376</div>
+          </div>
+          <div>
+            <table style={{width:'100%',borderCollapse:'collapse',marginBottom:8}}>
+              <tbody>
+                <tr><td style={{padding:'3px 8px',fontSize:12,color:'#555'}}>Invoice No.</td><td style={{padding:'3px 8px',fontSize:12,fontWeight:600}}>{invNo||'—'}</td></tr>
+                <tr><td style={{padding:'3px 8px',fontSize:12,color:'#555'}}>Invoice Date:</td><td style={{padding:'3px 8px',fontSize:12,fontWeight:600}}>{fmtD(invDate)||'—'}</td></tr>
+              </tbody>
+            </table>
+            <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #90BEE0'}}>
+              <tbody>
+                <tr style={{background:'#D6E8F7'}}><td style={{padding:'4px 8px',fontSize:12,fontWeight:600,width:80}}>Bill to :</td><td style={{padding:'4px 8px',fontSize:12,fontWeight:700}}>{client}</td></tr>
+                <tr style={{background:'#EAF4FB'}}><td style={{padding:'4px 8px',fontSize:12,color:'#555'}}>Address:</td><td style={{padding:'4px 8px',fontSize:12}}><strong>{addr}</strong>{city?<><br/>{city}</>:''}</td></tr>
+                <tr style={{background:'#D6E8F7'}}><td style={{padding:'4px 8px',fontSize:12,color:'#555'}}>Phone</td><td style={{padding:'4px 8px',fontSize:12,color:'#1D4ED8'}}>{phone}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #90BEE0'}}>
+          <thead><tr style={{background:'#1D4ED8'}}><th style={{padding:'7px 10px',textAlign:'left',color:'#fff',fontSize:12,fontWeight:700,width:'55%'}}>Description</th><th style={{padding:'7px 10px',textAlign:'center',color:'#fff',fontSize:12,fontWeight:700,width:'20%'}}>Date</th><th style={{padding:'7px 10px',textAlign:'right',color:'#fff',fontSize:12,fontWeight:700,width:'25%'}}>Amount</th></tr></thead>
+          <tbody>
+            {lineItems.map((item,idx)=>(
+              <tr key={item.id} style={{borderBottom:'1px solid #BDD6E8',background:idx%2===0?'#fff':'#EAF4FB'}}>
+                <td style={{padding:'6px 10px',fontSize:12,fontStyle:'italic'}}>{item.desc}</td>
+                <td style={{padding:'6px 10px',fontSize:12,textAlign:'center'}}>{fmtD(item.date)||item.date}</td>
+                <td style={{padding:'6px 10px',fontSize:12,textAlign:'right'}}>{item.amount?`$ ${parseFloat(item.amount).toLocaleString('en-US',{minimumFractionDigits:2})}`:''}</td>
+              </tr>
+            ))}
+            {Array.from({length:Math.max(0,8-lineItems.length)}).map((_,i)=>(
+              <tr key={`e${i}`} style={{borderBottom:'1px solid #BDD6E8',background:((lineItems.length+i)%2===0)?'#fff':'#EAF4FB'}}><td style={{padding:'6px 10px'}}>&nbsp;</td><td/><td/></tr>
+            ))}
+          </tbody>
+        </table>
+        <table style={{width:'100%',borderCollapse:'collapse',borderLeft:'1px solid #90BEE0',borderRight:'1px solid #90BEE0'}}>
+          <tbody>
+            <tr style={{borderBottom:'1px solid #BDD6E8'}}><td style={{padding:'5px 10px',fontSize:12,color:'#555',width:'40%'}}>{notes?<em>{notes}</em>:''}</td><td style={{padding:'5px 10px',fontSize:12,textAlign:'right',color:'#555',width:'35%'}}>Sales Tax</td><td style={{padding:'5px 10px',fontSize:12,textAlign:'right',borderLeft:'2px solid #1D4ED8',width:'25%'}}>{taxAmt>0?fmt(taxAmt):''}</td></tr>
+            <tr style={{borderBottom:'1px solid #BDD6E8'}}><td/><td style={{padding:'5px 10px',fontSize:12,textAlign:'right',color:'#555'}}>Other</td><td style={{padding:'5px 10px',fontSize:12,textAlign:'right',borderLeft:'2px solid #1D4ED8'}}>{otherAmt>0?fmt(otherAmt):''}</td></tr>
+          </tbody>
+        </table>
+        <table style={{width:'100%',borderCollapse:'collapse',border:'1px solid #90BEE0'}}>
+          <tbody><tr style={{background:'#D6E8F7'}}><td style={{padding:'8px 10px',fontSize:13,fontWeight:700,textAlign:'right'}}>TOTAL</td><td style={{padding:'8px 14px',fontSize:14,fontWeight:700,textAlign:'right',width:'25%'}}>${total.toLocaleString('en-US',{minimumFractionDigits:2})}</td></tr></tbody>
+        </table>
+        {method&&<div style={{marginTop:10,fontSize:11,color:'#555'}}>Payment Method: <strong>{method}</strong></div>}
+      </div>
+      <style>{`@media print{body>*:not(#printable){display:none!important;}#printable{position:fixed;inset:0;padding:1.5cm;z-index:9999;}}`}</style>
+    </div>
+  );
+
+  return(
+    <div style={{maxWidth:740,margin:'0 auto'}}>
+      {rentals.length>0&&<div style={{background:'#EFF6FF',border:'1px solid #BFDBFE',borderRadius:10,padding:'14px 18px',marginBottom:20,display:'flex',alignItems:'center',gap:12}}>
+        <span>⚡</span>
+        <div style={{flex:1}}><p style={{fontSize:13,fontWeight:600,color:'#1D4ED8'}}>Auto-fill from rental</p></div>
+        <select style={{...inp,width:'auto',minWidth:200,cursor:'pointer',background:'#fff'}} value={prefill} onChange={e=>doPrefill(e.target.value)}>
+          <option value="">Select rental...</option>
+          {rentals.map(r=><option key={r.id} value={r.id}>{r.id} — {r.client_name}</option>)}
+        </select>
+      </div>}
+      <div style={{background:'#fff',borderRadius:12,border:'1px solid #F3F4F6',overflow:'hidden'}}>
+        <div style={{background:'#111827',padding:'16px 22px'}}><h3 style={{fontSize:14,fontWeight:700,color:'#fff'}}>Invoice — Sams Construction Services LTD</h3></div>
+        <div style={{padding:'20px 22px',display:'flex',flexDirection:'column',gap:18}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
+            <div><label style={lbl}>Invoice No.</label><input style={inp} placeholder="332" value={invNo} onChange={e=>setInvNo(e.target.value)}/></div>
+            <div><label style={lbl}>Invoice Date</label><input type="date" style={inp} value={invDate} onChange={e=>setInvDate(e.target.value)}/></div>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+            <div style={{gridColumn:'1/-1'}}><label style={lbl}>Client Name</label><input style={inp} placeholder="Stallion Construction" value={client} onChange={e=>setClient(e.target.value)}/></div>
+            <div style={{gridColumn:'1/-1'}}><label style={lbl}>Address</label><input style={inp} placeholder="459 Underhill Ave" value={addr} onChange={e=>setAddr(e.target.value)}/></div>
+            <div><label style={lbl}>City/State</label><input style={inp} placeholder="Bronx, NY" value={city} onChange={e=>setCity(e.target.value)}/></div>
+            <div><label style={lbl}>Phone</label><input style={inp} placeholder="917-561-6594" value={phone} onChange={e=>setPhone(e.target.value)}/></div>
+          </div>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:13}}>
+            <thead><tr style={{background:'#F9FAFB'}}>{['Description','Date','Amount ($)',''].map((h,i)=>(<th key={i} style={{padding:'7px 8px',textAlign:'left',fontSize:10,fontWeight:700,textTransform:'uppercase',color:'#9CA3AF',borderBottom:'1px solid #E5E7EB',width:i===1?'140px':i===2?'120px':i===3?'30px':'auto'}}>{h}</th>))}</tr></thead>
+            <tbody>
+              {items.map(item=>(
+                <tr key={item.id}>
+                  <td style={{padding:'4px 4px 4px 0'}}><input style={inp} placeholder="RENT CAT 320 - 3 DAYS" value={item.desc} onChange={e=>setItems(p=>p.map(i=>i.id===item.id?{...i,desc:e.target.value}:i))}/></td>
+                  <td style={{padding:'4px'}}><input type="date" style={inp} value={item.date} onChange={e=>setItems(p=>p.map(i=>i.id===item.id?{...i,date:e.target.value}:i))}/></td>
+                  <td style={{padding:'4px'}}><input type="number" min="0" step="0.01" style={inp} placeholder="0.00" value={item.amount} onChange={e=>setItems(p=>p.map(i=>i.id===item.id?{...i,amount:e.target.value}:i))}/></td>
+                  <td style={{padding:'4px 0 4px 4px',textAlign:'center'}}>{items.length>1&&<button onClick={()=>setItems(p=>p.filter(i=>i.id!==item.id))} style={{background:'none',border:'none',cursor:'pointer',color:'#EF4444',fontSize:17}}>×</button>}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <button onClick={()=>{setItems(p=>[...p,{id:nextId,desc:'',date:'',amount:''}]);setNextId(n=>n+1);}} style={{fontSize:12,color:'#2563EB',background:'none',border:'none',cursor:'pointer',fontWeight:600,padding:'4px 0',textAlign:'left'}}>+ Add line item</button>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr 1fr',gap:12}}>
+            <div><label style={lbl}>Sales Tax ($)</label><input type="number" min="0" step="0.01" style={inp} placeholder="0.00" value={tax} onChange={e=>setTax(e.target.value)}/></div>
+            <div><label style={lbl}>Other ($)</label><input type="number" min="0" step="0.01" style={inp} placeholder="0.00" value={other} onChange={e=>setOther(e.target.value)}/></div>
+            <div><label style={lbl}>Payment Method</label><select style={{...inp,cursor:'pointer'}} value={method} onChange={e=>setMethod(e.target.value)}><option value="">—</option>{['Cash','Check','Zelle','Venmo','Card','Bank Transfer'].map(m=><option key={m}>{m}</option>)}</select></div>
+            <div><label style={lbl}>Notes</label><input style={inp} placeholder="not tax include $00" value={notes} onChange={e=>setNotes(e.target.value)}/></div>
+          </div>
+          <div style={{background:'#F9FAFB',borderRadius:8,border:'1px solid #F3F4F6',padding:'12px 16px',display:'flex',justifyContent:'flex-end'}}>
+            <div style={{fontSize:16,fontWeight:700}}>TOTAL: ${total.toLocaleString('en-US',{minimumFractionDigits:2})}</div>
+          </div>
+          <button onClick={()=>setPreview(true)} style={{width:'100%',padding:13,background:'#111827',color:'#fff',border:'none',borderRadius:9,fontSize:14,fontWeight:700,cursor:'pointer'}}>👁 Preview Invoice</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App/>);
+</script>
+</body>
+</html>
