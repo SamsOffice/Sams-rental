@@ -508,6 +508,91 @@ function ClientPortal({token}){
   );
 }
 
+
+// ── EDIT RENTAL MODAL ──
+function EditRentalModal({rental,onClose,onSaved,showToast}){
+  const [form,setForm]=useState({...rental});
+  const [saving,setSaving]=useState(false);
+  const [assets,setAssets]=useState([]);
+  const set=(k,v)=>setForm(f=>({...f,[k]:v}));
+  useEffect(()=>{sb.from('assets').select('*').order('category').order('name').then(({data})=>{if(data)setAssets(data);});},[]);
+  const inp={width:'100%',background:'#FAFAFA',border:'1px solid #E5E7EB',borderRadius:8,padding:'10px 12px',fontSize:13,outline:'none',boxSizing:'border-box'};
+  const lbl={fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#9CA3AF',display:'block',marginBottom:6};
+  const save=async()=>{
+    setSaving(true);
+    const {error}=await sb.from('rentals').update({
+      client_name:form.client_name,client_phone:form.client_phone,client_email:form.client_email,
+      client_address:form.client_address,asset:form.asset,assigned_driver:form.assigned_driver,
+      start_date:form.start_date,due_date:form.due_date,price:parseFloat(form.price),
+      payment_status:form.payment_status,payment_method:form.payment_method,
+      rental_status:form.rental_status,driver_status:form.driver_status,notes:form.notes
+    }).eq('id',rental.id);
+    setSaving(false);
+    if(error){showToast('Error: '+error.message);return;}
+    onSaved();
+  };
+  return (
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.4)',zIndex:300,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+      <div style={{background:'#fff',borderRadius:14,width:'100%',maxWidth:580,maxHeight:'90vh',overflowY:'auto'}}>
+        <div style={{padding:'18px 22px',borderBottom:'1px solid #F3F4F6',display:'flex',justifyContent:'space-between',alignItems:'center',position:'sticky',top:0,background:'#fff'}}>
+          <div><h2 style={{fontSize:16,fontWeight:700}}>Edit Rental</h2><p style={{fontSize:11,color:'#9CA3AF'}}>{rental.id}</p></div>
+          <button onClick={onClose} style={{width:28,height:28,borderRadius:'50%',border:'1px solid #E5E7EB',background:'#F9FAFB',cursor:'pointer',fontSize:16,color:'#6B7280'}}>×</button>
+        </div>
+        <div style={{padding:22,display:'flex',flexDirection:'column',gap:14}}>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12}}>
+            <div style={{gridColumn:'1/-1'}}><label style={lbl}>Client Name</label><input style={inp} value={form.client_name||''} onChange={e=>set('client_name',e.target.value)}/></div>
+            <div><label style={lbl}>Phone</label><input style={inp} value={form.client_phone||''} onChange={e=>set('client_phone',e.target.value)}/></div>
+            <div><label style={lbl}>Email</label><input style={inp} value={form.client_email||''} onChange={e=>set('client_email',e.target.value)}/></div>
+            <div style={{gridColumn:'1/-1'}}><label style={lbl}>Address</label><input style={inp} value={form.client_address||''} onChange={e=>set('client_address',e.target.value)}/></div>
+            <div style={{gridColumn:'1/-1'}}><label style={lbl}>Equipment</label>
+              <select style={{...inp,cursor:'pointer'}} value={form.asset||''} onChange={e=>set('asset',e.target.value)}>
+                <optgroup label="Machines">{assets.filter(a=>a.category==='Machine').map(a=><option key={a.id}>{a.name}</option>)}</optgroup>
+                <optgroup label="Tools">{assets.filter(a=>a.category==='Tool').map(a=><option key={a.id}>{a.name}</option>)}</optgroup>
+              </select>
+            </div>
+            <div><label style={lbl}>Driver</label>
+              <select style={{...inp,cursor:'pointer'}} value={form.assigned_driver||''} onChange={e=>set('assigned_driver',e.target.value)}>
+                {['Sams','Samu','Jose Luis'].map(d=><option key={d}>{d}</option>)}
+              </select>
+            </div>
+            <div><label style={lbl}>Driver Status</label>
+              <select style={{...inp,cursor:'pointer'}} value={form.driver_status||'assigned'} onChange={e=>set('driver_status',e.target.value)}>
+                <option value="assigned">📋 Assigned</option>
+                <option value="on_the_way">🚛 On the Way</option>
+                <option value="picked_up">📦 Picked Up</option>
+                <option value="delivered">✅ Delivered</option>
+              </select>
+            </div>
+            <div><label style={lbl}>Start Date</label><input type="date" style={inp} value={form.start_date||''} onChange={e=>set('start_date',e.target.value)}/></div>
+            <div><label style={lbl}>Due Date</label><input type="date" style={inp} value={form.due_date||''} onChange={e=>set('due_date',e.target.value)}/></div>
+            <div><label style={lbl}>Price ($)</label><input type="number" style={inp} value={form.price||''} onChange={e=>set('price',e.target.value)}/></div>
+            <div><label style={lbl}>Payment Status</label>
+              <select style={{...inp,cursor:'pointer'}} value={form.payment_status||'unpaid'} onChange={e=>set('payment_status',e.target.value)}>
+                <option value="unpaid">Unpaid</option><option value="partial">Partial</option><option value="paid">Paid</option>
+              </select>
+            </div>
+            <div><label style={lbl}>Payment Method</label>
+              <select style={{...inp,cursor:'pointer'}} value={form.payment_method||''} onChange={e=>set('payment_method',e.target.value)}>
+                <option value="">—</option>{['Cash','Check','Zelle','Venmo','Card','Bank Transfer'].map(m=><option key={m}>{m}</option>)}
+              </select>
+            </div>
+            <div><label style={lbl}>Rental Status</label>
+              <select style={{...inp,cursor:'pointer'}} value={form.rental_status||'active'} onChange={e=>set('rental_status',e.target.value)}>
+                <option value="active">Active</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div style={{gridColumn:'1/-1'}}><label style={lbl}>Notes</label><textarea style={{...inp,minHeight:60}} value={form.notes||''} onChange={e=>set('notes',e.target.value)}/></div>
+          </div>
+        </div>
+        <div style={{padding:'14px 22px',borderTop:'1px solid #F3F4F6',display:'flex',gap:10,position:'sticky',bottom:0,background:'#fff'}}>
+          <button onClick={onClose} style={{flex:1,padding:11,borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer',border:'1px solid #E5E7EB',background:'#fff',color:'#374151'}}>Cancel</button>
+          <button onClick={save} disabled={saving} style={{flex:2,padding:11,borderRadius:8,fontSize:13,fontWeight:700,cursor:'pointer',border:'none',background:saving?'#9CA3AF':'#111827',color:'#fff'}}>{saving?'Saving...':'Save Changes'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── LOGIN ──
 function Login({onLogin}){
   const [username,setUsername]=useState('');const [password,setPassword]=useState('');const [error,setError]=useState('');const [loading,setLoading]=useState(false);const [forgot,setForgot]=useState(false);
@@ -593,6 +678,7 @@ function App(){
   const [showForm,setShowForm]=useState(false);
   const [showEquip,setShowEquip]=useState(false);
   const [clientPanel,setClientPanel]=useState(null);
+  const [editRental,setEditRental]=useState(null);
 
   useEffect(()=>{const u=localStorage.getItem('sams_user');if(u)setUser(JSON.parse(u));},[]);
   useEffect(()=>{if(user)loadData();},[user]);
@@ -604,6 +690,7 @@ function App(){
   const setDriverStatus=async(id,status)=>{await sb.from('rentals').update({driver_status:status}).eq('id',id);showToast('Status updated ✓');loadData();};
   const approveExt=async(ext)=>{const r=rentals.find(x=>x.id===ext.rental_id);if(!r)return;const d=new Date(r.due_date);d.setDate(d.getDate()+ext.extra_days);await sb.from('rentals').update({due_date:d.toISOString().slice(0,10),price:r.price+ext.extra_cost}).eq('id',ext.rental_id);await sb.from('extension_requests').update({status:'approved'}).eq('id',ext.id);showToast('Extension approved ✓');loadData();};
   const denyExt=async(id)=>{await sb.from('extension_requests').update({status:'denied'}).eq('id',id);loadData();};
+  const deleteRental=async(id)=>{if(!window.confirm('Delete rental '+id+'? This cannot be undone.'))return;await sb.from('rentals').delete().eq('id',id);showToast('Rental deleted');loadData();};
 
   if(!user)return <Login onLogin={u=>{localStorage.setItem('sams_user',JSON.stringify(u));setUser(u);}}/>;
 
@@ -617,6 +704,7 @@ function App(){
       {showForm&&<NewRentalForm onSaved={()=>{setShowForm(false);loadData();showToast('Rental saved! Portal link ready.');}} onClose={()=>setShowForm(false)} showToast={showToast}/>}
       {showEquip&&<EquipmentManager onClose={()=>setShowEquip(false)} onChange={loadData} showToast={showToast}/>}
       {clientPanel&&<ClientPanel client={clientPanel} rentals={rentals} onClose={()=>setClientPanel(null)} copyLink={copyLink}/>}
+      {editRental&&<EditRentalModal rental={editRental} onClose={()=>setEditRental(null)} onSaved={()=>{setEditRental(null);loadData();showToast('Rental updated ✓');}} showToast={showToast}/>}
 
       <header style={{background:'#fff',borderBottom:'1px solid #E5E7EB',padding:'0 20px',display:'flex',alignItems:'center',justifyContent:'space-between',height:56,position:'sticky',top:0,zIndex:100,flexWrap:'wrap'}}>
         <div style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap'}}>
@@ -659,7 +747,7 @@ function App(){
                 <td style={{padding:'10px 12px',borderBottom:'1px solid #F3F4F6'}}><div style={{fontSize:11,fontFamily:'monospace'}}>{r.due_date}</div><div style={{fontSize:10,fontWeight:d<=1?600:400,color:d<0?'#DC2626':d<=2?'#D97706':'#9CA3AF'}}>{d<0?`${Math.abs(d)}d over`:d===0?'today':`${d}d left`}</div></td>
                 <td style={{padding:'10px 12px',borderBottom:'1px solid #F3F4F6',fontFamily:'monospace',fontWeight:600,fontSize:12}}>{money(r.price)}</td>
                 <td style={{padding:'10px 12px',borderBottom:'1px solid #F3F4F6'}}><PayBadge status={r.payment_status}/></td>
-                <td style={{padding:'10px 12px',borderBottom:'1px solid #F3F4F6'}}><div style={{display:'flex',gap:5,flexWrap:'wrap'}}><button onClick={()=>copyLink(r.portal_token)} style={{padding:'4px 8px',borderRadius:5,fontSize:11,fontWeight:600,background:'#F0F7FF',color:'#2563EB',border:'1px solid #BFDBFE',cursor:'pointer',whiteSpace:'nowrap'}}>🔗 Link</button>{r.payment_status!=='paid'&&<button onClick={()=>markPaid(r.id)} style={{padding:'4px 8px',borderRadius:5,fontSize:11,fontWeight:600,background:'#ECFDF5',color:'#065F46',border:'none',cursor:'pointer'}}>✓ Paid</button>}</div></td>
+                <td style={{padding:'10px 12px',borderBottom:'1px solid #F3F4F6'}}><div style={{display:'flex',gap:5,flexWrap:'wrap'}}><button onClick={()=>copyLink(r.portal_token)} style={{padding:'4px 8px',borderRadius:5,fontSize:11,fontWeight:600,background:'#F0F7FF',color:'#2563EB',border:'1px solid #BFDBFE',cursor:'pointer',whiteSpace:'nowrap'}}>🔗 Link</button>{r.payment_status!=='paid'&&<button onClick={()=>markPaid(r.id)} style={{padding:'4px 8px',borderRadius:5,fontSize:11,fontWeight:600,background:'#ECFDF5',color:'#065F46',border:'none',cursor:'pointer'}}>✓ Paid</button>}<button onClick={()=>setEditRental(r)} style={{padding:'4px 8px',borderRadius:5,fontSize:11,fontWeight:600,background:'#FFFBEB',color:'#92400E',border:'1px solid #FDE68A',cursor:'pointer'}}>✏ Edit</button><button onClick={()=>deleteRental(r.id)} style={{padding:'4px 8px',borderRadius:5,fontSize:11,fontWeight:600,background:'#FEF2F2',color:'#991B1B',border:'none',cursor:'pointer'}}>🗑</button></div></td>
               </tr>;})}</tbody>
             </table></div>}
           </div>
