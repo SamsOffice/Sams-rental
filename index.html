@@ -30,6 +30,7 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const COMPANY = 'Sams Construction Services LTD';
 const APP_URL = 'https://lumiscures.github.io/Sams-rental';
+const getZelle = () => localStorage.getItem('sams_zelle') || '+1 (917) 663-6369';
 const WORKERS = ['Sams','Samu','Jose Luis'];
 
 // Big preset list of construction equipment
@@ -509,6 +510,60 @@ function ClientPortal({token}){
 }
 
 
+
+// ── SETTINGS TAB ──
+function SettingsTab({showToast}){
+  const [zelle,setZelle]=useState(localStorage.getItem('sams_zelle')||'+1 (917) 663-6369');
+  const [saved,setSaved]=useState(false);
+  const inp={width:'100%',background:'#FAFAFA',border:'1px solid #E5E7EB',borderRadius:8,padding:'10px 12px',fontSize:14,outline:'none',boxSizing:'border-box'};
+  const lbl={fontSize:11,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.06em',color:'#9CA3AF',display:'block',marginBottom:6};
+  const save=()=>{localStorage.setItem('sams_zelle',zelle);showToast('Zelle number updated ✓');setSaved(true);setTimeout(()=>setSaved(false),3000);};
+  return (
+    <div style={{maxWidth:560,margin:'0 auto'}}>
+      <div style={{background:'#fff',borderRadius:12,border:'1px solid #F3F4F6',overflow:'hidden'}}>
+        <div style={{background:'#111827',padding:'16px 22px'}}><h3 style={{fontSize:14,fontWeight:700,color:'#fff'}}>⚙️ Settings</h3></div>
+        <div style={{padding:'22px',display:'flex',flexDirection:'column',gap:20}}>
+
+          {/* Zelle number */}
+          <div style={{background:'#F0F7FF',border:'1px solid #BFDBFE',borderRadius:10,padding:'18px'}}>
+            <h4 style={{fontSize:14,fontWeight:700,color:'#1D4ED8',marginBottom:4}}>💳 Zelle Number</h4>
+            <p style={{fontSize:12,color:'#6B7280',marginBottom:14}}>This is what clients see on their portal for payments. Update it whenever your Zelle number changes.</p>
+            <label style={lbl}>Current Zelle Number</label>
+            <div style={{display:'flex',gap:8}}>
+              <input style={{...inp,flex:1}} value={zelle} onChange={e=>setZelle(e.target.value)} placeholder="+1 (917) 663-6369"/>
+              <button onClick={save} style={{padding:'10px 20px',borderRadius:8,fontSize:13,fontWeight:700,cursor:'pointer',border:'none',background:'#2563EB',color:'#fff',whiteSpace:'nowrap'}}>{saved?'✓ Saved':'Save'}</button>
+            </div>
+            <p style={{fontSize:11,color:'#9CA3AF',marginTop:8}}>⚠️ This is saved on this device only. Update on each device you use.</p>
+          </div>
+
+          {/* Driver links */}
+          <div style={{background:'#F9FAFB',border:'1px solid #F3F4F6',borderRadius:10,padding:'18px'}}>
+            <h4 style={{fontSize:14,fontWeight:700,marginBottom:4}}>🚛 Driver Links</h4>
+            <p style={{fontSize:12,color:'#6B7280',marginBottom:14}}>Send these links to each driver. They bookmark it on their phone to update job status.</p>
+            {['Sams','Samu','Jose Luis'].map(driver=>{
+              const link=`${APP_URL}/#/driver/${encodeURIComponent(driver)}`;
+              return (
+                <div key={driver} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'10px 12px',background:'#fff',borderRadius:8,border:'1px solid #E5E7EB',marginBottom:8,gap:10,flexWrap:'wrap'}}>
+                  <div><div style={{fontSize:13,fontWeight:700}}>{driver}</div><div style={{fontSize:11,color:'#9CA3AF',fontFamily:'monospace'}}>{link}</div></div>
+                  <button onClick={()=>{navigator.clipboard.writeText(link);showToast(driver+"'s link copied!");}} style={{padding:'6px 14px',borderRadius:6,fontSize:12,fontWeight:600,cursor:'pointer',border:'1px solid #E5E7EB',background:'#fff',color:'#374151',whiteSpace:'nowrap'}}>📋 Copy</button>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Login info */}
+          <div style={{background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:10,padding:'18px'}}>
+            <h4 style={{fontSize:14,fontWeight:700,color:'#92400E',marginBottom:4}}>🔐 Login Credentials</h4>
+            <p style={{fontSize:12,color:'#6B7280',marginBottom:4}}>Username: <strong>samsoffice2020</strong></p>
+            <p style={{fontSize:12,color:'#6B7280'}}>Keep your password private. To reset, contact samsconstructionltd23@outlook.com</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── EDIT RENTAL MODAL ──
 function EditRentalModal({rental,onClose,onSaved,showToast}){
   const [form,setForm]=useState({...rental});
@@ -711,7 +766,7 @@ function App(){
           <span style={{fontSize:14,fontWeight:700}}>Sams Construction</span>
           <span style={{fontSize:10,fontWeight:600,color:'#2563EB',background:'#EFF6FF',padding:'2px 6px',borderRadius:4}}>SamsOffice</span>
           <nav style={{display:'flex',gap:2}}>
-            {[{id:'dashboard',label:'Dashboard'},{id:'drivers',label:'🚛 Drivers'},{id:'collections',label:'⚖️ Collections'},{id:'invoice',label:'📄 Invoice'}].map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{padding:'5px 11px',borderRadius:6,fontSize:12,fontWeight:500,cursor:'pointer',border:'none',background:tab===t.id?'#F3F4F6':'transparent',color:tab===t.id?'#111827':'#6B7280'}}>{t.label}</button>)}
+            {[{id:'dashboard',label:'Dashboard'},{id:'drivers',label:'🚛 Drivers'},{id:'collections',label:'⚖️ Collections'},{id:'invoice',label:'📄 Invoice'},{id:'settings',label:'⚙️ Settings'}].map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{padding:'5px 11px',borderRadius:6,fontSize:12,fontWeight:500,cursor:'pointer',border:'none',background:tab===t.id?'#F3F4F6':'transparent',color:tab===t.id?'#111827':'#6B7280'}}>{t.label}</button>)}
           </nav>
         </div>
         <div style={{display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'}}>
@@ -778,6 +833,7 @@ function App(){
         </div>}
 
         {!loading&&tab==='invoice'&&<InvoiceTab rentals={rentals} showToast={showToast}/>}
+        {!loading&&tab==='settings'&&<SettingsTab showToast={showToast}/>}
       </main>
     </div>
   );
