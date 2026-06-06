@@ -510,23 +510,32 @@ function ClientPortal({token}){
 
 // ── LOGIN ──
 function Login({onLogin}){
-  const [email,setEmail]=useState('');const [password,setPassword]=useState('');const [error,setError]=useState('');const [loading,setLoading]=useState(false);
-  const USERS=[{email:'secretary@samsconstruction.com',password:'sams2024',role:'secretary',name:'Secretary'},{email:'owner@samsconstruction.com',password:'owner2024',role:'owner',name:'Owner'}];
-  const go=async(e)=>{e.preventDefault();setLoading(true);setError('');await new Promise(r=>setTimeout(r,400));const u=USERS.find(u=>u.email===email&&u.password===password);if(u)onLogin(u);else{setError('Invalid email or password.');setLoading(false);}};
+  const [username,setUsername]=useState('');const [password,setPassword]=useState('');const [error,setError]=useState('');const [loading,setLoading]=useState(false);const [forgot,setForgot]=useState(false);
+  const go=async(e)=>{e.preventDefault();setLoading(true);setError('');await new Promise(r=>setTimeout(r,400));if(username==='samsoffice2020'&&password==='samsconsDRIVES2020'){onLogin({username:'samsoffice2020',role:'secretary',name:'Secretary'});}else{setError('Invalid username or password.');setLoading(false);}};
   const inp={width:'100%',background:'#FAFAFA',border:'1px solid #E5E7EB',borderRadius:8,padding:'10px 12px',fontSize:14,outline:'none'};
   return (
     <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
       <div style={{width:'100%',maxWidth:400}}>
         <div style={{textAlign:'center',marginBottom:32}}><div style={{fontSize:20,fontWeight:700}}>Sams Construction Services LTD</div><div style={{fontSize:12,color:'#9CA3AF'}}>Private Internal System — Staff Only</div></div>
         <div style={{background:'#fff',borderRadius:14,padding:'32px 28px',boxShadow:'0 4px 24px rgba(0,0,0,0.07)',border:'1px solid #F3F4F6'}}>
-          <h1 style={{fontSize:18,fontWeight:700,marginBottom:20}}>Sign In</h1>
-          <form onSubmit={go} style={{display:'flex',flexDirection:'column',gap:16}}>
-            <div><label style={{fontSize:11,fontWeight:700,color:'#6B7280',textTransform:'uppercase',display:'block',marginBottom:6}}>Email</label><input style={inp} type="email" value={email} onChange={e=>setEmail(e.target.value)} required placeholder="your@email.com"/></div>
-            <div><label style={{fontSize:11,fontWeight:700,color:'#6B7280',textTransform:'uppercase',display:'block',marginBottom:6}}>Password</label><input style={inp} type="password" value={password} onChange={e=>setPassword(e.target.value)} required placeholder="••••••••"/></div>
-            {error&&<div style={{background:'#FEF2F2',border:'1px solid #FCA5A5',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#991B1B'}}>{error}</div>}
-            <button type="submit" disabled={loading} style={{padding:12,borderRadius:9,background:loading?'#9CA3AF':'#2563EB',color:'#fff',border:'none',fontSize:14,fontWeight:700,cursor:'pointer'}}>{loading?'Signing in...':'Sign In'}</button>
-          </form>
-          <div style={{marginTop:20,padding:'12px 14px',background:'#F9FAFB',borderRadius:8,fontSize:12,color:'#9CA3AF',lineHeight:1.7}}><strong style={{color:'#374151'}}>Credentials:</strong><br/>Secretary: secretary@samsconstruction.com / sams2024<br/>Owner: owner@samsconstruction.com / owner2024</div>
+          {forgot?(
+            <div style={{textAlign:'center'}}>
+              <div style={{fontSize:32,marginBottom:12}}>🔐</div>
+              <h2 style={{fontSize:16,fontWeight:700,marginBottom:8}}>Forgot Password?</h2>
+              <p style={{fontSize:13,color:'#6B7280',marginBottom:20}}>Contact the office and we'll reset your access.</p>
+              <a href="mailto:samsconstructionltd23@outlook.com" style={{display:'block',padding:'12px',borderRadius:9,background:'#2563EB',color:'#fff',textDecoration:'none',fontSize:14,fontWeight:700,marginBottom:10}}>✉ samsconstructionltd23@outlook.com</a>
+              <button onClick={()=>setForgot(false)} style={{fontSize:13,color:'#6B7280',background:'none',border:'none',cursor:'pointer',textDecoration:'underline'}}>← Back to Sign In</button>
+            </div>
+          ):(
+            <form onSubmit={go} style={{display:'flex',flexDirection:'column',gap:16}}>
+              <h1 style={{fontSize:18,fontWeight:700}}>Sign In</h1>
+              <div><label style={{fontSize:11,fontWeight:700,color:'#6B7280',textTransform:'uppercase',display:'block',marginBottom:6}}>Username</label><input style={inp} type="text" value={username} onChange={e=>setUsername(e.target.value)} required placeholder="Enter username" autoComplete="username"/></div>
+              <div><label style={{fontSize:11,fontWeight:700,color:'#6B7280',textTransform:'uppercase',display:'block',marginBottom:6}}>Password</label><input style={inp} type="password" value={password} onChange={e=>setPassword(e.target.value)} required placeholder="••••••••"/></div>
+              {error&&<div style={{background:'#FEF2F2',border:'1px solid #FCA5A5',borderRadius:8,padding:'10px 14px',fontSize:13,color:'#991B1B'}}>{error}</div>}
+              <button type="submit" disabled={loading} style={{padding:12,borderRadius:9,background:loading?'#9CA3AF':'#2563EB',color:'#fff',border:'none',fontSize:14,fontWeight:700,cursor:'pointer'}}>{loading?'Signing in...':'Sign In'}</button>
+              <button type="button" onClick={()=>setForgot(true)} style={{fontSize:12,color:'#9CA3AF',background:'none',border:'none',cursor:'pointer',textDecoration:'underline',padding:0}}>Forgot password?</button>
+            </form>
+          )}
         </div>
       </div>
     </div>
