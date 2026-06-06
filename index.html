@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Sams Construction Services LTD — RentalHQ</title>
+<title>SamsOffice</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -612,7 +612,7 @@ function App(){
       <header style={{background:'#fff',borderBottom:'1px solid #E5E7EB',padding:'0 20px',display:'flex',alignItems:'center',justifyContent:'space-between',height:56,position:'sticky',top:0,zIndex:100,flexWrap:'wrap'}}>
         <div style={{display:'flex',alignItems:'center',gap:14,flexWrap:'wrap'}}>
           <span style={{fontSize:14,fontWeight:700}}>Sams Construction</span>
-          <span style={{fontSize:10,fontWeight:600,color:'#2563EB',background:'#EFF6FF',padding:'2px 6px',borderRadius:4}}>RentalHQ</span>
+          <span style={{fontSize:10,fontWeight:600,color:'#2563EB',background:'#EFF6FF',padding:'2px 6px',borderRadius:4}}>SamsOffice</span>
           <nav style={{display:'flex',gap:2}}>
             {[{id:'dashboard',label:'Dashboard'},{id:'drivers',label:'🚛 Drivers'},{id:'collections',label:'⚖️ Collections'},{id:'invoice',label:'📄 Invoice'}].map(t=><button key={t.id} onClick={()=>setTab(t.id)} style={{padding:'5px 11px',borderRadius:6,fontSize:12,fontWeight:500,cursor:'pointer',border:'none',background:tab===t.id?'#F3F4F6':'transparent',color:tab===t.id?'#111827':'#6B7280'}}>{t.label}</button>)}
           </nav>
