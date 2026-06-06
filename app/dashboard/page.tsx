@@ -636,7 +636,7 @@ export default function Dashboard() {
                           <a href={`tel:${r.client_phone?.replace(/\D/g,'')}`} style={{ padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#EFF6FF',color:'#1D4ED8',textDecoration:'none',border:'1px solid #BFDBFE' }}>📞 Call</a>
                           <button onClick={()=>copyPortalLink(r.portal_token)} style={{ padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#F0F7FF',color:'#2563EB',border:'1px solid #BFDBFE',cursor:'pointer' }}>🔗 Send Portal</button>
                           {overdueDays >= 7 && (
-                            <a href={`mailto:${r.client_email}?subject=${encodeURIComponent('NOTICE OF INTENT TO FILE MECHANIC\'S LIEN — '+r.id)}&body=${encodeURIComponent(lienwBody)}`} style={{ padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#FEF2F2',color:'#991B1B',textDecoration:'none',border:'1px solid #FCA5A5' }}>⚖️ Send Lien Notice</button>
+                            <button onClick={()=>{ window.location.href='mailto:'+r.client_email+'?subject=NOTICE OF INTENT TO FILE MECHANIC LIEN — '+r.id+'&body='+encodeURIComponent(lienwBody); }} style={{ padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#FEF2F2',color:'#991B1B',border:'1px solid #FCA5A5',cursor:'pointer' }}>⚖️ Send Lien Notice</button>
                           )}
                           {r.payment_status !== 'paid' && <button onClick={()=>markPaid(r.id)} style={{ padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#ECFDF5',color:'#065F46',border:'none',cursor:'pointer' }}>✓ Mark Paid</button>}
                         </div>
