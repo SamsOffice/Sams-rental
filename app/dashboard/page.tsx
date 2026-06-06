@@ -378,7 +378,7 @@ export default function Dashboard() {
   const overdue = rentals.filter(r=>daysUntil(r.due_date)<0&&r.payment_status!=='paid').length;
   const paid = rentals.filter(r=>r.payment_status==='paid').length;
   const revenue = rentals.filter(r=>r.payment_status==='paid').reduce((s,r)=>s+r.price,0);
-  const uniqueClients = [...new Set(rentals.map(r=>r.client_name))];
+  const uniqueClients = Array.from(new Set(rentals.map(r=>r.client_name)));
   const searchResults = search.length > 1 ? uniqueClients.filter(c=>c.toLowerCase().includes(search.toLowerCase())) : [];
 
   const inp: React.CSSProperties = { width:'100%',background:'#FAFAFA',border:'1px solid #E5E7EB',borderRadius:7,padding:'9px 11px',fontSize:13,color:'#111827',outline:'none',boxSizing:'border-box' };
