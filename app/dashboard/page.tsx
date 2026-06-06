@@ -395,7 +395,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}`}</style>
+      <style dangerouslySetInnerHTML={{__html:"@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}} @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}"}} />
 
       {toast && <div style={{ position:'fixed',bottom:24,right:24,background:'#111827',color:'#fff',padding:'12px 20px',borderRadius:10,fontWeight:600,fontSize:14,zIndex:500,boxShadow:'0 8px 32px rgba(0,0,0,0.3)',animation:'fadeIn 0.3s ease' }}>{toast}</div>}
 
