@@ -275,7 +275,7 @@ function InvoiceTab({rentals,showToast}){
 
   // Build plain text version
   const plainText=()=>{
-    let t=`SAMS CONSTRUCTION SERVICES LTD\n188-16 Woodhull Ave, Hollis NY 11423\nTel: 646-529-8499  |  BIC# 4376\n`;
+    let t=`SAMS CONSTRUCTION SERVICES LTD\n188-16 Woodhull Ave, Hollis NY 11423\nTel: +1 (917) 663-6369  |  BIC# 4376\n`;
     t+=`${'='.repeat(44)}\n`;
     t+=`Invoice No: ${invNo||'—'}\nDate: ${fmtDate(invDate)}\n\n`;
     t+=`BILL TO:\n${client}\n${addr}\n${phone}\n`;
@@ -289,7 +289,7 @@ function InvoiceTab({rentals,showToast}){
     t+=`TOTAL:`.padEnd(38)+money(total)+`\n`;
     t+=`${'='.repeat(44)}\n`;
     if(method)t+=`Payment Method: ${method}\n`;
-    t+=`\nThank you for your business!\nPay via Zelle: 646-529-8499`;
+    t+=`\nThank you for your business!\nPay via Zelle: +1 (917) 663-6369`;
     return t;
   };
 
@@ -299,7 +299,7 @@ function InvoiceTab({rentals,showToast}){
     const rows=[
       ['SAMS CONSTRUCTION SERVICES LTD'],
       ['188-16 Woodhull Ave, Hollis NY 11423'],
-      ['Tel: 646-529-8499','','BIC# 4376'],
+      ['Tel: +1 (917) 663-6369','','BIC# 4376'],
       [],
       ['Invoice No:',invNo||'—'],
       ['Date:',fmtDate(invDate)],
@@ -406,7 +406,7 @@ function ClientPortal({token}){
   },[token]);
 
   if(loading)return <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center'}}><div className="spinner"/></div>;
-  if(notFound)return <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:20,textAlign:'center'}}><div><div style={{fontSize:48}}>🔍</div><h1 style={{fontSize:20,fontWeight:700,margin:'12px 0'}}>Invoice Not Found</h1><a href="tel:6465298499" style={{color:'#2563EB'}}>Call 646-529-8499</a></div></div>;
+  if(notFound)return <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:20,textAlign:'center'}}><div><div style={{fontSize:48}}>🔍</div><h1 style={{fontSize:20,fontWeight:700,margin:'12px 0'}}>Invoice Not Found</h1><a href="tel:9176636369" style={{color:'#2563EB'}}>Call +1 (917) 663-6369</a></div></div>;
 
   const days=daysUntil(rental.due_date);
   const od=days<0?Math.abs(days):0;
@@ -423,7 +423,7 @@ function ClientPortal({token}){
     <div style={{minHeight:'100vh',background:'#F9FAFB'}}>
       <div style={{background:'#fff',borderBottom:'1px solid #E5E7EB',padding:'16px 20px'}}>
         <div style={{fontSize:15,fontWeight:700,color:'#1D4ED8'}}>SAMS CONSTRUCTION SERVICES LTD</div>
-        <div style={{fontSize:11,color:'#9CA3AF',marginTop:2}}>188-16 Woodhull Ave, Hollis NY 11423 · 646-529-8499</div>
+        <div style={{fontSize:11,color:'#9CA3AF',marginTop:2}}>188-16 Woodhull Ave, Hollis NY 11423 · +1 (917) 663-6369</div>
       </div>
       <div style={{maxWidth:480,margin:'0 auto',padding:'20px 16px',display:'flex',flexDirection:'column',gap:16}}>
         <div><p style={{fontSize:13,color:'#9CA3AF'}}>Hello,</p><h1 style={{fontSize:22,fontWeight:700}}>{rental.client_name}</h1></div>
@@ -471,14 +471,14 @@ function ClientPortal({token}){
           <div style={{padding:'14px 18px',display:'flex',flexDirection:'column',gap:10}}>
             <div style={{background:'#F0F7FF',border:'1px solid #BFDBFE',borderRadius:10,padding:'14px'}}>
               <div style={{fontSize:14,fontWeight:700,color:'#1D4ED8',marginBottom:4}}>Zelle (Fastest)</div>
-              <div style={{fontSize:13}}>Send to: <strong>646-529-8499</strong></div>
-              <button onClick={()=>{navigator.clipboard.writeText('646-529-8499');}} style={{marginTop:8,fontSize:12,padding:'6px 14px',borderRadius:6,border:'1px solid #BFDBFE',background:'#fff',color:'#2563EB',cursor:'pointer',fontWeight:600}}>Copy Zelle Number</button>
+              <div style={{fontSize:13}}>Send to: <strong>+1 (917) 663-6369</strong></div>
+              <button onClick={()=>{navigator.clipboard.writeText('+1 (917) 663-6369');}} style={{marginTop:8,fontSize:12,padding:'6px 14px',borderRadius:6,border:'1px solid #BFDBFE',background:'#fff',color:'#2563EB',cursor:'pointer',fontWeight:600}}>Copy Zelle Number</button>
             </div>
             <div style={{background:'#F9FAFB',border:'1px solid #E5E7EB',borderRadius:10,padding:'14px',fontSize:13}}>
               <div style={{fontWeight:700,marginBottom:4}}>Check</div>
               Payable to: <strong>{COMPANY}</strong><br/>Mail: 188-16 Woodhull Ave, Hollis NY 11423
             </div>
-            <div style={{background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:8,padding:'10px 14px',fontSize:12,color:'#92400E'}}>After paying, confirm at samsconstructionltd23@outlook.com or 646-529-8499</div>
+            <div style={{background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:8,padding:'10px 14px',fontSize:12,color:'#92400E'}}>After paying, confirm at samsconstructionltd23@outlook.com or +1 (917) 663-6369</div>
           </div>
         </div>}
 
@@ -499,7 +499,7 @@ function ClientPortal({token}){
         </div>}
 
         <div style={{background:'#fff',borderRadius:12,padding:'16px 18px',border:'1px solid #F3F4F6',display:'flex',gap:10}}>
-          <a href="tel:6465298499" style={{flex:1,padding:12,borderRadius:9,background:'#EFF6FF',color:'#1D4ED8',textDecoration:'none',fontSize:14,fontWeight:600,textAlign:'center'}}>📞 Call</a>
+          <a href="tel:9176636369" style={{flex:1,padding:12,borderRadius:9,background:'#EFF6FF',color:'#1D4ED8',textDecoration:'none',fontSize:14,fontWeight:600,textAlign:'center'}}>📞 Call</a>
           <a href="mailto:samsconstructionltd23@outlook.com" style={{flex:1,padding:12,borderRadius:9,background:'#F9FAFB',color:'#374151',textDecoration:'none',fontSize:14,fontWeight:600,textAlign:'center',border:'1px solid #E5E7EB'}}>✉ Email</a>
         </div>
         <p style={{fontSize:11,color:'#9CA3AF',textAlign:'center'}}>This invoice is private and only accessible via this link.</p>
@@ -769,7 +769,7 @@ function App(){
         {!loading&&tab==='collections'&&<div>
           <div style={{background:'#FEF2F2',border:'1px solid #FCA5A5',borderRadius:10,padding:'14px 18px',marginBottom:20}}><p style={{fontSize:14,fontWeight:700,color:'#991B1B'}}>⚖️ Total Outstanding: {money(rentals.filter(r=>r.payment_status!=='paid').reduce((s,r)=>s+r.price,0))}</p></div>
           {rentals.filter(r=>r.payment_status!=='paid').length===0?<div style={{background:'#fff',borderRadius:12,padding:48,textAlign:'center',color:'#9CA3AF',border:'1px solid #F3F4F6'}}><div style={{fontSize:32}}>✅</div>All accounts current</div>
-          :rentals.filter(r=>r.payment_status!=='paid').map(r=>{const d=daysUntil(r.due_date);const od=d<0?Math.abs(d):0;const lien=`NOTICE OF INTENT TO FILE MECHANIC'S LIEN\n\nDate: ${new Date().toLocaleDateString()}\n\nTO: ${r.client_name}\n${r.client_address}\n\nFROM: ${COMPANY}\n188-16 Woodhull Ave, Hollis NY 11423\nTel: 646-529-8499\n\nRE: Unpaid invoice ${r.id} — ${money(r.price)}\nEquipment: ${r.asset}\n\n${COMPANY} intends to file a Mechanic's Lien against the property at ${r.client_address} for the unpaid amount of ${money(r.price)}.\n\nFull payment must be received within 10 days to avoid this filing.\n\nPay via Zelle: 646-529-8499\nor Check payable to: ${COMPANY}\n\n${COMPANY}`;return <div key={r.id} style={{background:'#fff',borderRadius:11,border:'1px solid #F3F4F6',padding:'16px 18px',marginBottom:12}}>
+          :rentals.filter(r=>r.payment_status!=='paid').map(r=>{const d=daysUntil(r.due_date);const od=d<0?Math.abs(d):0;const lien=`NOTICE OF INTENT TO FILE MECHANIC'S LIEN\n\nDate: ${new Date().toLocaleDateString()}\n\nTO: ${r.client_name}\n${r.client_address}\n\nFROM: ${COMPANY}\n188-16 Woodhull Ave, Hollis NY 11423\nTel: +1 (917) 663-6369\n\nRE: Unpaid invoice ${r.id} — ${money(r.price)}\nEquipment: ${r.asset}\n\n${COMPANY} intends to file a Mechanic's Lien against the property at ${r.client_address} for the unpaid amount of ${money(r.price)}.\n\nFull payment must be received within 10 days to avoid this filing.\n\nPay via Zelle: +1 (917) 663-6369\nor Check payable to: ${COMPANY}\n\n${COMPANY}`;return <div key={r.id} style={{background:'#fff',borderRadius:11,border:'1px solid #F3F4F6',padding:'16px 18px',marginBottom:12}}>
             <div style={{display:'flex',justifyContent:'space-between',flexWrap:'wrap',gap:10}}>
               <div><div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6,flexWrap:'wrap'}}><span style={{fontSize:15,fontWeight:700}}>{r.client_name}</span><span style={{fontSize:11,color:'#9CA3AF',fontFamily:'monospace'}}>{r.id}</span><span style={{fontSize:12,fontWeight:600,color:od>14?'#991B1B':od>7?'#D97706':'#374151'}}>{od>14?'⛔ Lien Stage':od>7?'🔴 Final Notice':od>0?'🟡 Overdue':'⏳ Not Due'}</span></div><div style={{fontSize:13,fontWeight:700,color:'#DC2626'}}>{money(r.price)} {od>0&&<span style={{fontWeight:400,fontSize:12}}>— {od}d overdue</span>}</div><div style={{fontSize:12,color:'#6B7280'}}>{r.asset} · {r.client_phone}</div></div>
               <div style={{display:'flex',gap:8,flexWrap:'wrap'}}><a href={`tel:${(r.client_phone||'').replace(/\D/g,'')}`} style={{padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#EFF6FF',color:'#1D4ED8',textDecoration:'none',border:'1px solid #BFDBFE'}}>📞 Call</a><button onClick={()=>copyLink(r.portal_token)} style={{padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#F0F7FF',color:'#2563EB',border:'1px solid #BFDBFE',cursor:'pointer'}}>🔗 Portal</button>{od>=7&&<a href={`mailto:${r.client_email}?subject=NOTICE OF INTENT TO FILE MECHANIC'S LIEN — ${r.id}&body=${encodeURIComponent(lien)}`} style={{padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#FEF2F2',color:'#991B1B',textDecoration:'none',border:'1px solid #FCA5A5'}}>⚖️ Lien Notice</a>}<button onClick={()=>markPaid(r.id)} style={{padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#ECFDF5',color:'#065F46',border:'none',cursor:'pointer'}}>✓ Paid</button></div>
