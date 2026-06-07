@@ -879,16 +879,15 @@ function NewRentalForm({
 
 // ── INVOICE TAB (copy-paste + Excel export) ──
 function InvoiceTab({
-  rentals,
-  showToast
+  rentals
 }) {
-  const [invNo, setInvNo] = useState('');
-  const [invDate, setInvDate] = useState(new Date().toISOString().slice(0, 10));
-  const [client, setClient] = useState('');
-  const [addr, setAddr] = useState('');
-  const [phone, setPhone] = useState('');
-  const [method, setMethod] = useState('');
-  const [items, setItems] = useState([{
+  const [invNo, setInvNo] = React.useState('');
+  const [invDate, setInvDate] = React.useState(new Date().toISOString().slice(0, 10));
+  const [billTo, setBillTo] = React.useState('');
+  const [addr1, setAddr1] = React.useState('');
+  const [addr2, setAddr2] = React.useState('');
+  const [phone, setPhone] = React.useState('');
+  const [items, setItems] = React.useState([{
     id: 1,
     desc: '',
     date: '',
@@ -898,42 +897,64 @@ function InvoiceTab({
     desc: '',
     date: '',
     amount: ''
+  }, {
+    id: 3,
+    desc: '',
+    date: '',
+    amount: ''
+  }, {
+    id: 4,
+    desc: '',
+    date: '',
+    amount: ''
   }]);
-  const [nextId, setNextId] = useState(3);
-  const [tax, setTax] = useState('');
-  const [other, setOther] = useState('');
-  const [prefill, setPrefill] = useState('');
+  const [nextId, setNextId] = React.useState(5);
+  const [tax, setTax] = React.useState('');
+  const [other, setOther] = React.useState('');
+  const [notes, setNotes] = React.useState('');
+  const [method, setMethod] = React.useState('');
+  const [prefill, setPrefill] = React.useState('');
+  const [preview, setPreview] = React.useState(false);
   const inp = {
     width: '100%',
     background: '#FAFAFA',
     border: '1px solid #E5E7EB',
     borderRadius: 7,
-    padding: '9px 11px',
+    padding: '8px 10px',
     fontSize: 13,
     outline: 'none',
     boxSizing: 'border-box'
   };
   const lbl = {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 700,
     textTransform: 'uppercase',
-    letterSpacing: '0.06em',
     color: '#9CA3AF',
     display: 'block',
-    marginBottom: 5
+    marginBottom: 4
   };
   const sub = items.reduce((s, i) => s + (parseFloat(i.amount) || 0), 0);
   const taxA = parseFloat(tax) || 0,
     otherA = parseFloat(other) || 0,
     total = sub + taxA + otherA;
+  const fm = n => n > 0 ? '$ ' + n.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }) : '';
+  const fd = s => {
+    if (!s) return '';
+    const d = new Date(s + 'T00:00:00');
+    return d.getMonth() + 1 + '/' + d.getDate() + '/' + d.getFullYear();
+  };
   const doPrefill = rid => {
     setPrefill(rid);
     const r = rentals.find(x => x.id === rid);
     if (!r) return;
     setInvNo(rid);
     setInvDate(r.start_date || '');
-    setClient(r.client_name || '');
-    setAddr(r.client_address || '');
+    setBillTo(r.client_name || '');
+    setAddr1(r.client_address || '');
+    setAddr2('');
     setPhone(r.client_phone || '');
     setMethod(r.payment_method || '');
     setItems([{
@@ -946,54 +967,365 @@ function InvoiceTab({
       desc: '',
       date: '',
       amount: ''
+    }, {
+      id: 3,
+      desc: '',
+      date: '',
+      amount: ''
+    }, {
+      id: 4,
+      desc: '',
+      date: '',
+      amount: ''
     }]);
   };
   const li = items.filter(i => i.desc || i.amount);
-
-  // Build plain text version
-  const plainText = () => {
-    let t = `SAMS CONSTRUCTION SERVICES LTD\n188-16 Woodhull Ave, Hollis NY 11423\nTel: +1 (917) 663-6369  |  BIC# 4376\n`;
-    t += `${'='.repeat(44)}\n`;
-    t += `Invoice No: ${invNo || '—'}\nDate: ${fmtDate(invDate)}\n\n`;
-    t += `BILL TO:\n${client}\n${addr}\n${phone}\n`;
-    t += `${'='.repeat(44)}\n`;
-    t += `DESCRIPTION`.padEnd(28) + `DATE`.padEnd(10) + `AMOUNT\n`;
-    t += `${'-'.repeat(44)}\n`;
-    li.forEach(i => {
-      t += `${(i.desc || '').slice(0, 26).padEnd(28)}${(i.date || '').padEnd(10)}${money(i.amount)}\n`;
-    });
-    t += `${'-'.repeat(44)}\n`;
-    if (taxA > 0) t += `Sales Tax:`.padEnd(38) + money(taxA) + `\n`;
-    if (otherA > 0) t += `Other:`.padEnd(38) + money(otherA) + `\n`;
-    t += `TOTAL:`.padEnd(38) + money(total) + `\n`;
-    t += `${'='.repeat(44)}\n`;
-    if (method) t += `Payment Method: ${method}\n`;
-    t += `\nThank you for your business!\nPay via Zelle: +1 (917) 663-6369`;
-    return t;
-  };
-  const copyText = () => {
-    navigator.clipboard.writeText(plainText());
-    showToast('Invoice copied! Paste into text/email');
-  };
-  const exportExcel = () => {
-    const rows = [['SAMS CONSTRUCTION SERVICES LTD'], ['188-16 Woodhull Ave, Hollis NY 11423'], ['Tel: +1 (917) 663-6369', '', 'BIC# 4376'], [], ['Invoice No:', invNo || '—'], ['Date:', fmtDate(invDate)], [], ['Bill To:', client], ['Address:', addr], ['Phone:', phone], [], ['Description', 'Date', 'Amount'], ...li.map(i => [i.desc, i.date, parseFloat(i.amount) || 0]), []];
-    if (taxA > 0) rows.push(['', 'Sales Tax', taxA]);
-    if (otherA > 0) rows.push(['', 'Other', otherA]);
-    rows.push(['', 'TOTAL', total]);
-    if (method) rows.push([], ['Payment Method:', method]);
-    const ws = XLSX.utils.aoa_to_sheet(rows);
+  const rows = Math.max(8, li.length + 2);
+  const doExcel = () => {
+    const data = [['SAMS CONSTRUCTION SERVICES LTD', '', '', 'Invoice No.', invNo || ''], ['188-16 WOODHULL AVE', '', '', 'Invoice Date:', fd(invDate)], ['Hollis NY 11423', '', '', '', ''], ['+1 (917) 663-6369', '', '', 'Bill to :', billTo], ['BIC#4376', '', '', 'Address:', addr1], ['', '', '', '', addr2], ['', '', '', 'Phone', phone], ['', '', '', '', ''], ['Description', '', 'Date', '', 'Amount'], ...li.map(i => [i.desc || '', '', i.date ? fd(i.date) : '', '', parseFloat(i.amount) || '']), ...Array(Math.max(0, 6 - li.length)).fill(['', '', '', '', '']), ['', '', '', 'Sales Tax', taxA > 0 ? taxA : ''], [notes || '', '', '', 'Other', otherA > 0 ? otherA : ''], ['', '', '', 'TOTAL', '$' + total.toLocaleString('en-US', {
+      minimumFractionDigits: 2
+    })]];
+    const ws = XLSX.utils.aoa_to_sheet(data);
     ws['!cols'] = [{
-      wch: 30
+      wch: 32
+    }, {
+      wch: 4
     }, {
       wch: 14
     }, {
       wch: 14
+    }, {
+      wch: 16
     }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Invoice');
-    XLSX.writeFile(wb, `Invoice_${invNo || 'SAMS'}.xlsx`);
-    showToast('Excel file downloaded ✓');
+    XLSX.writeFile(wb, 'Invoice_' + (invNo || 'SAMS') + '_' + (billTo || '').replace(/\s+/g, '_') + '.xlsx');
   };
+  const Doc = () => /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: '#fff',
+      border: '1px solid #ccc',
+      padding: '28px 32px',
+      fontFamily: 'Arial,sans-serif',
+      maxWidth: 680,
+      margin: '0 auto',
+      fontSize: 12,
+      color: '#111'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 14
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 17,
+      fontWeight: 700,
+      color: '#1D4ED8'
+    }
+  }, "SAMS CONSTRUCTION SERVICES LTD"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: 3,
+      background: '#1D4ED8',
+      marginTop: 4
+    }
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 24,
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      lineHeight: 2.1
+    }
+  }, /*#__PURE__*/React.createElement("div", null, "188-16 WOODHULL AVE"), /*#__PURE__*/React.createElement("div", null, "Hollis NY 11423"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 4
+    }
+  }, "+1 (917) 663-6369"), /*#__PURE__*/React.createElement("div", null, "BIC#4376")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("table", {
+    style: {
+      width: '100%',
+      borderCollapse: 'collapse',
+      fontSize: 11,
+      marginBottom: 8
+    }
+  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '3px 6px',
+      color: '#555'
+    }
+  }, "Invoice No."), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '3px 6px',
+      fontWeight: 700
+    }
+  }, invNo || '—')), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '3px 6px',
+      color: '#555'
+    }
+  }, "Invoice Date:"), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '3px 6px',
+      fontWeight: 700
+    }
+  }, fd(invDate) || '—')))), /*#__PURE__*/React.createElement("table", {
+    style: {
+      width: '100%',
+      borderCollapse: 'collapse',
+      border: '1px solid #90BEE0',
+      fontSize: 11
+    }
+  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", {
+    style: {
+      background: '#D6E8F7'
+    }
+  }, /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '4px 8px',
+      fontWeight: 700,
+      width: 70
+    }
+  }, "Bill to :"), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '4px 8px',
+      fontWeight: 700
+    }
+  }, billTo || '—')), /*#__PURE__*/React.createElement("tr", {
+    style: {
+      background: '#EAF4FB'
+    }
+  }, /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '4px 8px',
+      color: '#555'
+    }
+  }, "Address:"), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '4px 8px'
+    }
+  }, /*#__PURE__*/React.createElement("div", null, addr1), addr2 && /*#__PURE__*/React.createElement("div", null, addr2))), /*#__PURE__*/React.createElement("tr", {
+    style: {
+      background: '#D6E8F7'
+    }
+  }, /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '4px 8px',
+      color: '#555'
+    }
+  }, "Phone"), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '4px 8px',
+      color: '#1D4ED8'
+    }
+  }, phone)))))), /*#__PURE__*/React.createElement("table", {
+    style: {
+      width: '100%',
+      borderCollapse: 'collapse',
+      border: '1px solid #90BEE0'
+    }
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+    style: {
+      background: '#1D4ED8'
+    }
+  }, /*#__PURE__*/React.createElement("th", {
+    style: {
+      padding: '7px 10px',
+      textAlign: 'left',
+      color: '#fff',
+      fontWeight: 700,
+      width: '55%'
+    }
+  }, "Description"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      padding: '7px 10px',
+      textAlign: 'center',
+      color: '#fff',
+      fontWeight: 700,
+      width: '22%'
+    }
+  }, "Date"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      padding: '7px 10px',
+      textAlign: 'right',
+      color: '#fff',
+      fontWeight: 700,
+      width: '23%'
+    }
+  }, "Amount"))), /*#__PURE__*/React.createElement("tbody", null, Array.from({
+    length: rows
+  }).map((_, idx) => {
+    const item = li[idx];
+    return /*#__PURE__*/React.createElement("tr", {
+      key: idx,
+      style: {
+        borderBottom: '1px solid #BDD6E8',
+        background: idx % 2 === 0 ? '#fff' : '#EAF4FB'
+      }
+    }, /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: '6px 10px',
+        fontStyle: item && item.desc ? 'italic' : 'normal'
+      }
+    }, item && item.desc ? item.desc : ' '), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: '6px 10px',
+        textAlign: 'center'
+      }
+    }, item && item.date ? fd(item.date) : ''), /*#__PURE__*/React.createElement("td", {
+      style: {
+        padding: '6px 10px',
+        textAlign: 'right'
+      }
+    }, item && item.amount ? fm(parseFloat(item.amount)) : ''));
+  }))), /*#__PURE__*/React.createElement("table", {
+    style: {
+      width: '100%',
+      borderCollapse: 'collapse',
+      borderLeft: '1px solid #90BEE0',
+      borderRight: '1px solid #90BEE0'
+    }
+  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", {
+    style: {
+      borderBottom: '1px solid #BDD6E8'
+    }
+  }, /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '5px 10px',
+      width: '55%',
+      fontSize: 11,
+      fontStyle: 'italic',
+      color: '#555'
+    }
+  }, notes), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '5px 10px',
+      textAlign: 'right',
+      color: '#555',
+      fontSize: 11
+    }
+  }, "Sales Tax"), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '5px 10px',
+      textAlign: 'right',
+      borderLeft: '2px solid #1D4ED8',
+      width: '23%',
+      fontSize: 11
+    }
+  }, taxA > 0 ? fm(taxA) : '')), /*#__PURE__*/React.createElement("tr", {
+    style: {
+      borderBottom: '1px solid #BDD6E8'
+    }
+  }, /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '5px 10px'
+    }
+  }), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '5px 10px',
+      textAlign: 'right',
+      color: '#555',
+      fontSize: 11
+    }
+  }, "Other"), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '5px 10px',
+      textAlign: 'right',
+      borderLeft: '2px solid #1D4ED8',
+      fontSize: 11
+    }
+  }, otherA > 0 ? fm(otherA) : '')))), /*#__PURE__*/React.createElement("table", {
+    style: {
+      width: '100%',
+      borderCollapse: 'collapse',
+      border: '1px solid #90BEE0'
+    }
+  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", {
+    style: {
+      background: '#D6E8F7'
+    }
+  }, /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '8px 10px',
+      fontWeight: 700,
+      textAlign: 'right',
+      width: '77%',
+      fontSize: 12
+    }
+  }, "TOTAL"), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '8px 14px',
+      fontWeight: 700,
+      textAlign: 'right',
+      fontSize: 14,
+      borderLeft: '2px solid #1D4ED8'
+    }
+  }, '$ ' + total.toLocaleString('en-US', {
+    minimumFractionDigits: 2
+  }))))), method && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 8,
+      fontSize: 10,
+      color: '#555'
+    }
+  }, "Payment Method: ", /*#__PURE__*/React.createElement("strong", null, method)));
+  if (preview) return /*#__PURE__*/React.createElement("div", {
+    style: {
+      maxWidth: 720,
+      margin: '0 auto'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 16,
+      flexWrap: 'wrap',
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setPreview(false),
+    style: {
+      padding: '8px 16px',
+      borderRadius: 8,
+      fontSize: 13,
+      fontWeight: 600,
+      cursor: 'pointer',
+      border: '1px solid #E5E7EB',
+      background: '#fff'
+    }
+  }, "\u2190 Edit"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: doExcel,
+    style: {
+      padding: '8px 16px',
+      borderRadius: 8,
+      fontSize: 13,
+      fontWeight: 600,
+      cursor: 'pointer',
+      border: 'none',
+      background: '#065F46',
+      color: '#fff'
+    }
+  }, "\uD83D\uDCCA Export Excel"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => window.print(),
+    style: {
+      padding: '8px 16px',
+      borderRadius: 8,
+      fontSize: 13,
+      fontWeight: 600,
+      cursor: 'pointer',
+      border: 'none',
+      background: '#1D4ED8',
+      color: '#fff'
+    }
+  }, "\uD83D\uDDA8 Print/PDF"))), /*#__PURE__*/React.createElement(Doc, null));
   return /*#__PURE__*/React.createElement("div", {
     style: {
       maxWidth: 760,
@@ -1011,24 +1343,23 @@ function InvoiceTab({
       gap: 12,
       flexWrap: 'wrap'
     }
-  }, /*#__PURE__*/React.createElement("span", null, "\u26A1"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      flex: 1,
-      minWidth: 140
-    }
-  }, /*#__PURE__*/React.createElement("p", {
+  }, /*#__PURE__*/React.createElement("span", null, "\u26A1"), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       fontWeight: 600,
-      color: '#1D4ED8'
+      color: '#1D4ED8',
+      flex: 1
     }
-  }, "Auto-fill from rental")), /*#__PURE__*/React.createElement("select", {
+  }, "Auto-fill from rental"), /*#__PURE__*/React.createElement("select", {
     style: {
-      ...inp,
-      width: 'auto',
-      minWidth: 180,
+      padding: '8px 12px',
+      border: '1px solid #BFDBFE',
+      borderRadius: 8,
+      fontSize: 13,
+      outline: 'none',
       cursor: 'pointer',
-      background: '#fff'
+      background: '#fff',
+      minWidth: 180
     },
     value: prefill,
     onChange: e => doPrefill(e.target.value)
@@ -1046,7 +1377,7 @@ function InvoiceTab({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      background: '#111827',
+      background: '#1D4ED8',
       padding: '16px 22px'
     }
   }, /*#__PURE__*/React.createElement("h3", {
@@ -1055,18 +1386,18 @@ function InvoiceTab({
       fontWeight: 700,
       color: '#fff'
     }
-  }, "Create Invoice"), /*#__PURE__*/React.createElement("p", {
+  }, "Invoice Builder ", /*#__PURE__*/React.createElement("span", {
     style: {
-      fontSize: 12,
-      color: '#9CA3AF',
-      marginTop: 2
+      fontSize: 11,
+      color: '#BFDBFE',
+      fontWeight: 400
     }
-  }, "Fill in, then copy as text or export to Excel")), /*#__PURE__*/React.createElement("div", {
+  }, "\u2014 matches INV #332 format"))), /*#__PURE__*/React.createElement("div", {
     style: {
-      padding: '20px 22px',
+      padding: 22,
       display: 'flex',
       flexDirection: 'column',
-      gap: 18
+      gap: 16
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1083,68 +1414,103 @@ function InvoiceTab({
     onChange: e => setInvNo(e.target.value)
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: lbl
-  }, "Date"), /*#__PURE__*/React.createElement("input", {
+  }, "Invoice Date"), /*#__PURE__*/React.createElement("input", {
     type: "date",
     style: inp,
     value: invDate,
     onChange: e => setInvDate(e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: '#EFF6FF',
+      border: '1px solid #BFDBFE',
+      borderRadius: 8,
+      padding: 14
+    }
+  }, /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 11,
+      fontWeight: 700,
+      color: '#1D4ED8',
+      marginBottom: 10,
+      textTransform: 'uppercase'
+    }
+  }, "Bill To"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      gridColumn: '1/-1'
+    }
+  }, /*#__PURE__*/React.createElement("label", {
+    style: lbl
+  }, "Client / Company Name"), /*#__PURE__*/React.createElement("input", {
+    style: inp,
+    placeholder: "Stallion Construction",
+    value: billTo,
+    onChange: e => setBillTo(e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: lbl
+  }, "Address"), /*#__PURE__*/React.createElement("input", {
+    style: inp,
+    placeholder: "3 Peardegat 6th Street",
+    value: addr1,
+    onChange: e => setAddr1(e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: lbl
+  }, "City / State"), /*#__PURE__*/React.createElement("input", {
+    style: inp,
+    placeholder: "Brooklyn, NY",
+    value: addr2,
+    onChange: e => setAddr2(e.target.value)
   })), /*#__PURE__*/React.createElement("div", {
     style: {
       gridColumn: '1/-1'
     }
   }, /*#__PURE__*/React.createElement("label", {
     style: lbl
-  }, "Client Name"), /*#__PURE__*/React.createElement("input", {
-    style: inp,
-    placeholder: "Stallion Construction",
-    value: client,
-    onChange: e => setClient(e.target.value)
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: lbl
-  }, "Address"), /*#__PURE__*/React.createElement("input", {
-    style: inp,
-    placeholder: "459 Underhill Ave, Bronx",
-    value: addr,
-    onChange: e => setAddr(e.target.value)
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: lbl
   }, "Phone"), /*#__PURE__*/React.createElement("input", {
     style: inp,
-    placeholder: "917-561-6594",
     value: phone,
     onChange: e => setPhone(e.target.value)
-  }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+  })))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: lbl
   }, "Line Items"), /*#__PURE__*/React.createElement("table", {
     style: {
       width: '100%',
-      borderCollapse: 'collapse',
-      fontSize: 13
+      borderCollapse: 'collapse'
     }
   }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
     style: {
-      background: '#F9FAFB'
+      background: '#1D4ED8'
     }
   }, ['Description', 'Date', 'Amount', ''].map((h, i) => /*#__PURE__*/React.createElement("th", {
     key: i,
     style: {
-      padding: '7px 8px',
+      padding: '7px 10px',
       textAlign: 'left',
-      fontSize: 10,
+      color: '#fff',
+      fontSize: 11,
       fontWeight: 700,
-      color: '#9CA3AF',
-      textTransform: 'uppercase',
-      width: i === 1 ? '130px' : i === 2 ? '110px' : i === 3 ? '30px' : 'auto'
+      width: i === 1 ? '140px' : i === 2 ? '120px' : i === 3 ? '32px' : 'auto'
     }
-  }, h)))), /*#__PURE__*/React.createElement("tbody", null, items.map(item => /*#__PURE__*/React.createElement("tr", {
-    key: item.id
+  }, h)))), /*#__PURE__*/React.createElement("tbody", null, items.map((item, idx) => /*#__PURE__*/React.createElement("tr", {
+    key: item.id,
+    style: {
+      background: idx % 2 === 0 ? '#fff' : '#EAF4FB'
+    }
   }, /*#__PURE__*/React.createElement("td", {
     style: {
-      padding: '4px 4px 4px 0'
+      padding: '3px 3px 3px 0'
     }
   }, /*#__PURE__*/React.createElement("input", {
-    style: inp,
-    placeholder: "RENT CAT 320 - 3 DAYS",
+    style: {
+      ...inp,
+      fontStyle: 'italic'
+    },
+    placeholder: "e.g. CONTAINER CLEAN CONCRETE",
     value: item.desc,
     onChange: e => setItems(p => p.map(i => i.id === item.id ? {
       ...i,
@@ -1152,7 +1518,7 @@ function InvoiceTab({
     } : i))
   })), /*#__PURE__*/React.createElement("td", {
     style: {
-      padding: 4
+      padding: 3
     }
   }, /*#__PURE__*/React.createElement("input", {
     type: "date",
@@ -1164,10 +1530,11 @@ function InvoiceTab({
     } : i))
   })), /*#__PURE__*/React.createElement("td", {
     style: {
-      padding: 4
+      padding: 3
     }
   }, /*#__PURE__*/React.createElement("input", {
     type: "number",
+    step: "0.01",
     style: inp,
     placeholder: "0.00",
     value: item.amount,
@@ -1177,7 +1544,7 @@ function InvoiceTab({
     } : i))
   })), /*#__PURE__*/React.createElement("td", {
     style: {
-      padding: '4px 0 4px 4px',
+      padding: '3px 0 3px 3px',
       textAlign: 'center'
     }
   }, items.length > 1 && /*#__PURE__*/React.createElement("button", {
@@ -1201,7 +1568,7 @@ function InvoiceTab({
     },
     style: {
       fontSize: 12,
-      color: '#2563EB',
+      color: '#1D4ED8',
       background: 'none',
       border: 'none',
       cursor: 'pointer',
@@ -1211,13 +1578,14 @@ function InvoiceTab({
   }, "+ Add line item")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'grid',
-      gridTemplateColumns: '1fr 1fr 1fr',
-      gap: 12
+      gridTemplateColumns: '1fr 1fr 1fr 1fr',
+      gap: 10
     }
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: lbl
   }, "Sales Tax ($)"), /*#__PURE__*/React.createElement("input", {
     type: "number",
+    step: "0.01",
     style: inp,
     placeholder: "0.00",
     value: tax,
@@ -1226,6 +1594,7 @@ function InvoiceTab({
     style: lbl
   }, "Other ($)"), /*#__PURE__*/React.createElement("input", {
     type: "number",
+    step: "0.01",
     style: inp,
     placeholder: "0.00",
     value: other,
@@ -1241,49 +1610,41 @@ function InvoiceTab({
     onChange: e => setMethod(e.target.value)
   }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "\u2014"), ['Cash', 'Check', 'Zelle', 'Venmo', 'Card', 'Bank Transfer'].map(m => /*#__PURE__*/React.createElement("option", {
+  }, "\u2014"), ['Cash', 'Check', 'Zelle', 'Venmo', 'Bank Transfer', 'Credit Card'].map(m => /*#__PURE__*/React.createElement("option", {
     key: m
-  }, m))))), /*#__PURE__*/React.createElement("div", {
+  }, m)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: lbl
+  }, "Notes"), /*#__PURE__*/React.createElement("input", {
+    style: inp,
+    placeholder: "not tax included...",
+    value: notes,
+    onChange: e => setNotes(e.target.value)
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
-      background: '#F9FAFB',
+      background: '#D6E8F7',
+      border: '1px solid #90BEE0',
       borderRadius: 8,
-      border: '1px solid #F3F4F6',
       padding: '12px 16px',
-      display: 'flex',
-      justifyContent: 'flex-end'
+      textAlign: 'right'
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", {
     style: {
       fontSize: 16,
       fontWeight: 700
     }
-  }, "TOTAL: ", money(total))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: lbl
-  }, "Preview (what gets copied)"), /*#__PURE__*/React.createElement("pre", {
-    style: {
-      background: '#111827',
-      color: '#E5E7EB',
-      padding: '14px',
-      borderRadius: 8,
-      fontSize: 11,
-      fontFamily: 'IBM Plex Mono,monospace',
-      overflowX: 'auto',
-      whiteSpace: 'pre',
-      lineHeight: 1.5
-    }
-  }, plainText())), /*#__PURE__*/React.createElement("div", {
+  }, "TOTAL: $ ", total.toLocaleString('en-US', {
+    minimumFractionDigits: 2
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
-      gap: 10,
-      flexWrap: 'wrap'
+      gap: 10
     }
   }, /*#__PURE__*/React.createElement("button", {
-    onClick: copyText,
+    onClick: () => setPreview(true),
     style: {
       flex: 1,
-      minWidth: 160,
-      padding: '13px',
-      background: '#2563EB',
+      padding: 13,
+      background: '#1D4ED8',
       color: '#fff',
       border: 'none',
       borderRadius: 9,
@@ -1291,12 +1652,11 @@ function InvoiceTab({
       fontWeight: 700,
       cursor: 'pointer'
     }
-  }, "\uD83D\uDCCB Copy as Text"), /*#__PURE__*/React.createElement("button", {
-    onClick: exportExcel,
+  }, "\uD83D\uDC41 Preview Invoice"), /*#__PURE__*/React.createElement("button", {
+    onClick: doExcel,
     style: {
       flex: 1,
-      minWidth: 160,
-      padding: '13px',
+      padding: 13,
       background: '#065F46',
       color: '#fff',
       border: 'none',
@@ -1307,8 +1667,6 @@ function InvoiceTab({
     }
   }, "\uD83D\uDCCA Export to Excel")))));
 }
-
-// ── CLIENT PORTAL (full live tracking) ──
 function ClientPortal({
   token
 }) {
