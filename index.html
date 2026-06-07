@@ -22,6 +22,8 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;}
 <body>
 <div id="root"></div>
 <script>
+window.addEventListener('load', function() {
+try {
 const {
   useState,
   useEffect,
@@ -5330,6 +5332,11 @@ function SettingsTab({
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(/*#__PURE__*/React.createElement(App, null));
 window.addEventListener('hashchange', () => root.render(/*#__PURE__*/React.createElement(App, null)));
+} catch(e) {
+  document.getElementById('root').innerHTML = '<div style="padding:40px;font-family:sans-serif;color:red;"><h2>Error loading app</h2><pre>' + e.message + '</pre></div>';
+  console.error(e);
+}
+});
 </script>
 </body>
 </html>
