@@ -547,7 +547,12 @@ function App(){
   };
 
   const showToast=(m)=>{setToast(m);setTimeout(()=>setToast(''),3000);};
-  const copyLink=(t)=>{navigator.clipboard.writeText(APP+'/#/portal/'+t);showToast('Portal link copied!');};
+  const copyLink=(t)=>{
+    const url=APP+'/#/portal/'+t;
+    window.open(url,'_blank');
+    navigator.clipboard.writeText(url).catch(()=>{});
+    showToast('Portal opened in new tab!');
+  };
   const markPaid=async(id)=>{await sb.from('rentals').update({payment_status:'paid'}).eq('id',id);showToast('Marked paid ✓');loadData();};
   const softDelete=async(id)=>{if(!window.confirm('Move to Recently Deleted?'))return;if(!window.confirm('Are you sure?'))return;await sb.from('rentals').update({deleted:true}).eq('id',id);showToast('Moved to deleted');loadData();};
   const restoreRental=async(id)=>{await sb.from('rentals').update({deleted:false}).eq('id',id);showToast('Restored ✓');loadData();};
@@ -654,7 +659,7 @@ function App(){
                   <td style={{padding:'10px 10px',borderBottom:'1px solid #F3F4F6',fontFamily:'monospace',fontWeight:600,fontSize:12}}>{money(r.price)}</td>
                   <td style={{padding:'10px 10px',borderBottom:'1px solid #F3F4F6'}}><Badge status={r.payment_status}/></td>
                   <td style={{padding:'10px 10px',borderBottom:'1px solid #F3F4F6'}}><div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
-                    <button onClick={()=>copyLink(r.portal_token)} style={{padding:'4px 7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#F0F7FF',color:'#2563EB',border:'1px solid #BFDBFE',cursor:'pointer'}}>🔗</button>
+                    <button onClick={()=>copyLink(r.portal_token)} style={{padding:'4px 7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#F0F7FF',color:'#2563EB',border:'1px solid #BFDBFE',cursor:'pointer'}}>🔗 Portal</button>
                     {r.payment_status!=='paid'&&<button onClick={()=>markPaid(r.id)} style={{padding:'4px 7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#ECFDF5',color:'#065F46',border:'none',cursor:'pointer'}}>✓</button>}
                     <button onClick={()=>setEditRental(r)} style={{padding:'4px 7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#FFFBEB',color:'#92400E',border:'1px solid #FDE68A',cursor:'pointer'}}>✏</button>
                     {r.client_phone&&<a href={'tel:'+(r.client_phone||'').replace(/[^0-9]/g,'')} style={{padding:'4px 7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#EFF6FF',color:'#1D4ED8',textDecoration:'none',border:'1px solid #BFDBFE'}}>📞</a>}
