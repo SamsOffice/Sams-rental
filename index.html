@@ -656,7 +656,7 @@ function App(){
                     {r.payment_status!=='paid'&&<button onClick={()=>markPaid(r.id)} style={{padding:'4px 7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#ECFDF5',color:'#065F46',border:'none',cursor:'pointer'}}>✓</button>}
                     <button onClick={()=>setEditRental(r)} style={{padding:'4px 7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#FFFBEB',color:'#92400E',border:'1px solid #FDE68A',cursor:'pointer'}}>✏</button>
                     {r.client_phone&&<a href={'tel:'+(r.client_phone||'').replace(/[^0-9]/g,'')} style={{padding:'4px 7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#EFF6FF',color:'#1D4ED8',textDecoration:'none',border:'1px solid #BFDBFE'}}>📞</a>}
-                    {r.client_email&&<a href={'mailto:'+r.client_email+'?subject=URGENT: Outstanding Balance — Invoice '+r.id+'&body='+emailBody} style={{padding:'4px 7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#FDF4FF',color:'#7C3AED',textDecoration:'none',border:'1px solid #E9D5FF'}}>✉</a>}
+                    {r.client_email&&<a href={'mailto:'+r.client_email+'?subject=URGENT: Outstanding Balance - Invoice '+r.id+'&body='+emailBody} style={{padding:'4px 7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#FDF4FF',color:'#7C3AED',textDecoration:'none',border:'1px solid #E9D5FF'}}>✉</a>}
                     <button onClick={()=>softDelete(r.id)} style={{padding:'4px 7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#FEF2F2',color:'#991B1B',border:'none',cursor:'pointer'}}>🗑</button>
                   </div></td>
                 </tr>;
@@ -666,40 +666,72 @@ function App(){
         </>}
 
         {!loading&&tab==='drivers'&&<div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:20}}>
-          {WORKERS.map(driver=>{const jobs=rentals.filter(r=>r.assigned_driver===driver&&r.rental_status!=='completed');return<div key={driver} style={{background:'#fff',borderRadius:12,border:'1px solid #F3F4F6',overflow:'hidden'}}>
-            <div style={{padding:'14px 18px',background:'#111827',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div style={{display:'flex',alignItems:'center',gap:10}}><div style={{width:32,height:32,borderRadius:'50%',background:'#374151',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:700,color:'#fff'}}>{driver[0]}</div><div style={{fontSize:14,fontWeight:700,color:'#fff'}}>{driver}</div></div><span style={{background:'#374151',padding:'3px 10px',borderRadius:20,fontSize:11,color:'#9CA3AF'}}>{jobs.length} jobs</span></div>
-            <div style={{padding:12}}>{jobs.length===0?<div style={{textAlign:'center',padding:20,color:'#9CA3AF',fontSize:12}}>No active jobs</div>:jobs.map(r=>{const step=getStep(r.driver_status);const stepIdx=STEPS.findIndex(x=>x.key===r.driver_status);const next=STEPS[stepIdx+1];return<div key={r.id} style={{background:'#F9FAFB',borderRadius:8,padding:12,marginBottom:8,border:'1px solid #F3F4F6'}}>
-              <div style={{fontWeight:700,marginBottom:2}}>{r.asset}</div>
-              <div style={{fontSize:11,color:'#6B7280',marginBottom:4}}>{r.client_name}</div>
-              <div style={{fontSize:11,fontWeight:600,color:'#1D4ED8',marginBottom:8}}>{step.label}</div>
-              {next&&<button onClick={()=>setDriverStatus(r.id,next.key)} style={{width:'100%',padding:'8px',borderRadius:7,fontSize:12,fontWeight:700,cursor:'pointer',border:'none',background:'#2563EB',color:'#fff',marginBottom:6}}>→ {next.label}</button>}
-              <div style={{display:'flex',gap:6}}>
-                <a href={'tel:'+(r.client_phone||'').replace(/[^0-9]/g,'')} style={{flex:1,padding:'7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#EFF6FF',color:'#1D4ED8',textDecoration:'none',textAlign:'center'}}>📞</a>
-                <a href={'https://maps.google.com?q='+encodeURIComponent(r.client_address||'')} target="_blank" style={{flex:1,padding:'7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#ECFDF5',color:'#065F46',textDecoration:'none',textAlign:'center'}}>🗺</a>
+          {WORKERS.map(driver=>{
+            const jobs=rentals.filter(r=>r.assigned_driver===driver&&r.rental_status!=='completed');
+            return <div key={driver} style={{background:'#fff',borderRadius:12,border:'1px solid #F3F4F6',overflow:'hidden'}}>
+              <div style={{padding:'14px 18px',background:'#111827',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <div style={{width:32,height:32,borderRadius:'50%',background:'#374151',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,fontWeight:700,color:'#fff'}}>{driver[0]}</div>
+                  <div style={{fontSize:14,fontWeight:700,color:'#fff'}}>{driver}</div>
+                </div>
+                <span style={{background:'#374151',padding:'3px 10px',borderRadius:20,fontSize:11,color:'#9CA3AF'}}>{jobs.length} jobs</span>
               </div>
-            </div>;})}
-            <div style={{padding:'10px 12px',borderTop:'1px solid #F3F4F6'}}><a href={'#/driver/'+encodeURIComponent(driver)} style={{display:'block',textAlign:'center',padding:'8px',borderRadius:7,fontSize:12,fontWeight:600,background:'#2563EB',color:'#fff',textDecoration:'none'}}>Open Driver App →</a></div>
-          </div>;})}
+              <div style={{padding:12}}>
+                {jobs.length===0
+                  ?<div style={{textAlign:'center',padding:20,color:'#9CA3AF',fontSize:12}}>No active jobs</div>
+                  :jobs.map(r=>{
+                    const step=getStep(r.driver_status);
+                    const stepIdx=STEPS.findIndex(x=>x.key===r.driver_status);
+                    const next=STEPS[stepIdx+1];
+                    return <div key={r.id} style={{background:'#F9FAFB',borderRadius:8,padding:12,marginBottom:8,border:'1px solid #F3F4F6'}}>
+                      <div style={{fontWeight:700,marginBottom:2}}>{r.asset}</div>
+                      <div style={{fontSize:11,color:'#6B7280',marginBottom:4}}>{r.client_name}</div>
+                      <div style={{fontSize:11,fontWeight:600,color:'#1D4ED8',marginBottom:8}}>{step.label}</div>
+                      {next&&<button onClick={()=>setDriverStatus(r.id,next.key)} style={{width:'100%',padding:'8px',borderRadius:7,fontSize:12,fontWeight:700,cursor:'pointer',border:'none',background:'#2563EB',color:'#fff',marginBottom:6}}>{next.label}</button>}
+                      <div style={{display:'flex',gap:6}}>
+                        <a href={'tel:'+(r.client_phone||'').replace(/[^0-9]/g,'')} style={{flex:1,padding:'7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#EFF6FF',color:'#1D4ED8',textDecoration:'none',textAlign:'center'}}>📞</a>
+                        <a href={'https://maps.google.com?q='+encodeURIComponent(r.client_address||'')} target="_blank" style={{flex:1,padding:'7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#ECFDF5',color:'#065F46',textDecoration:'none',textAlign:'center'}}>🗺</a>
+                      </div>
+                    </div>;
+                  })
+                }
+              </div>
+              <div style={{padding:'10px 12px',borderTop:'1px solid #F3F4F6'}}>
+                <a href={'#/driver/'+encodeURIComponent(driver)} style={{display:'block',textAlign:'center',padding:'8px',borderRadius:7,fontSize:12,fontWeight:600,background:'#2563EB',color:'#fff',textDecoration:'none'}}>Open Driver App →</a>
+              </div>
+            </div>;
+          })}
         </div>}
 
         {!loading&&tab==='collections'&&<div>
-          <div style={{background:'#FEF2F2',border:'1px solid #FCA5A5',borderRadius:10,padding:'14px 18px',marginBottom:20}}><p style={{fontSize:14,fontWeight:700,color:'#991B1B'}}>⚖️ Total Outstanding: {money(rentals.filter(r=>r.payment_status!=='paid').reduce((s,r)=>s+r.price,0))}</p></div>
-          {rentals.filter(r=>r.payment_status!=='paid').map(r=>{const d=days(r.due_date);const od=d<0?Math.abs(d):0;const lien='NOTICE OF INTENT TO FILE MECHANIC\'S LIEN\n\nDate: '+new Date().toLocaleDateString()+'\n\nTO: '+r.client_name+'\n'+r.client_address+'\n\nFROM: Sams Construction Services LTD\n188-16 Woodhull Ave, Hollis NY 11423\nTel: '+PHONE+'\n\nRE: Unpaid invoice '+r.id+' — '+money(r.price)+'\nEquipment: '+r.asset+'\n\nSams Construction Services LTD intends to file a Mechanic\'s Lien for the unpaid amount of '+money(r.price)+'.\n\nFull payment must be received within 10 days.\n\nPay via Zelle: '+getZelle()+'\nCall: '+PHONE;
-          return<div key={r.id} style={{background:'#fff',borderRadius:11,border:'1px solid #F3F4F6',padding:'16px 18px',marginBottom:12}}>
-            <div style={{display:'flex',justifyContent:'space-between',flexWrap:'wrap',gap:10}}>
-              <div>
-                <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6,flexWrap:'wrap'}}><span style={{fontSize:15,fontWeight:700}}>{r.client_name}</span>{r.client_tag&&<TagBadge tag={r.client_tag}/>}<span style={{fontSize:11,color:'#9CA3AF',fontFamily:'monospace'}}>{r.id}</span><span style={{fontSize:12,fontWeight:600,color:od>14?'#991B1B':od>7?'#D97706':'#374151'}}>{od>14?'⛔ Lien Stage':od>7?'🔴 Final Notice':od>0?'🟡 Overdue':'⏳ Not Due'}</span></div>
-                <div style={{fontSize:13,fontWeight:700,color:'#DC2626'}}>{money(r.price)} {od>0&&<span style={{fontWeight:400,fontSize:12}}>— {od}d overdue</span>}</div>
-                <div style={{fontSize:12,color:'#6B7280'}}>{r.asset} · {r.client_phone}</div>
+          <div style={{background:'#FEF2F2',border:'1px solid #FCA5A5',borderRadius:10,padding:'14px 18px',marginBottom:20}}>
+            <p style={{fontSize:14,fontWeight:700,color:'#991B1B'}}>⚖️ Total Outstanding: {money(rentals.filter(r=>r.payment_status!=='paid').reduce((s,r)=>s+r.price,0))}</p>
+          </div>
+          {rentals.filter(r=>r.payment_status!=='paid').map(r=>{
+            const d=days(r.due_date);
+            const od=d<0?Math.abs(d):0;
+            const lienBody=encodeURIComponent('NOTICE OF INTENT TO FILE MECHANIC S LIEN\n\nTo: '+r.client_name+'\n'+r.client_address+'\n\nInvoice: '+r.id+'\nAmount: '+money(r.price)+'\nEquipment: '+r.asset+'\n\nPay within 10 days to avoid lien filing.\n\nZelle: '+getZelle()+'\nCall: '+PHONE);
+            return <div key={r.id} style={{background:'#fff',borderRadius:11,border:'1px solid #F3F4F6',padding:'16px 18px',marginBottom:12}}>
+              <div style={{display:'flex',justifyContent:'space-between',flexWrap:'wrap',gap:10}}>
+                <div>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6,flexWrap:'wrap'}}>
+                    <span style={{fontSize:15,fontWeight:700}}>{r.client_name}</span>
+                    {r.client_tag&&<TagBadge tag={r.client_tag}/>}
+                    <span style={{fontSize:11,color:'#9CA3AF',fontFamily:'monospace'}}>{r.id}</span>
+                    <span style={{fontSize:12,fontWeight:600,color:od>14?'#991B1B':od>7?'#D97706':'#374151'}}>{od>14?'⛔ Lien Stage':od>7?'🔴 Final Notice':od>0?'🟡 Overdue':'⏳ Not Due'}</span>
+                  </div>
+                  <div style={{fontSize:13,fontWeight:700,color:'#DC2626'}}>{money(r.price)} {od>0&&<span style={{fontWeight:400,fontSize:12}}>— {od}d overdue</span>}</div>
+                  <div style={{fontSize:12,color:'#6B7280'}}>{r.asset} · {r.client_phone}</div>
+                </div>
+                <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                  <a href={'tel:'+(r.client_phone||'').replace(/[^0-9]/g,'')} style={{padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#EFF6FF',color:'#1D4ED8',textDecoration:'none',border:'1px solid #BFDBFE'}}>📞 Call</a>
+                  <button onClick={()=>copyLink(r.portal_token)} style={{padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#F0F7FF',color:'#2563EB',border:'1px solid #BFDBFE',cursor:'pointer'}}>🔗 Portal</button>
+                  {od>=7&&r.client_email&&<a href={'mailto:'+r.client_email+'?subject=NOTICE - Invoice '+r.id+'&body='+lienBody} style={{padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#FEF2F2',color:'#991B1B',textDecoration:'none',border:'1px solid #FCA5A5'}}>⚖️ Lien Notice</a>}
+                  <button onClick={()=>markPaid(r.id)} style={{padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#ECFDF5',color:'#065F46',border:'none',cursor:'pointer'}}>✓ Paid</button>
+                </div>
               </div>
-              <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-                <a href={'tel:'+(r.client_phone||'').replace(/[^0-9]/g,'')} style={{padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#EFF6FF',color:'#1D4ED8',textDecoration:'none',border:'1px solid #BFDBFE'}}>📞 Call</a>
-                <button onClick={()=>copyLink(r.portal_token)} style={{padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#F0F7FF',color:'#2563EB',border:'1px solid #BFDBFE',cursor:'pointer'}}>🔗 Portal</button>
-                {od>=7&&<a href={'mailto:'+r.client_email+'?subject=NOTICE OF INTENT TO FILE MECHANIC\'S LIEN — '+r.id+'&body='+encodeURIComponent(lien)} style={{padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#FEF2F2',color:'#991B1B',textDecoration:'none',border:'1px solid #FCA5A5'}}>⚖️ Lien Notice</a>}
-                <button onClick={()=>markPaid(r.id)} style={{padding:'6px 12px',borderRadius:6,fontSize:12,fontWeight:600,background:'#ECFDF5',color:'#065F46',border:'none',cursor:'pointer'}}>✓ Paid</button>
-              </div>
-            </div>
-          </div>;})}
+            </div>;
+          })}
         </div>}
 
         {!loading&&tab==='invoice'&&<InvoiceTab rentals={rentals}/>}
