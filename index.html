@@ -743,6 +743,15 @@ function App(){
   );
 }
 
+
+function CheckItem({label}){
+  const [checked,setChecked]=useState(false);
+  return <div onClick={()=>setChecked(c=>!c)} style={{display:'flex',gap:8,alignItems:'flex-start',padding:'5px 0',cursor:'pointer'}}>
+    <div style={{width:18,height:18,borderRadius:4,border:'2px solid '+(checked?'#2563EB':'#D1D5DB'),background:checked?'#2563EB':'#fff',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:1}}>{checked&&<span style={{color:'#fff',fontSize:11,fontWeight:700}}>✓</span>}</div>
+    <span style={{fontSize:12,color:checked?'#9CA3AF':'#374151',textDecoration:checked?'line-through':'none',lineHeight:1.4}}>{label}</span>
+  </div>;
+}
+
 // ── DRIVER APP ──
 function DriverApp({name}){
   const [jobs,setJobs]=useState([]);
