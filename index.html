@@ -39,6 +39,7 @@ const getZelle = () => localStorage.getItem('sams_zelle') || '+1 (917) 663-6369'
 const WORKERS = ['Sams', 'Gustavo', 'Jose Luis'];
 
 // Big preset list of construction equipment
+const CLIENT_TAGS = ['Good Standing', 'Paying Client', 'Chronically Delinquent', 'Cash Only', 'New Client', 'VIP Client', 'Do Not Rent', 'Payment Plan', 'Blacklisted'];
 const PRESET_EQUIPMENT = {
   Machine: ['Caterpillar Excavator CAT 320', 'Caterpillar Excavator CAT 336', 'Mini Excavator', 'Kubota Skid Steer', 'Bobcat Skid Steer', 'Backhoe Loader', 'Wheel Loader', 'Bulldozer D6', 'Motor Grader', 'Dump Truck', 'Scissor Lift 26ft', 'Scissor Lift 32ft', 'Boom Lift 45ft', 'Telescopic Forklift', 'Rough Terrain Forklift', 'Crane 30 Ton', 'Compact Track Loader', 'Trencher', 'Skid Steer', 'Articulated Dump Truck'],
   Tool: ['Demolition Hammer Set', 'Jackhammer', 'Concrete Mixer', 'Concrete Saw', 'Plate Compactor', 'Jumping Jack Compactor', 'Pressure Washer', 'Generator 10kW', 'Generator 20kW', 'Air Compressor', 'Pipe Threader', 'Welding Machine', 'Water Pump', 'Light Tower', 'Floor Grinder', 'Tile Saw', 'Core Drill', 'Rebar Bender', 'Scaffolding Set', 'Heater']
@@ -81,6 +82,9 @@ const DRIVER_FLOW = [{
 }];
 function driverStep(s) {
   return DRIVER_FLOW.find(x => x.key === s) || DRIVER_FLOW[0];
+}
+function driverPct(s) {
+  return (DRIVER_FLOW.find(x => x.key === s) || DRIVER_FLOW[0]).pct;
 }
 function PayBadge({
   status
@@ -132,13 +136,16 @@ function PayBadge({
   }), c.label);
 }
 function DriverBadge({
-  status
+  status,
+  lang = 'en'
 }) {
   const s = driverStep(status);
   const colors = {
     assigned: '#6B7280',
+    preparing: '#7C3AED',
+    loading: '#0369A1',
     on_the_way: '#1D4ED8',
-    picked_up: '#92400E',
+    arrived: '#92400E',
     delivered: '#065F46'
   }[status] || '#6B7280';
   return /*#__PURE__*/React.createElement("span", {
@@ -147,7 +154,7 @@ function DriverBadge({
       fontWeight: 600,
       color: colors
     }
-  }, s.label);
+  }, lang === 'es' ? s.es : s.en);
 }
 
 // ── EQUIPMENT MANAGER ──
@@ -1789,26 +1796,26 @@ function ClientPortal({
     }
   }, /*#__PURE__*/React.createElement("h3", {
     style: {
-      fontSize: 13,
+      fontSize: 14,
       fontWeight: 700,
       marginBottom: 14
     }
-  }, "\uD83D\uDCE6 Delivery Status"), /*#__PURE__*/React.createElement("div", {
+  }, "\uD83D\uDCE6 Order Tracking"), /*#__PURE__*/React.createElement("div", {
     style: {
       position: 'relative',
       marginBottom: 8
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      height: 6,
+      height: 8,
       background: '#F3F4F6',
       borderRadius: 10
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       height: '100%',
-      width: dStep.pct + '%',
-      background: '#2563EB',
+      width: driverPct(rental.driver_status) + '%',
+      background: rental.driver_status === 'delivered' ? '#10B981' : '#2563EB',
       borderRadius: 10,
       transition: 'width 0.5s'
     }
@@ -1817,30 +1824,49 @@ function ClientPortal({
       display: 'flex',
       justifyContent: 'space-between'
     }
-  }, DRIVER_FLOW.map(st => {
-    const done = dStep.pct >= st.pct;
+  }, DRIVER_FLOW.map((st, i) => {
+    const stepIdx = DRIVER_FLOW.findIndex(x => x.key === rental.driver_status);
+    const done = i <= stepIdx;
+    const current = i === stepIdx;
     return /*#__PURE__*/React.createElement("div", {
       key: st.key,
       style: {
-        textAlign: 'center',
-        flex: 1
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 6,
+        opacity: done ? 1 : 0.35
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 16,
-        opacity: done ? 1 : 0.3
+        width: 22,
+        height: 22,
+        borderRadius: '50%',
+        background: done ? '#2563EB' : '#E5E7EB',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: 10,
+        color: '#fff',
+        fontWeight: 700,
+        flexShrink: 0
       }
-    }, st.label.split(' ')[0]), /*#__PURE__*/React.createElement("div", {
+    }, done ? '✓' : i + 1), /*#__PURE__*/React.createElement("div", {
       style: {
-        fontSize: 9,
-        color: done ? '#1D4ED8' : '#9CA3AF',
-        fontWeight: done ? 600 : 400,
-        marginTop: 2
+        fontSize: 12,
+        fontWeight: current ? 700 : 400,
+        color: current ? '#2563EB' : '#374151'
       }
-    }, st.label.split(' ').slice(1).join(' ')));
+    }, st.en, current && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 10,
+        color: '#2563EB',
+        marginLeft: 6
+      }
+    }, "\u2190 Now")));
   })), /*#__PURE__*/React.createElement("div", {
     style: {
-      marginTop: 12,
+      marginTop: 8,
       padding: '10px',
       background: '#EFF6FF',
       borderRadius: 8,
@@ -1849,7 +1875,7 @@ function ClientPortal({
       color: '#1D4ED8',
       textAlign: 'center'
     }
-  }, "Current: ", dStep.label)), rental.client_address && rental.driver_status !== 'delivered' && /*#__PURE__*/React.createElement("div", {
+  }, "Current: ", driverStep(rental.driver_status).en)), rental.client_address && rental.driver_status !== 'delivered' && /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
       borderRadius: 12,
@@ -3433,7 +3459,8 @@ function ClientPanel({
   client,
   rentals,
   onClose,
-  copyLink
+  copyLink,
+  showToast
 }) {
   const h = rentals.filter(r => r.client_name === client);
   const paid = h.filter(r => r.payment_status === 'paid').reduce((s, r) => s + r.price, 0);
@@ -3634,6 +3661,8 @@ function App() {
   const [clientPanel, setClientPanel] = useState(null);
   const [search, setSearch] = useState('');
   const [editRental, setEditRental] = useState(null);
+  const [deleted, setDeleted] = useState([]);
+  const [showDeleted, setShowDeleted] = useState(false);
   useEffect(() => {
     const u = localStorage.getItem('sams_user');
     if (u) setUser(JSON.parse(u));
@@ -3661,6 +3690,29 @@ function App() {
   const copyLink = t => {
     navigator.clipboard.writeText(`${APP_URL}/#/portal/${t}`);
     showToast('Portal link copied!');
+  };
+  const softDelete = async id => {
+    if (!window.confirm('Move rental ' + id + ' to Recently Deleted?')) return;
+    if (!window.confirm('Are you sure? You can restore it anytime.')) return;
+    await sb.from('rentals').update({
+      deleted: true
+    }).eq('id', id);
+    showToast('Moved to recently deleted');
+    loadData();
+  };
+  const restoreRental = async id => {
+    await sb.from('rentals').update({
+      deleted: false
+    }).eq('id', id);
+    showToast('Restored ✓');
+    loadData();
+  };
+  const hardDelete = async id => {
+    if (!window.confirm('DELETE PERMANENTLY? This cannot be undone!')) return;
+    if (!window.confirm('FINAL CONFIRMATION: Delete forever?')) return;
+    await sb.from('rentals').delete().eq('id', id);
+    showToast('Permanently deleted');
+    loadData();
   };
   const markPaid = async id => {
     await sb.from('rentals').update({
@@ -3747,7 +3799,17 @@ function App() {
     client: clientPanel,
     rentals: rentals,
     onClose: () => setClientPanel(null),
-    copyLink: copyLink
+    copyLink: copyLink,
+    showToast: showToast
+  }), editRental && /*#__PURE__*/React.createElement(EditRentalModal, {
+    rental: editRental,
+    onClose: () => setEditRental(null),
+    onSaved: () => {
+      setEditRental(null);
+      loadData();
+      showToast('Updated ✓');
+    },
+    showToast: showToast
   }), editRental && /*#__PURE__*/React.createElement(EditRentalModal, {
     rental: editRental,
     onClose: () => setEditRental(null),
@@ -3943,7 +4005,75 @@ function App() {
       maxWidth: 1400,
       margin: '0 auto'
     }
-  }, loading && /*#__PURE__*/React.createElement("div", {
+  }, deleted.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 16
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShowDeleted(s => !s),
+    style: {
+      padding: '6px 14px',
+      borderRadius: 8,
+      fontSize: 12,
+      fontWeight: 600,
+      cursor: 'pointer',
+      border: '1px solid #FDE68A',
+      background: '#FFFBEB',
+      color: '#92400E',
+      marginBottom: 8
+    }
+  }, "\uD83D\uDDD1 Recently Deleted (", deleted.length, ") ", showDeleted ? '▲' : '▼'), showDeleted && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: '#FFFBEB',
+      border: '1px solid #FDE68A',
+      borderRadius: 10,
+      padding: '14px 18px'
+    }
+  }, deleted.map(r => /*#__PURE__*/React.createElement("div", {
+    key: r.id,
+    style: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '8px 0',
+      borderBottom: '1px solid #FDE68A',
+      flexWrap: 'wrap',
+      gap: 8
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 13
+    }
+  }, /*#__PURE__*/React.createElement("strong", null, r.id), " \u2014 ", r.client_name, " \u2014 ", r.asset, " \u2014 $", r.price), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement("button", {
+    onClick: () => restoreRental(r.id),
+    style: {
+      padding: '5px 10px',
+      borderRadius: 6,
+      fontSize: 11,
+      fontWeight: 600,
+      cursor: 'pointer',
+      border: 'none',
+      background: '#ECFDF5',
+      color: '#065F46'
+    }
+  }, "\u21A9 Restore"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => hardDelete(r.id),
+    style: {
+      padding: '5px 10px',
+      borderRadius: 6,
+      fontSize: 11,
+      fontWeight: 600,
+      cursor: 'pointer',
+      border: 'none',
+      background: '#FEF2F2',
+      color: '#991B1B'
+    }
+  }, "Delete Forever")))))), loading && /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: 'center',
       padding: 48
@@ -4222,20 +4352,19 @@ function App() {
     }, /*#__PURE__*/React.createElement("button", {
       onClick: () => copyLink(r.portal_token),
       style: {
-        padding: '4px 8px',
+        padding: '4px 7px',
         borderRadius: 5,
         fontSize: 11,
         fontWeight: 600,
         background: '#F0F7FF',
         color: '#2563EB',
         border: '1px solid #BFDBFE',
-        cursor: 'pointer',
-        whiteSpace: 'nowrap'
+        cursor: 'pointer'
       }
-    }, "\uD83D\uDD17 Link"), r.payment_status !== 'paid' && /*#__PURE__*/React.createElement("button", {
+    }, "\uD83D\uDD17"), r.payment_status !== 'paid' && /*#__PURE__*/React.createElement("button", {
       onClick: () => markPaid(r.id),
       style: {
-        padding: '4px 8px',
+        padding: '4px 7px',
         borderRadius: 5,
         fontSize: 11,
         fontWeight: 600,
@@ -4244,10 +4373,10 @@ function App() {
         border: 'none',
         cursor: 'pointer'
       }
-    }, "\u2713 Paid"), /*#__PURE__*/React.createElement("button", {
+    }, "\u2713"), /*#__PURE__*/React.createElement("button", {
       onClick: () => setEditRental(r),
       style: {
-        padding: '4px 8px',
+        padding: '4px 7px',
         borderRadius: 5,
         fontSize: 11,
         fontWeight: 600,
@@ -4256,8 +4385,8 @@ function App() {
         border: '1px solid #FDE68A',
         cursor: 'pointer'
       }
-    }, "\u270F Edit"), r.client_phone && /*#__PURE__*/React.createElement("a", {
-      href: 'tel:' + (r.client_phone || '').replace(/\D/g, ''),
+    }, "\u270F"), r.client_phone && /*#__PURE__*/React.createElement("a", {
+      href: 'tel:' + (r.client_phone || '').replace(/[^0-9]/g, ''),
       style: {
         padding: '4px 7px',
         borderRadius: 5,
@@ -4269,7 +4398,7 @@ function App() {
         border: '1px solid #BFDBFE'
       }
     }, "\uD83D\uDCDE"), r.client_email && /*#__PURE__*/React.createElement("a", {
-      href: 'mailto:' + r.client_email + '?subject=Invoice ' + r.id + ' — Sams Construction&body=Dear ' + r.client_name + ',%0A%0APlease see your rental invoice below.%0A%0AInvoice: ' + r.id + '%0AEquipment: ' + r.asset + '%0AAmount: $' + r.price + '%0ADue: ' + r.due_date + '%0A%0AView portal: ' + APP_URL + '/%23/portal/' + r.portal_token + '%0A%0APay via Zelle: ' + (localStorage.getItem('sams_zelle') || '+1 (917) 663-6369') + '%0A%0ASams Construction Services LTD%0A+1 (917) 663-6369',
+      href: 'mailto:' + r.client_email + '?subject=NOTICE: Outstanding Invoice ' + r.id + ' — Sams Construction Services LTD&body=Dear ' + r.client_name + ',%0A%0AThis is a formal notice regarding your outstanding balance with Sams Construction Services LTD.%0A%0AEquipment Rented: ' + r.asset + '%0AAmount Due: $' + r.price + '%0APayment Due Date: ' + r.due_date + '%0A%0AImmediate payment is required to avoid further collection action, including equipment repossession and filing of a Mechanic%27s Lien.%0A%0ATo pay now:%0A• Zelle: ' + (localStorage.getItem('sams_zelle') || '+1 (917) 663-6369') + '%0A• Call us: +1 (917) 663-6369%0A%0APlease treat this matter with urgency.%0A%0ASams Construction Services LTD%0A+1 (917) 663-6369%0Asamsconstructionltd23@outlook.com',
       style: {
         padding: '4px 7px',
         borderRadius: 5,
@@ -4280,7 +4409,19 @@ function App() {
         textDecoration: 'none',
         border: '1px solid #E9D5FF'
       }
-    }, "\u2709"))));
+    }, "\u2709"), /*#__PURE__*/React.createElement("button", {
+      onClick: () => softDelete(r.id),
+      style: {
+        padding: '4px 7px',
+        borderRadius: 5,
+        fontSize: 11,
+        fontWeight: 600,
+        background: '#FEF2F2',
+        color: '#991B1B',
+        border: 'none',
+        cursor: 'pointer'
+      }
+    }, "\uD83D\uDDD1"))));
   })))))), !loading && tab === 'drivers' && /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'grid',
@@ -4587,10 +4728,17 @@ function DriverView({
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const load = async () => {
-    const {
-      data
-    } = await sb.from('rentals').select('*').eq('assigned_driver', name).neq('rental_status', 'completed').order('due_date');
-    if (data) setJobs(data);
+    try {
+      const {
+        data
+      } = await sb.from('rentals').select('*').eq('assigned_driver', name).eq('deleted', false).order('due_date');
+      if (data) setJobs(data.filter(r => r.rental_status !== 'completed' && r.rental_status !== 'cancelled'));
+    } catch (e) {
+      const {
+        data
+      } = await sb.from('rentals').select('*').eq('assigned_driver', name).order('due_date');
+      if (data) setJobs(data.filter(r => r.rental_status !== 'completed'));
+    }
     setLoading(false);
   };
   useEffect(() => {
