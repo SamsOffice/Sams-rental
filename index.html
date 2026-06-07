@@ -521,7 +521,8 @@ function ClientPortal({
   const [rental, setRental] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [payChoice, setPayChoice] = useState('');
+  const [payMethod, setPayMethod] = useState('');
+  const [lang, setLang] = useState('en');
   useEffect(() => {
     sb.from('rentals').select('*').eq('portal_token', token).single().then(({
       data,
@@ -561,18 +562,18 @@ function ClientPortal({
       margin: '12px 0'
     }
   }, "Invoice Not Found"), /*#__PURE__*/React.createElement("a", {
-    href: "tel:+19176636369",
+    href: `tel:${OFFICE_PHONE.replace(/\D/g, '')}`,
     style: {
       color: '#2563EB'
     }
-  }, "Call +1 (917) 663-6369")));
+  }, "Call ", OFFICE_PHONE)));
   const days = daysUntil(rental.due_date);
   const od = days < 0 ? Math.abs(days) : 0;
   const isPaid = rental.payment_status === 'paid';
+  const dStep = driverStep(rental.driver_status);
   const stepIdx = DRIVER_FLOW.findIndex(x => x.key === rental.driver_status);
-  const step = DRIVER_FLOW[stepIdx] || DRIVER_FLOW[0];
-  const ccTotal = Math.round(rental.price * 1.035 * 100) / 100;
-  const zelle = localStorage.getItem('sams_zelle') || '+1 (917) 663-6369';
+  const ccTotal = (rental.price * 1.035).toFixed(2);
+  const es = lang === 'es';
   return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: '100vh',
@@ -581,9 +582,12 @@ function ClientPortal({
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#111827',
-      padding: '16px 20px'
+      padding: '16px 20px',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center'
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 15,
       fontWeight: 700,
@@ -592,10 +596,27 @@ function ClientPortal({
   }, "SAMS CONSTRUCTION SERVICES LTD"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: '#9CA3AF',
-      marginTop: 2
+      color: '#9CA3AF'
     }
-  }, "188-16 Woodhull Ave, Hollis NY 11423 \xB7 +1 (917) 663-6369")), /*#__PURE__*/React.createElement("div", {
+  }, OFFICE_ADDR, " \xB7 ", OFFICE_PHONE)), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 6
+    }
+  }, ['en', 'es'].map(l => /*#__PURE__*/React.createElement("button", {
+    key: l,
+    onClick: () => setLang(l),
+    style: {
+      padding: '4px 10px',
+      borderRadius: 6,
+      fontSize: 11,
+      fontWeight: 600,
+      cursor: 'pointer',
+      border: 'none',
+      background: lang === l ? '#2563EB' : '#374151',
+      color: '#fff'
+    }
+  }, l === 'en' ? 'EN' : 'ES')))), /*#__PURE__*/React.createElement("div", {
     style: {
       maxWidth: 500,
       margin: '0 auto',
@@ -618,34 +639,33 @@ function ClientPortal({
       fontWeight: 700,
       marginBottom: 8
     }
-  }, "\u26A0\uFE0F FORMAL NOTICE OF OVERDUE PAYMENT"), /*#__PURE__*/React.createElement("div", {
+  }, "\u26A0\uFE0F ", es ? 'AVISO FORMAL DE MOROSIDAD' : 'FORMAL NOTICE OF OVERDUE PAYMENT'), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
       lineHeight: 1.7,
       marginBottom: 10
     }
-  }, "Invoice ", /*#__PURE__*/React.createElement("strong", null, rental.id), " is ", /*#__PURE__*/React.createElement("strong", null, "OVERDUE by ", od, " day(s)"), ". The amount of ", /*#__PURE__*/React.createElement("strong", null, money(rental.price)), " must be paid immediately to avoid:"), /*#__PURE__*/React.createElement("ul", {
+  }, es ? `Su factura ${rental.id} está VENCIDA por ${od} día(s). El monto de ${money(rental.price)} debe pagarse de inmediato para evitar consecuencias.` : `Invoice ${rental.id} is OVERDUE by ${od} day(s). The amount of ${money(rental.price)} must be paid immediately to avoid the following consequences:`), /*#__PURE__*/React.createElement("ul", {
     style: {
       fontSize: 12,
-      lineHeight: 2.2,
+      lineHeight: 2,
       paddingLeft: 16
     }
-  }, /*#__PURE__*/React.createElement("li", null, "Immediate equipment repossession scheduling"), /*#__PURE__*/React.createElement("li", null, "Suspension of all active rentals"), /*#__PURE__*/React.createElement("li", null, "Report to commercial credit agencies (D&B / Experian)"), /*#__PURE__*/React.createElement("li", null, "Filing of Mechanic's Lien on your property"), /*#__PURE__*/React.createElement("li", null, "All legal and collection fees added to balance")), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("li", null, es ? 'Programación inmediata de recuperación de equipo' : 'Immediate equipment repossession scheduling'), /*#__PURE__*/React.createElement("li", null, es ? 'Suspensión de todas las rentas activas' : 'Suspension of all active rentals'), /*#__PURE__*/React.createElement("li", null, es ? 'Reporte a agencias de crédito comercial' : 'Report to commercial credit agencies (D&B/Experian)'), /*#__PURE__*/React.createElement("li", null, es ? 'Presentación de Gravamen Mecánico' : 'Filing of Mechanic\'s Lien on your property'), /*#__PURE__*/React.createElement("li", null, es ? 'Honorarios legales y de cobro' : 'Legal and collection fees added to balance')), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 12,
       padding: '10px',
       background: 'rgba(0,0,0,0.3)',
       borderRadius: 8,
       fontSize: 13,
-      fontWeight: 700,
-      textAlign: 'center'
+      fontWeight: 700
     }
-  }, "\uD83D\uDCDE Call immediately: +1 (917) 663-6369")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+  }, es ? `Llame inmediatamente: ${OFFICE_PHONE}` : `Call immediately: ${OFFICE_PHONE}`)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: '#9CA3AF'
     }
-  }, "Hello,"), /*#__PURE__*/React.createElement("h1", {
+  }, es ? 'Estimado/a,' : 'Hello,'), /*#__PURE__*/React.createElement("h1", {
     style: {
       fontSize: 22,
       fontWeight: 700
@@ -661,38 +681,43 @@ function ClientPortal({
     style: {
       fontSize: 14,
       fontWeight: 700,
-      marginBottom: 14
+      marginBottom: 16
     }
-  }, "\uD83D\uDCE6 Order Tracking"), /*#__PURE__*/React.createElement("div", {
+  }, es ? '📦 Seguimiento de Pedido' : '📦 Order Tracking'), /*#__PURE__*/React.createElement("div", {
     style: {
-      height: 8,
-      background: '#F3F4F6',
-      borderRadius: 10,
+      position: 'relative',
       marginBottom: 16
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      height: '100%',
-      width: step.pct + '%',
-      background: step.pct === 100 ? '#10B981' : '#2563EB',
-      borderRadius: 10,
-      transition: 'width 0.6s'
+      height: 6,
+      background: '#F3F4F6',
+      borderRadius: 10
     }
-  })), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      height: '100%',
+      width: dStep.pct + '%',
+      background: dStep.pct === 100 ? '#10B981' : '#2563EB',
+      borderRadius: 10,
+      transition: 'width 0.5s'
+    }
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       flexDirection: 'column',
-      gap: 10
+      gap: 8
     }
   }, DRIVER_FLOW.map((st, i) => {
-    const done = i <= stepIdx;
-    const current = i === stepIdx;
+    const done = stepIdx >= i;
+    const current = stepIdx === i;
     return /*#__PURE__*/React.createElement("div", {
       key: st.key,
       style: {
         display: 'flex',
         alignItems: 'center',
-        gap: 10
+        gap: 10,
+        opacity: done ? 1 : 0.4
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
@@ -706,38 +731,23 @@ function ClientPortal({
         fontSize: 11,
         color: '#fff',
         fontWeight: 700,
-        flexShrink: 0,
-        opacity: done ? 1 : 0.4
+        flexShrink: 0
       }
-    }, done ? '✓' : i + 1), /*#__PURE__*/React.createElement("span", {
+    }, done ? '✓' : i + 1), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 13,
         fontWeight: current ? 700 : 400,
-        color: current ? '#2563EB' : '#374151',
-        opacity: done ? 1 : 0.5
+        color: current ? '#2563EB' : '#374151'
       }
-    }, st.en, current && /*#__PURE__*/React.createElement("span", {
+    }, st.label[lang], current && /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 11,
-        background: '#EFF6FF',
         color: '#2563EB',
-        padding: '1px 6px',
-        borderRadius: 8,
         marginLeft: 6,
         fontWeight: 600
       }
-    }, "Now")));
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 12,
-      padding: '10px 14px',
-      background: '#EFF6FF',
-      borderRadius: 8,
-      fontSize: 13,
-      fontWeight: 600,
-      color: '#2563EB'
-    }
-  }, "Driver: ", /*#__PURE__*/React.createElement("strong", null, rental.assigned_driver), " \xB7 ", step.en)), /*#__PURE__*/React.createElement("div", {
+    }, "\u2190 ", es ? 'Ahora' : 'Now')));
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: isPaid ? '#ECFDF5' : od > 0 ? '#FEF2F2' : days <= 2 ? '#FFFBEB' : '#EFF6FF',
       border: '1px solid ' + (isPaid ? '#A7F3D0' : od > 0 ? '#FCA5A5' : days <= 2 ? '#FDE68A' : '#BFDBFE'),
@@ -750,13 +760,13 @@ function ClientPortal({
       fontWeight: 700,
       color: isPaid ? '#065F46' : od > 0 ? '#991B1B' : days <= 2 ? '#92400E' : '#1D4ED8'
     }
-  }, isPaid ? '✅ PAID IN FULL' : od > 0 ? `⚠️ ${od} DAYS OVERDUE` : days === 0 ? '⏰ DUE TODAY' : `${days} DAYS REMAINING`), !isPaid && /*#__PURE__*/React.createElement("div", {
+  }, isPaid ? es ? '✅ PAGADO EN SU TOTALIDAD' : '✅ PAID IN FULL' : od > 0 ? es ? `⚠️ ${od} DÍAS VENCIDO` : `⚠️ ${od} DAYS OVERDUE` : days === 0 ? es ? '⏰ VENCE HOY' : '⏰ DUE TODAY' : es ? `${days} DÍAS RESTANTES` : `${days} DAYS REMAINING`), !isPaid && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: '#6B7280',
       marginTop: 4
     }
-  }, "Due: ", fmtDate(rental.due_date))), /*#__PURE__*/React.createElement("div", {
+  }, es ? 'Fecha límite:' : 'Due:', " ", fmtDate(rental.due_date))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
       borderRadius: 12,
@@ -769,7 +779,7 @@ function ClientPortal({
       fontWeight: 700,
       marginBottom: 12
     }
-  }, "Invoice Details"), [['Invoice', rental.id], ['Equipment', rental.asset], ['Start', fmtDate(rental.start_date)], ['Due', fmtDate(rental.due_date)], ['Duration', rental.duration_days + ' days'], ['Driver', rental.assigned_driver]].map(([l, v]) => /*#__PURE__*/React.createElement("div", {
+  }, es ? 'Detalles de Renta' : 'Rental Details'), [[es ? 'Factura' : 'Invoice', rental.id], [es ? 'Equipo' : 'Equipment', rental.asset], [es ? 'Inicio' : 'Start', fmtDate(rental.start_date)], [es ? 'Vence' : 'Due', fmtDate(rental.due_date)], [es ? 'Duración' : 'Duration', rental.duration_days + (es ? ' días' : ' days')], [es ? 'Conductor' : 'Driver', rental.assigned_driver]].map(([l, v]) => /*#__PURE__*/React.createElement("div", {
     key: l,
     style: {
       display: 'flex',
@@ -794,7 +804,7 @@ function ClientPortal({
       fontSize: 16,
       fontWeight: 700
     }
-  }, /*#__PURE__*/React.createElement("span", null, "Total Due"), /*#__PURE__*/React.createElement("span", null, money(rental.price)))), !isPaid && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", null, es ? 'Total' : 'Total Due'), /*#__PURE__*/React.createElement("span", null, money(rental.price)))), !isPaid && /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
       borderRadius: 12,
@@ -803,8 +813,9 @@ function ClientPortal({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      background: '#111827',
-      padding: '14px 18px'
+      padding: '14px 18px',
+      borderBottom: '1px solid #F3F4F6',
+      background: '#111827'
     }
   }, /*#__PURE__*/React.createElement("h3", {
     style: {
@@ -812,213 +823,166 @@ function ClientPortal({
       fontWeight: 700,
       color: '#fff'
     }
-  }, "\uD83D\uDCB3 How Would You Like to Pay?")), /*#__PURE__*/React.createElement("div", {
+  }, "\uD83D\uDCB3 ", es ? `Pagar Ahora — ${money(rental.price)}` : `Pay Now — ${money(rental.price)}`)), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: '14px 18px'
     }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("p", {
     style: {
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
+      fontSize: 13,
+      fontWeight: 600,
+      marginBottom: 12,
+      color: '#374151'
+    }
+  }, es ? 'Elige tu método de pago:' : 'Choose your payment method:'), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      flexDirection: 'column',
       gap: 8,
       marginBottom: 14
     }
-  }, [{
-    key: 'zelle',
-    icon: '⚡',
-    label: 'Zelle'
-  }, {
-    key: 'cash',
-    icon: '💵',
-    label: 'Cash'
-  }, {
-    key: 'check',
-    icon: '🏦',
-    label: 'Check'
-  }, {
-    key: 'venmo',
-    icon: '💜',
-    label: 'Venmo'
-  }, {
-    key: 'credit',
-    icon: '💳',
-    label: 'Credit Card'
-  }, {
-    key: 'bank',
-    icon: '🏛',
-    label: 'Bank Transfer'
-  }].map(m => /*#__PURE__*/React.createElement("button", {
-    key: m.key,
-    onClick: () => setPayChoice(payChoice === m.key ? '' : m.key),
+  }, ['zelle', 'check', 'credit'].map(m => /*#__PURE__*/React.createElement("button", {
+    key: m,
+    onClick: () => setPayMethod(payMethod === m ? '' : m),
     style: {
-      padding: '10px 8px',
+      padding: '12px 14px',
       borderRadius: 9,
-      border: '2px solid ' + (payChoice === m.key ? '#2563EB' : '#E5E7EB'),
-      background: payChoice === m.key ? '#EFF6FF' : '#F9FAFB',
+      border: '2px solid ' + (payMethod === m ? '#2563EB' : '#E5E7EB'),
+      background: payMethod === m ? '#EFF6FF' : '#fff',
+      textAlign: 'left',
+      cursor: 'pointer',
       fontSize: 13,
       fontWeight: 600,
-      cursor: 'pointer',
-      color: payChoice === m.key ? '#1D4ED8' : '#374151',
-      textAlign: 'center'
+      color: payMethod === m ? '#1D4ED8' : '#374151',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center'
     }
-  }, m.icon, " ", m.label))), payChoice === 'zelle' && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", null, {
+    zelle: '⚡ Zelle',
+    check: '🏦 ' + (es ? 'Cheque' : 'Check'),
+    credit: '💳 ' + (es ? 'Tarjeta de Crédito' : 'Credit Card'),
+    cash: '💵 ' + (es ? 'Efectivo' : 'Cash'),
+    venmo: '💜 Venmo',
+    bank: '🏛 ' + (es ? 'Transferencia Bancaria' : 'Bank Transfer')
+  }[m] || m), /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 11,
+      color: '#9CA3AF'
+    }
+  }, payMethod === m ? '▲' : '▼')))), payMethod === 'zelle' && /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#F0F7FF',
       border: '1px solid #BFDBFE',
       borderRadius: 10,
-      padding: '16px'
+      padding: '14px'
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 15,
+      fontSize: 14,
       fontWeight: 700,
       color: '#1D4ED8',
-      marginBottom: 8
-    }
-  }, "\u26A1 Pay via Zelle"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
       marginBottom: 4
     }
-  }, "Amount: ", /*#__PURE__*/React.createElement("strong", null, money(rental.price))), /*#__PURE__*/React.createElement("div", {
+  }, "Zelle \u2014 ", money(rental.price)), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 13,
-      marginBottom: 12
+      marginBottom: 8
     }
-  }, "Send to: ", /*#__PURE__*/React.createElement("strong", {
+  }, es ? 'Enviar a:' : 'Send to:', " ", /*#__PURE__*/React.createElement("strong", null, getZelle())), /*#__PURE__*/React.createElement("button", {
+    onClick: () => navigator.clipboard.writeText(getZelle()),
     style: {
-      fontSize: 16
-    }
-  }, zelle)), /*#__PURE__*/React.createElement("button", {
-    onClick: () => navigator.clipboard.writeText(zelle),
-    style: {
-      width: '100%',
-      padding: '10px',
-      borderRadius: 8,
-      border: 'none',
-      background: '#2563EB',
-      color: '#fff',
-      fontSize: 14,
-      fontWeight: 700,
+      fontSize: 12,
+      padding: '6px 14px',
+      borderRadius: 6,
+      border: '1px solid #BFDBFE',
+      background: '#fff',
+      color: '#2563EB',
       cursor: 'pointer',
-      marginBottom: 8
+      fontWeight: 600
     }
-  }, "\uD83D\uDCCB Copy Zelle Number"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: '#6B7280',
-      textAlign: 'center'
-    }
-  }, "After sending, call to confirm: +1 (917) 663-6369")), payChoice === 'cash' && /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#ECFDF5',
-      border: '1px solid #A7F3D0',
-      borderRadius: 10,
-      padding: '16px'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 15,
-      fontWeight: 700,
-      color: '#065F46',
-      marginBottom: 8
-    }
-  }, "\uD83D\uDCB5 Cash Payment \u2014 ", money(rental.price)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      marginBottom: 12
-    }
-  }, "Pay cash to the driver at delivery, or drop off at our office. Call to arrange:"), /*#__PURE__*/React.createElement("a", {
-    href: "tel:+19176636369",
-    style: {
-      display: 'block',
-      padding: '12px',
-      borderRadius: 9,
-      background: '#065F46',
-      color: '#fff',
-      textDecoration: 'none',
-      fontSize: 14,
-      fontWeight: 700,
-      textAlign: 'center'
-    }
-  }, "\uD83D\uDCDE +1 (917) 663-6369")), payChoice === 'check' && /*#__PURE__*/React.createElement("div", {
+  }, es ? 'Copiar Número' : 'Copy Number')), payMethod === 'check' && /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#F9FAFB',
       border: '1px solid #E5E7EB',
       borderRadius: 10,
-      padding: '16px'
+      padding: '14px',
+      fontSize: 13
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 15,
       fontWeight: 700,
-      marginBottom: 8
+      marginBottom: 6
     }
-  }, "\uD83C\uDFE6 Check \u2014 ", money(rental.price)), /*#__PURE__*/React.createElement("div", {
+  }, es ? 'Pago con Cheque' : 'Check Payment', " \u2014 ", money(rental.price)), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 13,
-      marginBottom: 4
+      lineHeight: 1.9
     }
-  }, "Payable to: ", /*#__PURE__*/React.createElement("strong", null, "Sams Construction Services LTD")), /*#__PURE__*/React.createElement("div", {
+  }, es ? 'Pagable a:' : 'Payable to:', " ", /*#__PURE__*/React.createElement("strong", null, "Sams Construction Services LTD"), /*#__PURE__*/React.createElement("br", null), es ? 'Opciones de entrega:' : 'Delivery options:', /*#__PURE__*/React.createElement("br", null), "\u2022 ", es ? 'Entregar en oficina (llame primero): ' + OFFICE_PHONE : 'Drop off at office (call first): ' + OFFICE_PHONE, /*#__PURE__*/React.createElement("br", null), "\u2022 ", es ? `Llamar para recoger: ${OFFICE_PHONE}` : `Call for pickup: ${OFFICE_PHONE}`)), payMethod === 'cash' && /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 13,
-      marginBottom: 12
+      background: '#ECFDF5',
+      border: '1px solid #A7F3D0',
+      borderRadius: 10,
+      padding: '14px'
     }
-  }, "Call us to arrange drop-off or pickup:"), /*#__PURE__*/React.createElement("a", {
-    href: "tel:+19176636369",
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
-      display: 'block',
-      padding: '12px',
-      borderRadius: 9,
-      background: '#374151',
-      color: '#fff',
-      textDecoration: 'none',
       fontSize: 14,
       fontWeight: 700,
-      textAlign: 'center'
+      color: '#065F46',
+      marginBottom: 4
     }
-  }, "\uD83D\uDCDE +1 (917) 663-6369")), payChoice === 'venmo' && /*#__PURE__*/React.createElement("div", {
+  }, es ? 'Efectivo' : 'Cash'), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13
+    }
+  }, es ? 'Pague en efectivo en nuestra oficina o al conductor al momento de la entrega. Llame para confirmar:' : 'Pay cash at our office or to the driver at delivery. Call to confirm:', " ", /*#__PURE__*/React.createElement("strong", null, OFFICE_PHONE))), payMethod === 'venmo' && /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#F5F3FF',
       border: '1px solid #DDD6FE',
       borderRadius: 10,
-      padding: '16px'
+      padding: '14px'
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 15,
-      fontWeight: 700,
-      color: '#5B21B6',
-      marginBottom: 8
-    }
-  }, "\uD83D\uDC9C Venmo \u2014 ", money(rental.price)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      marginBottom: 12
-    }
-  }, "Send payment via Venmo then call to confirm:"), /*#__PURE__*/React.createElement("a", {
-    href: "tel:+19176636369",
-    style: {
-      display: 'block',
-      padding: '12px',
-      borderRadius: 9,
-      background: '#5B21B6',
-      color: '#fff',
-      textDecoration: 'none',
       fontSize: 14,
       fontWeight: 700,
-      textAlign: 'center'
+      color: '#5B21B6',
+      marginBottom: 4
     }
-  }, "\uD83D\uDCDE +1 (917) 663-6369")), payChoice === 'credit' && /*#__PURE__*/React.createElement("div", {
+  }, "Venmo"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13
+    }
+  }, es ? 'Envíe su pago a Venmo y luego llame para confirmar:' : 'Send your Venmo payment then call to confirm:', " ", /*#__PURE__*/React.createElement("strong", null, OFFICE_PHONE))), payMethod === 'bank' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: '#F0F9FF',
+      border: '1px solid #BAE6FD',
+      borderRadius: 10,
+      padding: '14px'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 700,
+      color: '#0369A1',
+      marginBottom: 4
+    }
+  }, es ? 'Transferencia Bancaria' : 'Bank Transfer'), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13
+    }
+  }, es ? 'Para información de transferencia bancaria llame a la oficina:' : 'For bank transfer details call the office:', " ", /*#__PURE__*/React.createElement("strong", null, OFFICE_PHONE))), payMethod === 'credit' && /*#__PURE__*/React.createElement("div", {
     style: {
       borderRadius: 10,
-      border: '1px solid #FDE68A',
+      border: '1px solid #E5E7EB',
       overflow: 'hidden'
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#FFFBEB',
-      padding: '12px 16px'
+      border: '1px solid #FDE68A',
+      padding: '12px 14px'
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1027,44 +991,49 @@ function ClientPortal({
       color: '#92400E',
       marginBottom: 4
     }
-  }, "\u26A0\uFE0F NY State Credit Card Surcharge"), /*#__PURE__*/React.createElement("div", {
+  }, "\u26A0\uFE0F ", es ? 'Cargo por Procesamiento de Tarjeta de Crédito' : 'Credit Card Processing Fee'), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
-      color: '#92400E',
-      marginBottom: 6
+      color: '#92400E'
     }
-  }, "Pursuant to NY State law, credit card payments are subject to a ", /*#__PURE__*/React.createElement("strong", null, "3.5% processing fee"), "."), /*#__PURE__*/React.createElement("div", {
+  }, es ? `Conforme a la ley del estado de Nueva York, los pagos con tarjeta de crédito tienen un cargo del 3.5% de procesamiento.` : `Pursuant to NY State law, credit card payments are subject to a 3.5% processing fee.`), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 14,
       fontWeight: 700,
-      color: '#92400E'
+      color: '#92400E',
+      marginTop: 8
     }
-  }, "New Total: ", money(ccTotal))), /*#__PURE__*/React.createElement("div", {
+  }, es ? 'Nuevo Total:' : 'New Total:', " ", money(ccTotal))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#ECFDF5',
-      padding: '8px 16px',
+      padding: '10px 14px',
       display: 'flex',
       gap: 8,
       alignItems: 'center'
     }
-  }, /*#__PURE__*/React.createElement("span", null, "\uD83D\uDD12"), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 18
+    }
+  }, "\uD83D\uDD12"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: '#065F46',
       fontWeight: 600
     }
-  }, "PCI-DSS Compliant \xB7 SSL Encrypted")), /*#__PURE__*/React.createElement("div", {
+  }, "PCI-DSS Compliant \xB7 SSL Encrypted \xB7 100% Secure")), /*#__PURE__*/React.createElement("div", {
     style: {
-      padding: '14px 16px',
+      padding: '14px',
       background: '#fff'
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 13,
-      marginBottom: 10
+      fontSize: 12,
+      color: '#6B7280',
+      marginBottom: 12
     }
-  }, "Call us to process your credit card:"), /*#__PURE__*/React.createElement("a", {
-    href: "tel:+19176636369",
+  }, es ? 'Para pagar con tarjeta llame a la oficina:' : 'To pay by credit card, please call the office:'), /*#__PURE__*/React.createElement("a", {
+    href: `tel:${OFFICE_PHONE.replace(/\D/g, '')}`,
     style: {
       display: 'block',
       padding: '12px',
@@ -1076,46 +1045,7 @@ function ClientPortal({
       fontWeight: 700,
       textAlign: 'center'
     }
-  }, "\uD83D\uDCDE +1 (917) 663-6369"))), payChoice === 'bank' && /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#F0F9FF',
-      border: '1px solid #BAE6FD',
-      borderRadius: 10,
-      padding: '16px'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 15,
-      fontWeight: 700,
-      color: '#0369A1',
-      marginBottom: 8
-    }
-  }, "\uD83C\uDFDB Bank Transfer \u2014 ", money(rental.price)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      marginBottom: 12
-    }
-  }, "Call us for bank transfer / ACH details:"), /*#__PURE__*/React.createElement("a", {
-    href: "tel:+19176636369",
-    style: {
-      display: 'block',
-      padding: '12px',
-      borderRadius: 9,
-      background: '#0369A1',
-      color: '#fff',
-      textDecoration: 'none',
-      fontSize: 14,
-      fontWeight: 700,
-      textAlign: 'center'
-    }
-  }, "\uD83D\uDCDE +1 (917) 663-6369")), !payChoice && /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: 'center',
-      padding: '14px',
-      color: '#9CA3AF',
-      fontSize: 13
-    }
-  }, "\uD83D\uDC46 Select a payment method above"))), !isPaid && /*#__PURE__*/React.createElement("div", {
+  }, "\uD83D\uDCDE ", OFFICE_PHONE))))), !isPaid && /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
       borderRadius: 12,
@@ -1128,14 +1058,14 @@ function ClientPortal({
       fontWeight: 700,
       marginBottom: 8
     }
-  }, "\uD83D\uDCC5 Need More Time?"), /*#__PURE__*/React.createElement("p", {
+  }, "\uD83D\uDCC5 ", es ? '¿Necesita Más Tiempo?' : 'Need More Time?'), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: '#6B7280',
       marginBottom: 12
     }
-  }, "Extensions cannot be requested online. Please call our office directly."), /*#__PURE__*/React.createElement("a", {
-    href: "tel:+19176636369",
+  }, es ? 'Las extensiones no se pueden solicitar en línea. Por favor llame a la oficina para solicitar una extensión.' : 'Extensions cannot be requested online. Please call the office to request an extension.'), /*#__PURE__*/React.createElement("a", {
+    href: `tel:${OFFICE_PHONE.replace(/\D/g, '')}`,
     style: {
       display: 'block',
       padding: '12px',
@@ -1147,7 +1077,7 @@ function ClientPortal({
       fontWeight: 700,
       textAlign: 'center'
     }
-  }, "\uD83D\uDCDE Call the Office \u2014 +1 (917) 663-6369")), /*#__PURE__*/React.createElement("div", {
+  }, "\uD83D\uDCDE ", es ? 'Llamar a la Oficina' : 'Call the Office', " \u2014 ", OFFICE_PHONE)), /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
       borderRadius: 12,
@@ -1157,7 +1087,7 @@ function ClientPortal({
       gap: 10
     }
   }, /*#__PURE__*/React.createElement("a", {
-    href: "tel:+19176636369",
+    href: `tel:${OFFICE_PHONE.replace(/\D/g, '')}`,
     style: {
       flex: 1,
       padding: 12,
@@ -1169,8 +1099,8 @@ function ClientPortal({
       fontWeight: 600,
       textAlign: 'center'
     }
-  }, "\uD83D\uDCDE Call"), /*#__PURE__*/React.createElement("a", {
-    href: "mailto:samsconstructionltd23@outlook.com",
+  }, "\uD83D\uDCDE ", es ? 'Llamar' : 'Call'), /*#__PURE__*/React.createElement("a", {
+    href: `mailto:${OFFICE_EMAIL}`,
     style: {
       flex: 1,
       padding: 12,
@@ -1189,8 +1119,10 @@ function ClientPortal({
       color: '#9CA3AF',
       textAlign: 'center'
     }
-  }, "This invoice is private and only accessible via this link.")));
+  }, es ? 'Esta factura es privada y solo accesible a través de este enlace.' : 'This invoice is private and only accessible via this link.')));
 }
+
+// ── DRIVER VIEW ──
 function DriverView({
   name
 }) {
@@ -1198,17 +1130,10 @@ function DriverView({
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState('en');
   const load = async () => {
-    try {
-      const {
-        data
-      } = await sb.from('rentals').select('*').eq('assigned_driver', name).eq('deleted', false).order('due_date');
-      if (data) setJobs(data.filter(r => r.rental_status !== 'completed' && r.rental_status !== 'cancelled'));
-    } catch (e) {
-      const {
-        data
-      } = await sb.from('rentals').select('*').eq('assigned_driver', name).order('due_date');
-      if (data) setJobs(data.filter(r => r.rental_status !== 'completed'));
-    }
+    const {
+      data
+    } = await sb.from('rentals').select('*').eq('assigned_driver', name).order('due_date');
+    if (data) setJobs(data.filter(r => r.rental_status !== 'completed' && r.rental_status !== 'cancelled'));
     setLoading(false);
   };
   useEffect(() => {
@@ -3507,7 +3432,7 @@ function App() {
         border: '1px solid #BFDBFE'
       }
     }, "\uD83D\uDCDE"), r.client_email && /*#__PURE__*/React.createElement("a", {
-      href: 'mailto:' + r.client_email + '?subject=Invoice ' + r.id + ' — Sams Construction&body=Dear ' + r.client_name + ',%0A%0APlease find your rental invoice attached.%0A%0AInvoice: ' + r.id + '%0AEquipment: ' + r.asset + '%0AAmount Due: $' + r.price + '%0ADue Date: ' + r.due_date + '%0A%0AView your portal: ' + APP_URL + '/%23/portal/' + r.portal_token + '%0A%0APay via Zelle: ' + getZelle() + '%0A%0AThank you,%0ASams Construction Services LTD%0A' + OFFICE_PHONE,
+      href: 'mailto:' + r.client_email + '?subject=URGENT: Outstanding Balance — Invoice ' + r.id + ' — Sams Construction&body=Dear ' + r.client_name + ',%0A%0APlease find your rental invoice attached.%0A%0AInvoice: ' + r.id + '%0AEquipment: ' + r.asset + '%0AAmount Due: $' + r.price + '%0ADue Date: ' + r.due_date + '%0A%0AView your portal: ' + APP_URL + '/%23/portal/' + r.portal_token + '%0A%0APay via Zelle: ' + getZelle() + '%0A%0AThank you,%0ASams Construction Services LTD%0A' + OFFICE_PHONE,
       style: {
         padding: '4px 7px',
         borderRadius: 5,
