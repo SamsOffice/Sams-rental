@@ -1677,12 +1677,11 @@ function InvoiceTab({
 function ClientPortal({
   token
 }) {
-  const [rental, setRental] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
-  const [extDays, setExtDays] = useState(0);
-  const [extDone, setExtDone] = useState(false);
-  useEffect(() => {
+  const [rental, setRental] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  const [notFound, setNotFound] = React.useState(false);
+  const [payChoice, setPayChoice] = React.useState('');
+  React.useEffect(() => {
     sb.from('rentals').select('*').eq('portal_token', token).single().then(({
       data,
       error
@@ -1721,7 +1720,7 @@ function ClientPortal({
       margin: '12px 0'
     }
   }, "Invoice Not Found"), /*#__PURE__*/React.createElement("a", {
-    href: "tel:9176636369",
+    href: "tel:+19176636369",
     style: {
       color: '#2563EB'
     }
@@ -1729,22 +1728,10 @@ function ClientPortal({
   const days = daysUntil(rental.due_date);
   const od = days < 0 ? Math.abs(days) : 0;
   const isPaid = rental.payment_status === 'paid';
-  const dStep = driverStep(rental.driver_status);
-  const dailyRate = rental.price / rental.duration_days;
-  const extCost = extDays > 0 ? Math.round(dailyRate * extDays * 100) / 100 : 0;
-  const requestExt = async () => {
-    if (extDays === 0) return;
-    await sb.from('extension_requests').insert({
-      rental_id: rental.id,
-      client_name: rental.client_name,
-      extra_days: extDays,
-      extra_cost: extCost,
-      status: 'pending'
-    });
-    setExtDone(true);
-  };
-  const statusColor = isPaid ? '#065F46' : od > 0 ? '#991B1B' : days <= 2 ? '#92400E' : '#1D4ED8';
-  const statusBg = isPaid ? '#ECFDF5' : od > 0 ? '#FEF2F2' : days <= 2 ? '#FFFBEB' : '#EFF6FF';
+  const stepIdx = DRIVER_FLOW.findIndex(x => x.key === rental.driver_status);
+  const step = DRIVER_FLOW[stepIdx] || DRIVER_FLOW[0];
+  const ccTotal = Math.round(rental.price * 1.035 * 100) / 100;
+  const zelle = localStorage.getItem('sams_zelle') || '+1 (917) 663-6369';
   return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: '100vh',
@@ -1752,15 +1739,14 @@ function ClientPortal({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      background: '#fff',
-      borderBottom: '1px solid #E5E7EB',
+      background: '#111827',
       padding: '16px 20px'
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 15,
       fontWeight: 700,
-      color: '#1D4ED8'
+      color: '#fff'
     }
   }, "SAMS CONSTRUCTION SERVICES LTD"), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1770,14 +1756,50 @@ function ClientPortal({
     }
   }, "188-16 Woodhull Ave, Hollis NY 11423 \xB7 +1 (917) 663-6369")), /*#__PURE__*/React.createElement("div", {
     style: {
-      maxWidth: 480,
+      maxWidth: 500,
       margin: '0 auto',
       padding: '20px 16px',
       display: 'flex',
       flexDirection: 'column',
-      gap: 16
+      gap: 14
     }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+  }, od > 0 && !isPaid && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: '#7F1D1D',
+      border: '2px solid #DC2626',
+      borderRadius: 12,
+      padding: '18px',
+      color: '#fff'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 16,
+      fontWeight: 700,
+      marginBottom: 8
+    }
+  }, "\u26A0\uFE0F FORMAL NOTICE OF OVERDUE PAYMENT"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      lineHeight: 1.7,
+      marginBottom: 10
+    }
+  }, "Invoice ", /*#__PURE__*/React.createElement("strong", null, rental.id), " is ", /*#__PURE__*/React.createElement("strong", null, "OVERDUE by ", od, " day(s)"), ". The amount of ", /*#__PURE__*/React.createElement("strong", null, money(rental.price)), " must be paid immediately to avoid the following:"), /*#__PURE__*/React.createElement("ul", {
+    style: {
+      fontSize: 12,
+      lineHeight: 2.2,
+      paddingLeft: 16
+    }
+  }, /*#__PURE__*/React.createElement("li", null, "Immediate equipment repossession scheduling"), /*#__PURE__*/React.createElement("li", null, "Suspension of all active rentals with our company"), /*#__PURE__*/React.createElement("li", null, "Report to commercial credit agencies (D&B / Experian Business)"), /*#__PURE__*/React.createElement("li", null, "Filing of Mechanic's Lien on your job site property"), /*#__PURE__*/React.createElement("li", null, "All legal and collection fees added to your balance")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginTop: 12,
+      padding: '10px',
+      background: 'rgba(0,0,0,0.3)',
+      borderRadius: 8,
+      fontSize: 13,
+      fontWeight: 700,
+      textAlign: 'center'
+    }
+  }, "\uD83D\uDCDE Call immediately: +1 (917) 663-6369")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: '#9CA3AF'
@@ -1802,30 +1824,26 @@ function ClientPortal({
     }
   }, "\uD83D\uDCE6 Order Tracking"), /*#__PURE__*/React.createElement("div", {
     style: {
-      position: 'relative',
-      marginBottom: 8
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
       height: 8,
       background: '#F3F4F6',
-      borderRadius: 10
+      borderRadius: 10,
+      marginBottom: 16
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       height: '100%',
-      width: driverPct(rental.driver_status) + '%',
-      background: rental.driver_status === 'delivered' ? '#10B981' : '#2563EB',
+      width: step.pct + '%',
+      background: step.pct === 100 ? '#10B981' : '#2563EB',
       borderRadius: 10,
-      transition: 'width 0.5s'
+      transition: 'width 0.6s'
     }
-  }))), /*#__PURE__*/React.createElement("div", {
+  })), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
-      justifyContent: 'space-between'
+      flexDirection: 'column',
+      gap: 10
     }
   }, DRIVER_FLOW.map((st, i) => {
-    const stepIdx = DRIVER_FLOW.findIndex(x => x.key === rental.driver_status);
     const done = i <= stepIdx;
     const current = i === stepIdx;
     return /*#__PURE__*/React.createElement("div", {
@@ -1833,143 +1851,55 @@ function ClientPortal({
       style: {
         display: 'flex',
         alignItems: 'center',
-        gap: 8,
-        marginBottom: 6,
-        opacity: done ? 1 : 0.35
+        gap: 10
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
-        width: 22,
-        height: 22,
+        width: 24,
+        height: 24,
         borderRadius: '50%',
         background: done ? '#2563EB' : '#E5E7EB',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: 10,
+        fontSize: 11,
         color: '#fff',
         fontWeight: 700,
-        flexShrink: 0
+        flexShrink: 0,
+        opacity: done ? 1 : 0.4
       }
-    }, done ? '✓' : i + 1), /*#__PURE__*/React.createElement("div", {
+    }, done ? '✓' : i + 1), /*#__PURE__*/React.createElement("span", {
       style: {
-        fontSize: 12,
+        fontSize: 13,
         fontWeight: current ? 700 : 400,
-        color: current ? '#2563EB' : '#374151'
+        color: current ? '#2563EB' : '#374151',
+        opacity: done ? 1 : 0.5
       }
     }, st.en, current && /*#__PURE__*/React.createElement("span", {
       style: {
-        fontSize: 10,
+        fontSize: 11,
+        background: '#EFF6FF',
         color: '#2563EB',
-        marginLeft: 6
+        padding: '1px 6px',
+        borderRadius: 8,
+        marginLeft: 6,
+        fontWeight: 600
       }
-    }, "\u2190 Now")));
+    }, "Now")));
   })), /*#__PURE__*/React.createElement("div", {
     style: {
-      marginTop: 8,
-      padding: '10px',
+      marginTop: 12,
+      padding: '10px 14px',
       background: '#EFF6FF',
       borderRadius: 8,
       fontSize: 13,
       fontWeight: 600,
-      color: '#1D4ED8',
-      textAlign: 'center'
+      color: '#2563EB'
     }
-  }, "Current: ", driverStep(rental.driver_status).en)), rental.client_address && rental.driver_status !== 'delivered' && /*#__PURE__*/React.createElement("div", {
+  }, "Driver: ", /*#__PURE__*/React.createElement("strong", null, rental.assigned_driver), " \xB7 Status: ", /*#__PURE__*/React.createElement("strong", null, step.en))), /*#__PURE__*/React.createElement("div", {
     style: {
-      background: '#fff',
-      borderRadius: 12,
-      padding: '16px 18px',
-      border: '1px solid #F3F4F6'
-    }
-  }, /*#__PURE__*/React.createElement("h3", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700,
-      marginBottom: 10
-    }
-  }, "\uD83D\uDCCD Track Your Delivery"), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 12,
-      color: '#6B7280',
-      marginBottom: 12
-    }
-  }, "Your equipment is being delivered to: ", /*#__PURE__*/React.createElement("strong", null, rental.client_address)), /*#__PURE__*/React.createElement("a", {
-    href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(rental.client_address)}`,
-    target: "_blank",
-    style: {
-      display: 'block',
-      padding: '12px',
-      borderRadius: 9,
-      background: '#2563EB',
-      color: '#fff',
-      textDecoration: 'none',
-      fontSize: 14,
-      fontWeight: 700,
-      textAlign: 'center',
-      marginBottom: 8
-    }
-  }, "\uD83D\uDDFA View Delivery Address on Map"), /*#__PURE__*/React.createElement("a", {
-    href: `https://www.google.com/maps/dir/My+Location/${encodeURIComponent(rental.client_address)}`,
-    target: "_blank",
-    style: {
-      display: 'block',
-      padding: '12px',
-      borderRadius: 9,
-      background: '#F0F7FF',
-      color: '#1D4ED8',
-      textDecoration: 'none',
-      fontSize: 13,
-      fontWeight: 600,
-      textAlign: 'center',
-      border: '1px solid #BFDBFE'
-    }
-  }, "\uD83D\uDCCD Get Directions to Delivery Location"), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 11,
-      color: '#9CA3AF',
-      marginTop: 8,
-      textAlign: 'center'
-    }
-  }, "Driver: ", /*#__PURE__*/React.createElement("strong", null, rental.assigned_driver), " \u2014 Status: ", /*#__PURE__*/React.createElement("strong", null, driverStep(rental.driver_status).label))), od > 0 && !isPaid && /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#7F1D1D',
-      border: '2px solid #DC2626',
-      borderRadius: 12,
-      padding: '18px',
-      color: '#fff'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 16,
-      fontWeight: 700,
-      marginBottom: 8
-    }
-  }, "\u26A0\uFE0F FORMAL NOTICE OF OVERDUE PAYMENT"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      lineHeight: 1.7,
-      marginBottom: 10
-    }
-  }, "Invoice ", r && r.id, " is OVERDUE by ", od, " day(s). The amount of $", rental && rental.price && rental.price.toLocaleString(), " must be paid immediately to avoid the following consequences:"), /*#__PURE__*/React.createElement("ul", {
-    style: {
-      fontSize: 12,
-      lineHeight: 2,
-      paddingLeft: 16
-    }
-  }, /*#__PURE__*/React.createElement("li", null, "Immediate equipment repossession scheduling"), /*#__PURE__*/React.createElement("li", null, "Suspension of all active rentals"), /*#__PURE__*/React.createElement("li", null, "Report to commercial credit agencies (D&B / Experian)"), /*#__PURE__*/React.createElement("li", null, "Filing of Mechanic's Lien on your property"), /*#__PURE__*/React.createElement("li", null, "Legal and collection fees added to balance")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 12,
-      padding: '10px',
-      background: 'rgba(0,0,0,0.3)',
-      borderRadius: 8,
-      fontSize: 13,
-      fontWeight: 700
-    }
-  }, "Call immediately: +1 (917) 663-6369")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: statusBg,
-      border: '1px solid ' + statusColor + '44',
+      background: isPaid ? '#ECFDF5' : od > 0 ? '#FEF2F2' : days <= 2 ? '#FFFBEB' : '#EFF6FF',
+      border: '1px solid ' + (isPaid ? '#A7F3D0' : od > 0 ? '#FCA5A5' : days <= 2 ? '#FDE68A' : '#BFDBFE'),
       borderRadius: 12,
       padding: '16px 18px'
     }
@@ -1977,50 +1907,15 @@ function ClientPortal({
     style: {
       fontSize: 16,
       fontWeight: 700,
-      color: statusColor,
-      marginBottom: 4
+      color: isPaid ? '#065F46' : od > 0 ? '#991B1B' : days <= 2 ? '#92400E' : '#1D4ED8'
     }
   }, isPaid ? '✅ PAID IN FULL' : od > 0 ? `⚠️ ${od} DAYS OVERDUE` : days === 0 ? '⏰ DUE TODAY' : `${days} DAYS REMAINING`), !isPaid && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
-      color: '#6B7280'
+      color: '#6B7280',
+      marginTop: 4
     }
-  }, "Due back: ", fmtDate(rental.due_date))), !isPaid && /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#fff',
-      borderRadius: 12,
-      padding: '16px 18px',
-      border: '1px solid #F3F4F6'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      fontSize: 11,
-      color: '#9CA3AF',
-      marginBottom: 8
-    }
-  }, /*#__PURE__*/React.createElement("span", null, "Start: ", fmtDate(rental.start_date)), /*#__PURE__*/React.createElement("span", null, "Due: ", fmtDate(rental.due_date))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#F3F4F6',
-      borderRadius: 10,
-      height: 10
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      height: '100%',
-      width: Math.max(0, Math.min(100, (rental.duration_days - Math.max(0, days)) / rental.duration_days * 100)) + '%',
-      background: od > 0 ? '#EF4444' : '#2563EB',
-      borderRadius: 10
-    }
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: '#9CA3AF',
-      marginTop: 6,
-      textAlign: 'center'
-    }
-  }, rental.duration_days, " day rental")), /*#__PURE__*/React.createElement("div", {
+  }, "Due back: ", fmtDate(rental.due_date))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
       borderRadius: 12,
@@ -2033,7 +1928,7 @@ function ClientPortal({
       fontWeight: 700,
       marginBottom: 12
     }
-  }, "Rental Details"), [['Invoice', rental.id], ['Equipment', rental.asset], ['Start', fmtDate(rental.start_date)], ['Due', fmtDate(rental.due_date)], ['Duration', rental.duration_days + ' days'], ['Driver', rental.assigned_driver]].map(([l, v]) => /*#__PURE__*/React.createElement("div", {
+  }, "Invoice Details"), [['Invoice', rental.id], ['Equipment', rental.asset], ['Start Date', fmtDate(rental.start_date)], ['Due Date', fmtDate(rental.due_date)], ['Duration', rental.duration_days + ' days'], ['Driver', rental.assigned_driver]].map(([l, v]) => /*#__PURE__*/React.createElement("div", {
     key: l,
     style: {
       display: 'flex',
@@ -2048,8 +1943,7 @@ function ClientPortal({
     }
   }, l), /*#__PURE__*/React.createElement("span", {
     style: {
-      fontWeight: 500,
-      textAlign: 'right'
+      fontWeight: 500
     }
   }, v))), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -2072,77 +1966,346 @@ function ClientPortal({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      padding: '14px 18px',
-      borderBottom: '1px solid #F3F4F6'
+      background: '#111827',
+      padding: '14px 18px'
     }
   }, /*#__PURE__*/React.createElement("h3", {
     style: {
       fontSize: 14,
-      fontWeight: 700
+      fontWeight: 700,
+      color: '#fff'
     }
-  }, "\uD83D\uDCB3 Pay Now \u2014 ", money(rental.price))), /*#__PURE__*/React.createElement("div", {
+  }, "\uD83D\uDCB3 How Would You Like to Pay?")), /*#__PURE__*/React.createElement("div", {
     style: {
-      padding: '14px 18px',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 10
+      padding: '14px 18px'
     }
   }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: 8,
+      marginBottom: 14
+    }
+  }, [{
+    key: 'zelle',
+    icon: '⚡',
+    label: 'Zelle'
+  }, {
+    key: 'cash',
+    icon: '💵',
+    label: 'Cash'
+  }, {
+    key: 'check',
+    icon: '🏦',
+    label: 'Check'
+  }, {
+    key: 'venmo',
+    icon: '💜',
+    label: 'Venmo'
+  }, {
+    key: 'credit',
+    icon: '💳',
+    label: 'Credit Card'
+  }, {
+    key: 'bank',
+    icon: '🏛',
+    label: 'Bank Transfer'
+  }].map(m => /*#__PURE__*/React.createElement("button", {
+    key: m.key,
+    onClick: () => setPayChoice(payChoice === m.key ? '' : m.key),
+    style: {
+      padding: '10px 8px',
+      borderRadius: 9,
+      border: '2px solid ' + (payChoice === m.key ? '#2563EB' : '#E5E7EB'),
+      background: payChoice === m.key ? '#EFF6FF' : '#F9FAFB',
+      fontSize: 13,
+      fontWeight: 600,
+      cursor: 'pointer',
+      color: payChoice === m.key ? '#1D4ED8' : '#374151',
+      textAlign: 'center'
+    }
+  }, m.icon, " ", m.label))), payChoice === 'zelle' && /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#F0F7FF',
       border: '1px solid #BFDBFE',
       borderRadius: 10,
-      padding: '14px'
+      padding: '16px',
+      animation: 'fadeIn 0.2s'
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 14,
+      fontSize: 15,
       fontWeight: 700,
       color: '#1D4ED8',
+      marginBottom: 8
+    }
+  }, "\u26A1 Pay via Zelle"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
       marginBottom: 4
     }
-  }, "Zelle (Fastest)"), /*#__PURE__*/React.createElement("div", {
+  }, "Amount: ", /*#__PURE__*/React.createElement("strong", null, money(rental.price))), /*#__PURE__*/React.createElement("div", {
     style: {
-      fontSize: 13
+      fontSize: 13,
+      marginBottom: 12
     }
-  }, "Send to: ", /*#__PURE__*/React.createElement("strong", null, "+1 (917) 663-6369")), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      navigator.clipboard.writeText('+1 (917) 663-6369');
-    },
+  }, "Send to: ", /*#__PURE__*/React.createElement("strong", {
     style: {
-      marginTop: 8,
-      fontSize: 12,
-      padding: '6px 14px',
-      borderRadius: 6,
-      border: '1px solid #BFDBFE',
-      background: '#fff',
-      color: '#2563EB',
+      fontSize: 16
+    }
+  }, zelle)), /*#__PURE__*/React.createElement("button", {
+    onClick: () => navigator.clipboard.writeText(zelle),
+    style: {
+      width: '100%',
+      padding: '10px',
+      borderRadius: 8,
+      border: 'none',
+      background: '#2563EB',
+      color: '#fff',
+      fontSize: 14,
+      fontWeight: 700,
       cursor: 'pointer',
-      fontWeight: 600
+      marginBottom: 8
     }
-  }, "Copy Zelle Number")), /*#__PURE__*/React.createElement("div", {
+  }, "\uD83D\uDCCB Copy Zelle Number"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: '#6B7280',
+      textAlign: 'center'
+    }
+  }, "After sending, call us to confirm: +1 (917) 663-6369")), payChoice === 'cash' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: '#ECFDF5',
+      border: '1px solid #A7F3D0',
+      borderRadius: 10,
+      padding: '16px',
+      animation: 'fadeIn 0.2s'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 700,
+      color: '#065F46',
+      marginBottom: 8
+    }
+  }, "\uD83D\uDCB5 Cash Payment"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      marginBottom: 12
+    }
+  }, "Amount: ", /*#__PURE__*/React.createElement("strong", null, money(rental.price))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      color: '#374151',
+      marginBottom: 12
+    }
+  }, "Pay cash directly to the driver at delivery, or drop off at our office. Call us to arrange:"), /*#__PURE__*/React.createElement("a", {
+    href: "tel:+19176636369",
+    style: {
+      display: 'block',
+      padding: '12px',
+      borderRadius: 9,
+      background: '#065F46',
+      color: '#fff',
+      textDecoration: 'none',
+      fontSize: 14,
+      fontWeight: 700,
+      textAlign: 'center'
+    }
+  }, "\uD83D\uDCDE Call +1 (917) 663-6369")), payChoice === 'check' && /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#F9FAFB',
       border: '1px solid #E5E7EB',
       borderRadius: 10,
-      padding: '14px',
-      fontSize: 13
+      padding: '16px',
+      animation: 'fadeIn 0.2s'
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
+      fontSize: 15,
       fontWeight: 700,
+      marginBottom: 8
+    }
+  }, "\uD83C\uDFE6 Check Payment"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
       marginBottom: 4
     }
-  }, "Check"), "Payable to: ", /*#__PURE__*/React.createElement("strong", null, COMPANY), /*#__PURE__*/React.createElement("br", null), "Mail: 188-16 Woodhull Ave, Hollis NY 11423"), /*#__PURE__*/React.createElement("div", {
+  }, "Amount: ", /*#__PURE__*/React.createElement("strong", null, money(rental.price))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      marginBottom: 4
+    }
+  }, "Payable to: ", /*#__PURE__*/React.createElement("strong", null, "Sams Construction Services LTD")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      marginBottom: 12
+    }
+  }, "To arrange drop-off or pickup of your check, please call us:"), /*#__PURE__*/React.createElement("a", {
+    href: "tel:+19176636369",
+    style: {
+      display: 'block',
+      padding: '12px',
+      borderRadius: 9,
+      background: '#374151',
+      color: '#fff',
+      textDecoration: 'none',
+      fontSize: 14,
+      fontWeight: 700,
+      textAlign: 'center'
+    }
+  }, "\uD83D\uDCDE Call +1 (917) 663-6369")), payChoice === 'venmo' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: '#F5F3FF',
+      border: '1px solid #DDD6FE',
+      borderRadius: 10,
+      padding: '16px',
+      animation: 'fadeIn 0.2s'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 700,
+      color: '#5B21B6',
+      marginBottom: 8
+    }
+  }, "\uD83D\uDC9C Venmo Payment"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      marginBottom: 12
+    }
+  }, "Amount: ", /*#__PURE__*/React.createElement("strong", null, money(rental.price))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      marginBottom: 12
+    }
+  }, "Send your Venmo payment then call us to confirm receipt:"), /*#__PURE__*/React.createElement("a", {
+    href: "tel:+19176636369",
+    style: {
+      display: 'block',
+      padding: '12px',
+      borderRadius: 9,
+      background: '#5B21B6',
+      color: '#fff',
+      textDecoration: 'none',
+      fontSize: 14,
+      fontWeight: 700,
+      textAlign: 'center'
+    }
+  }, "\uD83D\uDCDE Call +1 (917) 663-6369")), payChoice === 'credit' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      borderRadius: 10,
+      border: '1px solid #FDE68A',
+      overflow: 'hidden',
+      animation: 'fadeIn 0.2s'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#FFFBEB',
-      border: '1px solid #FDE68A',
-      borderRadius: 8,
-      padding: '10px 14px',
+      padding: '12px 16px'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      fontWeight: 700,
+      color: '#92400E',
+      marginBottom: 4
+    }
+  }, "\u26A0\uFE0F NY State Credit Card Surcharge Notice"), /*#__PURE__*/React.createElement("div", {
+    style: {
       fontSize: 12,
+      color: '#92400E',
+      marginBottom: 6
+    }
+  }, "Pursuant to NY State law, credit card payments are subject to a ", /*#__PURE__*/React.createElement("strong", null, "3.5% processing fee"), "."), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 14,
+      fontWeight: 700,
       color: '#92400E'
     }
-  }, "After paying, confirm at samsconstructionltd23@outlook.com or +1 (917) 663-6369"))), !isPaid && /*#__PURE__*/React.createElement("div", {
+  }, "Original: ", money(rental.price), " \u2192 New Total: ", money(ccTotal))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: '#ECFDF5',
+      padding: '8px 16px',
+      display: 'flex',
+      gap: 8,
+      alignItems: 'center'
+    }
+  }, /*#__PURE__*/React.createElement("span", null, "\uD83D\uDD12"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: '#065F46',
+      fontWeight: 600
+    }
+  }, "PCI-DSS Compliant \xB7 SSL Encrypted \xB7 100% Secure")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      padding: '14px 16px',
+      background: '#fff'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      marginBottom: 10
+    }
+  }, "To pay by credit card, please call our office:"), /*#__PURE__*/React.createElement("a", {
+    href: "tel:+19176636369",
+    style: {
+      display: 'block',
+      padding: '12px',
+      borderRadius: 9,
+      background: '#2563EB',
+      color: '#fff',
+      textDecoration: 'none',
+      fontSize: 14,
+      fontWeight: 700,
+      textAlign: 'center'
+    }
+  }, "\uD83D\uDCDE Call +1 (917) 663-6369"))), payChoice === 'bank' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: '#F0F9FF',
+      border: '1px solid #BAE6FD',
+      borderRadius: 10,
+      padding: '16px',
+      animation: 'fadeIn 0.2s'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 15,
+      fontWeight: 700,
+      color: '#0369A1',
+      marginBottom: 8
+    }
+  }, "\uD83C\uDFDB Bank Transfer"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      marginBottom: 12
+    }
+  }, "Amount: ", /*#__PURE__*/React.createElement("strong", null, money(rental.price))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13,
+      marginBottom: 12
+    }
+  }, "For bank transfer / ACH details, please call our office:"), /*#__PURE__*/React.createElement("a", {
+    href: "tel:+19176636369",
+    style: {
+      display: 'block',
+      padding: '12px',
+      borderRadius: 9,
+      background: '#0369A1',
+      color: '#fff',
+      textDecoration: 'none',
+      fontSize: 14,
+      fontWeight: 700,
+      textAlign: 'center'
+    }
+  }, "\uD83D\uDCDE Call +1 (917) 663-6369")), !payChoice && /*#__PURE__*/React.createElement("div", {
+    style: {
+      textAlign: 'center',
+      padding: '14px',
+      color: '#9CA3AF',
+      fontSize: 13
+    }
+  }, "\uD83D\uDC46 Select a payment method above"))), !isPaid && /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
       borderRadius: 12,
@@ -2161,7 +2324,7 @@ function ClientPortal({
       color: '#6B7280',
       marginBottom: 12
     }
-  }, "Extensions cannot be requested online. Please call the office directly to request an extension."), /*#__PURE__*/React.createElement("a", {
+  }, "Extensions cannot be requested online. Please call our office and we will work with you directly."), /*#__PURE__*/React.createElement("a", {
     href: "tel:+19176636369",
     style: {
       display: 'block',
@@ -2178,13 +2341,13 @@ function ClientPortal({
     style: {
       background: '#fff',
       borderRadius: 12,
-      padding: '16px 18px',
+      padding: '14px 18px',
       border: '1px solid #F3F4F6',
       display: 'flex',
       gap: 10
     }
   }, /*#__PURE__*/React.createElement("a", {
-    href: "tel:9176636369",
+    href: "tel:+19176636369",
     style: {
       flex: 1,
       padding: 12,
@@ -2192,7 +2355,7 @@ function ClientPortal({
       background: '#EFF6FF',
       color: '#1D4ED8',
       textDecoration: 'none',
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: 600,
       textAlign: 'center'
     }
@@ -2205,7 +2368,7 @@ function ClientPortal({
       background: '#F9FAFB',
       color: '#374151',
       textDecoration: 'none',
-      fontSize: 14,
+      fontSize: 13,
       fontWeight: 600,
       textAlign: 'center',
       border: '1px solid #E5E7EB'
@@ -2218,2510 +2381,6 @@ function ClientPortal({
     }
   }, "This invoice is private and only accessible via this link.")));
 }
-
-// ── MAP TAB ──
-function MapTab({
-  rentals
-}) {
-  const [selected, setSelected] = useState(null);
-  const active = rentals.filter(r => r.rental_status === 'active' && r.client_address);
-
-  // Build Google Maps embed URL with all active job pins
-  const allAddresses = active.map(r => encodeURIComponent(r.client_address)).join('|');
-  const officeAddr = encodeURIComponent('188-16 Woodhull Ave, Hollis NY 11423');
-
-  // Multi-stop route for selected driver
-  const [routeDriver, setRouteDriver] = useState('');
-  const driverJobs = routeDriver ? active.filter(r => r.assigned_driver === routeDriver) : [];
-  const routeUrl = driverJobs.length > 0 ? `https://www.google.com/maps/dir/${officeAddr}/${driverJobs.map(r => encodeURIComponent(r.client_address)).join('/')}` : null;
-
-  // Overview map with all pins
-  const overviewUrl = active.length > 0 ? `https://www.google.com/maps/embed/v1/search?key=AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY&q=${allAddresses}&center=40.7128,-73.8765&zoom=11` : null;
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))',
-      gap: 12
-    }
-  }, active.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#fff',
-      borderRadius: 12,
-      padding: 32,
-      textAlign: 'center',
-      color: '#9CA3AF',
-      border: '1px solid #F3F4F6',
-      gridColumn: '1/-1'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 32
-    }
-  }, "\uD83D\uDDFA"), "No active jobs with addresses") : active.map(r => {
-    const d = daysUntil(r.due_date);
-    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.client_address)}`;
-    const routeFromOffice = `https://www.google.com/maps/dir/${officeAddr}/${encodeURIComponent(r.client_address)}`;
-    return /*#__PURE__*/React.createElement("div", {
-      key: r.id,
-      style: {
-        background: '#fff',
-        borderRadius: 10,
-        border: '1px solid ' + (selected === r.id ? '#2563EB' : '#F3F4F6'),
-        padding: '14px',
-        cursor: 'pointer',
-        transition: 'border 0.2s'
-      },
-      onClick: () => setSelected(selected === r.id ? null : r.id)
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 6
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        fontFamily: 'monospace',
-        color: '#9CA3AF'
-      }
-    }, r.id), /*#__PURE__*/React.createElement(DriverBadge, {
-      status: r.driver_status
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        fontWeight: 700,
-        marginBottom: 2
-      }
-    }, r.client_name), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: '#6B7280',
-        marginBottom: 8
-      }
-    }, "\uD83D\uDCCD ", r.client_address), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: '#6B7280',
-        marginBottom: 8
-      }
-    }, "\uD83D\uDC77 ", r.assigned_driver, " \xB7 ", d < 0 ? `${Math.abs(d)}d overdue` : `${d}d left`), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: 'flex',
-        gap: 6
-      }
-    }, /*#__PURE__*/React.createElement("a", {
-      href: mapsUrl,
-      target: "_blank",
-      style: {
-        flex: 1,
-        padding: '7px',
-        borderRadius: 6,
-        fontSize: 11,
-        fontWeight: 600,
-        background: '#EFF6FF',
-        color: '#1D4ED8',
-        textDecoration: 'none',
-        textAlign: 'center'
-      }
-    }, "\uD83D\uDCCD View"), /*#__PURE__*/React.createElement("a", {
-      href: routeFromOffice,
-      target: "_blank",
-      style: {
-        flex: 1,
-        padding: '7px',
-        borderRadius: 6,
-        fontSize: 11,
-        fontWeight: 600,
-        background: '#ECFDF5',
-        color: '#065F46',
-        textDecoration: 'none',
-        textAlign: 'center'
-      }
-    }, "\uD83D\uDE9B Route")));
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#fff',
-      borderRadius: 12,
-      border: '1px solid #F3F4F6',
-      padding: '18px'
-    }
-  }, /*#__PURE__*/React.createElement("h3", {
-    style: {
-      fontSize: 14,
-      fontWeight: 700,
-      marginBottom: 12
-    }
-  }, "\uD83D\uDE9B Driver Route Planner"), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 12,
-      color: '#6B7280',
-      marginBottom: 12
-    }
-  }, "Pick a driver to see their optimized route from the office through all their jobs."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      gap: 10,
-      flexWrap: 'wrap',
-      marginBottom: 12
-    }
-  }, ['', 'Sams', 'Gustavo', 'Jose Luis'].map(d => /*#__PURE__*/React.createElement("button", {
-    key: d,
-    onClick: () => setRouteDriver(d),
-    style: {
-      padding: '8px 16px',
-      borderRadius: 8,
-      fontSize: 13,
-      fontWeight: 600,
-      cursor: 'pointer',
-      border: '2px solid ' + (routeDriver === d ? '#2563EB' : '#E5E7EB'),
-      background: routeDriver === d ? '#EFF6FF' : '#fff',
-      color: routeDriver === d ? '#1D4ED8' : '#374151'
-    }
-  }, d || 'All Drivers'))), routeDriver && driverJobs.length === 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: 16,
-      background: '#F9FAFB',
-      borderRadius: 8,
-      fontSize: 13,
-      color: '#9CA3AF',
-      textAlign: 'center'
-    }
-  }, "No active jobs for ", routeDriver), routeDriver && driverJobs.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#F0F7FF',
-      borderRadius: 8,
-      padding: '12px 14px',
-      marginBottom: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: '#1D4ED8',
-      fontWeight: 600,
-      marginBottom: 6
-    }
-  }, "Route: Office \u2192 ", driverJobs.map(r => r.client_name).join(' → ')), driverJobs.map((r, i) => /*#__PURE__*/React.createElement("div", {
-    key: r.id,
-    style: {
-      fontSize: 12,
-      color: '#374151',
-      padding: '4px 0',
-      borderBottom: '1px solid #BFDBFE'
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontWeight: 700
-    }
-  }, "Stop ", i + 1, ":"), " ", r.client_name, " \u2014 ", r.client_address))), /*#__PURE__*/React.createElement("a", {
-    href: routeUrl,
-    target: "_blank",
-    style: {
-      display: 'block',
-      width: '100%',
-      padding: '13px',
-      borderRadius: 9,
-      background: '#2563EB',
-      color: '#fff',
-      textDecoration: 'none',
-      fontSize: 14,
-      fontWeight: 700,
-      textAlign: 'center'
-    }
-  }, "\uD83D\uDDFA Open Full Route in Google Maps"))), active.length > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#fff',
-      borderRadius: 12,
-      border: '1px solid #F3F4F6',
-      padding: '18px'
-    }
-  }, /*#__PURE__*/React.createElement("h3", {
-    style: {
-      fontSize: 14,
-      fontWeight: 700,
-      marginBottom: 8
-    }
-  }, "\uD83D\uDCCD View All Jobs on Google Maps"), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 12,
-      color: '#6B7280',
-      marginBottom: 12
-    }
-  }, "Opens Google Maps with all active job locations pinned."), /*#__PURE__*/React.createElement("a", {
-    href: `https://www.google.com/maps/search/${active.map(r => encodeURIComponent(r.client_address)).join('/')}`,
-    target: "_blank",
-    style: {
-      display: 'block',
-      width: '100%',
-      padding: '13px',
-      borderRadius: 9,
-      background: '#111827',
-      color: '#fff',
-      textDecoration: 'none',
-      fontSize: 14,
-      fontWeight: 700,
-      textAlign: 'center'
-    }
-  }, "\uD83D\uDDFA Open All Jobs in Google Maps")));
-}
-
-// ── SETTINGS TAB ──
-function SettingsTab({
-  showToast
-}) {
-  const [zelle, setZelle] = useState(localStorage.getItem('sams_zelle') || '+1 (917) 663-6369');
-  const [saved, setSaved] = useState(false);
-  const inp = {
-    width: '100%',
-    background: '#FAFAFA',
-    border: '1px solid #E5E7EB',
-    borderRadius: 8,
-    padding: '10px 12px',
-    fontSize: 14,
-    outline: 'none',
-    boxSizing: 'border-box'
-  };
-  const lbl = {
-    fontSize: 11,
-    fontWeight: 700,
-    textTransform: 'uppercase',
-    letterSpacing: '0.06em',
-    color: '#9CA3AF',
-    display: 'block',
-    marginBottom: 6
-  };
-  const save = () => {
-    localStorage.setItem('sams_zelle', zelle);
-    showToast('Zelle number updated ✓');
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  };
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      maxWidth: 560,
-      margin: '0 auto'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#fff',
-      borderRadius: 12,
-      border: '1px solid #F3F4F6',
-      overflow: 'hidden'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#111827',
-      padding: '16px 22px'
-    }
-  }, /*#__PURE__*/React.createElement("h3", {
-    style: {
-      fontSize: 14,
-      fontWeight: 700,
-      color: '#fff'
-    }
-  }, "\u2699\uFE0F Settings")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: '22px',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#F0F7FF',
-      border: '1px solid #BFDBFE',
-      borderRadius: 10,
-      padding: '18px'
-    }
-  }, /*#__PURE__*/React.createElement("h4", {
-    style: {
-      fontSize: 14,
-      fontWeight: 700,
-      color: '#1D4ED8',
-      marginBottom: 4
-    }
-  }, "\uD83D\uDCB3 Zelle Number"), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 12,
-      color: '#6B7280',
-      marginBottom: 14
-    }
-  }, "This is what clients see on their portal for payments. Update it whenever your Zelle number changes."), /*#__PURE__*/React.createElement("label", {
-    style: lbl
-  }, "Current Zelle Number"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      gap: 8
-    }
-  }, /*#__PURE__*/React.createElement("input", {
-    style: {
-      ...inp,
-      flex: 1
-    },
-    value: zelle,
-    onChange: e => setZelle(e.target.value),
-    placeholder: "+1 (917) 663-6369"
-  }), /*#__PURE__*/React.createElement("button", {
-    onClick: save,
-    style: {
-      padding: '10px 20px',
-      borderRadius: 8,
-      fontSize: 13,
-      fontWeight: 700,
-      cursor: 'pointer',
-      border: 'none',
-      background: '#2563EB',
-      color: '#fff',
-      whiteSpace: 'nowrap'
-    }
-  }, saved ? '✓ Saved' : 'Save')), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 11,
-      color: '#9CA3AF',
-      marginTop: 8
-    }
-  }, "\u26A0\uFE0F This is saved on this device only. Update on each device you use.")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#F9FAFB',
-      border: '1px solid #F3F4F6',
-      borderRadius: 10,
-      padding: '18px'
-    }
-  }, /*#__PURE__*/React.createElement("h4", {
-    style: {
-      fontSize: 14,
-      fontWeight: 700,
-      marginBottom: 4
-    }
-  }, "\uD83D\uDE9B Driver Links"), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 12,
-      color: '#6B7280',
-      marginBottom: 14
-    }
-  }, "Send these links to each driver. They bookmark it on their phone to update job status."), ['Sams', 'Gustavo', 'Jose Luis'].map(driver => {
-    const link = `${APP_URL}/#/driver/${encodeURIComponent(driver)}`;
-    return /*#__PURE__*/React.createElement("div", {
-      key: driver,
-      style: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '10px 12px',
-        background: '#fff',
-        borderRadius: 8,
-        border: '1px solid #E5E7EB',
-        marginBottom: 8,
-        gap: 10,
-        flexWrap: 'wrap'
-      }
-    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        fontWeight: 700
-      }
-    }, driver), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: '#9CA3AF',
-        fontFamily: 'monospace'
-      }
-    }, link)), /*#__PURE__*/React.createElement("button", {
-      onClick: () => {
-        navigator.clipboard.writeText(link);
-        showToast(driver + "'s link copied!");
-      },
-      style: {
-        padding: '6px 14px',
-        borderRadius: 6,
-        fontSize: 12,
-        fontWeight: 600,
-        cursor: 'pointer',
-        border: '1px solid #E5E7EB',
-        background: '#fff',
-        color: '#374151',
-        whiteSpace: 'nowrap'
-      }
-    }, "\uD83D\uDCCB Copy"));
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#FFFBEB',
-      border: '1px solid #FDE68A',
-      borderRadius: 10,
-      padding: '18px'
-    }
-  }, /*#__PURE__*/React.createElement("h4", {
-    style: {
-      fontSize: 14,
-      fontWeight: 700,
-      color: '#92400E',
-      marginBottom: 4
-    }
-  }, "\uD83D\uDD10 Login Credentials"), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 12,
-      color: '#6B7280',
-      marginBottom: 4
-    }
-  }, "Username: ", /*#__PURE__*/React.createElement("strong", null, "samsoffice2020")), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 12,
-      color: '#6B7280'
-    }
-  }, "Keep your password private. To reset, contact samsconstructionltd23@outlook.com")))));
-}
-
-// ── EDIT RENTAL MODAL ──
-function EditRentalModal({
-  rental,
-  onClose,
-  onSaved,
-  showToast
-}) {
-  const [form, setForm] = useState({
-    ...rental
-  });
-  const [saving, setSaving] = useState(false);
-  const [assets, setAssets] = useState([]);
-  const set = (k, v) => setForm(f => ({
-    ...f,
-    [k]: v
-  }));
-  useEffect(() => {
-    sb.from('assets').select('*').order('category').order('name').then(({
-      data
-    }) => {
-      if (data) setAssets(data);
-    });
-  }, []);
-  const inp = {
-    width: '100%',
-    background: '#FAFAFA',
-    border: '1px solid #E5E7EB',
-    borderRadius: 8,
-    padding: '10px 12px',
-    fontSize: 13,
-    outline: 'none',
-    boxSizing: 'border-box'
-  };
-  const lbl = {
-    fontSize: 11,
-    fontWeight: 700,
-    textTransform: 'uppercase',
-    letterSpacing: '0.06em',
-    color: '#9CA3AF',
-    display: 'block',
-    marginBottom: 6
-  };
-  const save = async () => {
-    setSaving(true);
-    const {
-      error
-    } = await sb.from('rentals').update({
-      client_name: form.client_name,
-      client_phone: form.client_phone,
-      client_email: form.client_email,
-      client_address: form.client_address,
-      asset: form.asset,
-      assigned_driver: form.assigned_driver,
-      start_date: form.start_date,
-      due_date: form.due_date,
-      price: parseFloat(form.price),
-      payment_status: form.payment_status,
-      payment_method: form.payment_method,
-      rental_status: form.rental_status,
-      driver_status: form.driver_status,
-      notes: form.notes
-    }).eq('id', rental.id);
-    setSaving(false);
-    if (error) {
-      showToast('Error: ' + error.message);
-      return;
-    }
-    onSaved();
-  };
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(0,0,0,0.4)',
-      zIndex: 300,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#fff',
-      borderRadius: 14,
-      width: '100%',
-      maxWidth: 580,
-      maxHeight: '90vh',
-      overflowY: 'auto'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: '18px 22px',
-      borderBottom: '1px solid #F3F4F6',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      position: 'sticky',
-      top: 0,
-      background: '#fff'
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h2", {
-    style: {
-      fontSize: 16,
-      fontWeight: 700
-    }
-  }, "Edit Rental"), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 11,
-      color: '#9CA3AF'
-    }
-  }, rental.id)), /*#__PURE__*/React.createElement("button", {
-    onClick: onClose,
-    style: {
-      width: 28,
-      height: 28,
-      borderRadius: '50%',
-      border: '1px solid #E5E7EB',
-      background: '#F9FAFB',
-      cursor: 'pointer',
-      fontSize: 16,
-      color: '#6B7280'
-    }
-  }, "\xD7")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: 22,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 14
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gap: 12
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      gridColumn: '1/-1'
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    style: lbl
-  }, "Client Name"), /*#__PURE__*/React.createElement("input", {
-    style: inp,
-    value: form.client_name || '',
-    onChange: e => set('client_name', e.target.value)
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: lbl
-  }, "Phone"), /*#__PURE__*/React.createElement("input", {
-    style: inp,
-    value: form.client_phone || '',
-    onChange: e => set('client_phone', e.target.value)
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: lbl
-  }, "Email"), /*#__PURE__*/React.createElement("input", {
-    style: inp,
-    value: form.client_email || '',
-    onChange: e => set('client_email', e.target.value)
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      gridColumn: '1/-1'
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    style: lbl
-  }, "Address"), /*#__PURE__*/React.createElement("input", {
-    style: inp,
-    value: form.client_address || '',
-    onChange: e => set('client_address', e.target.value)
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      gridColumn: '1/-1'
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    style: lbl
-  }, "Equipment"), /*#__PURE__*/React.createElement("select", {
-    style: {
-      ...inp,
-      cursor: 'pointer'
-    },
-    value: form.asset || '',
-    onChange: e => set('asset', e.target.value)
-  }, /*#__PURE__*/React.createElement("optgroup", {
-    label: "Machines"
-  }, assets.filter(a => a.category === 'Machine').map(a => /*#__PURE__*/React.createElement("option", {
-    key: a.id
-  }, a.name))), /*#__PURE__*/React.createElement("optgroup", {
-    label: "Tools"
-  }, assets.filter(a => a.category === 'Tool').map(a => /*#__PURE__*/React.createElement("option", {
-    key: a.id
-  }, a.name))))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: lbl
-  }, "Driver"), /*#__PURE__*/React.createElement("select", {
-    style: {
-      ...inp,
-      cursor: 'pointer'
-    },
-    value: form.assigned_driver || '',
-    onChange: e => set('assigned_driver', e.target.value)
-  }, ['Sams', 'Gustavo', 'Jose Luis'].map(d => /*#__PURE__*/React.createElement("option", {
-    key: d
-  }, d)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: lbl
-  }, "Driver Status"), /*#__PURE__*/React.createElement("select", {
-    style: {
-      ...inp,
-      cursor: 'pointer'
-    },
-    value: form.driver_status || 'assigned',
-    onChange: e => set('driver_status', e.target.value)
-  }, /*#__PURE__*/React.createElement("option", {
-    value: "assigned"
-  }, "\uD83D\uDCCB Assigned"), /*#__PURE__*/React.createElement("option", {
-    value: "on_the_way"
-  }, "\uD83D\uDE9B On the Way"), /*#__PURE__*/React.createElement("option", {
-    value: "picked_up"
-  }, "\uD83D\uDCE6 Picked Up"), /*#__PURE__*/React.createElement("option", {
-    value: "delivered"
-  }, "\u2705 Delivered"))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: lbl
-  }, "Start Date"), /*#__PURE__*/React.createElement("input", {
-    type: "date",
-    style: inp,
-    value: form.start_date || '',
-    onChange: e => set('start_date', e.target.value)
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: lbl
-  }, "Due Date"), /*#__PURE__*/React.createElement("input", {
-    type: "date",
-    style: inp,
-    value: form.due_date || '',
-    onChange: e => set('due_date', e.target.value)
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: lbl
-  }, "Price ($)"), /*#__PURE__*/React.createElement("input", {
-    type: "number",
-    style: inp,
-    value: form.price || '',
-    onChange: e => set('price', e.target.value)
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: lbl
-  }, "Payment Status"), /*#__PURE__*/React.createElement("select", {
-    style: {
-      ...inp,
-      cursor: 'pointer'
-    },
-    value: form.payment_status || 'unpaid',
-    onChange: e => set('payment_status', e.target.value)
-  }, /*#__PURE__*/React.createElement("option", {
-    value: "unpaid"
-  }, "Unpaid"), /*#__PURE__*/React.createElement("option", {
-    value: "partial"
-  }, "Partial"), /*#__PURE__*/React.createElement("option", {
-    value: "paid"
-  }, "Paid"))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: lbl
-  }, "Payment Method"), /*#__PURE__*/React.createElement("select", {
-    style: {
-      ...inp,
-      cursor: 'pointer'
-    },
-    value: form.payment_method || '',
-    onChange: e => set('payment_method', e.target.value)
-  }, /*#__PURE__*/React.createElement("option", {
-    value: ""
-  }, "\u2014"), ['Cash', 'Check', 'Zelle', 'Venmo', 'Card', 'Bank Transfer'].map(m => /*#__PURE__*/React.createElement("option", {
-    key: m
-  }, m)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: lbl
-  }, "Rental Status"), /*#__PURE__*/React.createElement("select", {
-    style: {
-      ...inp,
-      cursor: 'pointer'
-    },
-    value: form.rental_status || 'active',
-    onChange: e => set('rental_status', e.target.value)
-  }, /*#__PURE__*/React.createElement("option", {
-    value: "active"
-  }, "Active"), /*#__PURE__*/React.createElement("option", {
-    value: "completed"
-  }, "Completed"), /*#__PURE__*/React.createElement("option", {
-    value: "cancelled"
-  }, "Cancelled"))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      gridColumn: '1/-1'
-    }
-  }, /*#__PURE__*/React.createElement("label", {
-    style: lbl
-  }, "Notes"), /*#__PURE__*/React.createElement("textarea", {
-    style: {
-      ...inp,
-      minHeight: 60
-    },
-    value: form.notes || '',
-    onChange: e => set('notes', e.target.value)
-  })))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: '14px 22px',
-      borderTop: '1px solid #F3F4F6',
-      display: 'flex',
-      gap: 10,
-      position: 'sticky',
-      bottom: 0,
-      background: '#fff'
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: onClose,
-    style: {
-      flex: 1,
-      padding: 11,
-      borderRadius: 8,
-      fontSize: 13,
-      fontWeight: 600,
-      cursor: 'pointer',
-      border: '1px solid #E5E7EB',
-      background: '#fff',
-      color: '#374151'
-    }
-  }, "Cancel"), /*#__PURE__*/React.createElement("button", {
-    onClick: save,
-    disabled: saving,
-    style: {
-      flex: 2,
-      padding: 11,
-      borderRadius: 8,
-      fontSize: 13,
-      fontWeight: 700,
-      cursor: 'pointer',
-      border: 'none',
-      background: saving ? '#9CA3AF' : '#111827',
-      color: '#fff'
-    }
-  }, saving ? 'Saving...' : 'Save Changes'))));
-}
-
-// ── LOGIN ──
-
-function ScheduleTab({
-  rentals
-}) {
-  const active = rentals.filter(r => r.rental_status === 'active');
-  const today = new Date();
-  const days = Array.from({
-    length: 30
-  }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() + i);
-    return d;
-  });
-  const getRentalsForDay = date => {
-    const ds = date.toISOString().slice(0, 10);
-    return active.filter(r => ds >= r.start_date && ds <= r.due_date);
-  };
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#fff',
-      borderRadius: 12,
-      border: '1px solid #F3F4F6',
-      overflow: 'hidden'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#111827',
-      padding: '14px 18px'
-    }
-  }, /*#__PURE__*/React.createElement("h3", {
-    style: {
-      fontSize: 14,
-      fontWeight: 700,
-      color: '#fff'
-    }
-  }, "\uD83D\uDCCB Current Equipment Status")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: 16,
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))',
-      gap: 10
-    }
-  }, active.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: 'center',
-      padding: 24,
-      color: '#9CA3AF'
-    }
-  }, "No equipment currently rented") : active.map(r => {
-    const d = Math.ceil((new Date(r.due_date) - new Date().setHours(0, 0, 0, 0)) / 86400000);
-    return /*#__PURE__*/React.createElement("div", {
-      key: r.id,
-      style: {
-        background: '#F9FAFB',
-        borderRadius: 8,
-        padding: 12,
-        border: '1px solid ' + (d < 0 ? '#FCA5A5' : d <= 2 ? '#FDE68A' : '#E5E7EB')
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        fontWeight: 700,
-        marginBottom: 4
-      }
-    }, r.asset), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: '#6B7280',
-        marginBottom: 2
-      }
-    }, "Client: ", r.client_name), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: '#6B7280',
-        marginBottom: 6
-      }
-    }, "Driver: ", r.assigned_driver), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        marginBottom: 4
-      }
-    }, "Return: ", /*#__PURE__*/React.createElement("strong", null, r.due_date)), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 10,
-        fontWeight: 700,
-        padding: '2px 8px',
-        borderRadius: 10,
-        background: d < 0 ? '#FEF2F2' : d <= 2 ? '#FFFBEB' : '#ECFDF5',
-        color: d < 0 ? '#991B1B' : d <= 2 ? '#92400E' : '#065F46'
-      }
-    }, d < 0 ? Math.abs(d) + 'd overdue' : d === 0 ? 'due today' : d + 'd left'));
-  }))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#fff',
-      borderRadius: 12,
-      border: '1px solid #F3F4F6',
-      overflow: 'hidden'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#111827',
-      padding: '14px 18px'
-    }
-  }, /*#__PURE__*/React.createElement("h3", {
-    style: {
-      fontSize: 14,
-      fontWeight: 700,
-      color: '#fff'
-    }
-  }, "\uD83D\uDCC5 30-Day Schedule")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: 16,
-      overflowX: 'auto'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(7,1fr)',
-      gap: 4,
-      minWidth: 500
-    }
-  }, ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => /*#__PURE__*/React.createElement("div", {
-    key: d,
-    style: {
-      textAlign: 'center',
-      fontSize: 10,
-      fontWeight: 700,
-      color: '#9CA3AF',
-      padding: '4px'
-    }
-  }, d)), Array.from({
-    length: today.getDay()
-  }).map((_, i) => /*#__PURE__*/React.createElement("div", {
-    key: 'off' + i
-  })), days.map((date, i) => {
-    const rents = getRentalsForDay(date);
-    const isToday = date.toISOString().slice(0, 10) === today.toISOString().slice(0, 10);
-    return /*#__PURE__*/React.createElement("div", {
-      key: i,
-      style: {
-        border: '1px solid #F3F4F6',
-        borderRadius: 6,
-        padding: '4px',
-        minHeight: 56,
-        background: isToday ? '#EFF6FF' : '#fff'
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        fontWeight: isToday ? 700 : 400,
-        color: isToday ? '#2563EB' : '#6B7280',
-        marginBottom: 2
-      }
-    }, date.getDate()), rents.slice(0, 2).map((r, j) => /*#__PURE__*/React.createElement("div", {
-      key: j,
-      style: {
-        fontSize: 8,
-        fontWeight: 600,
-        background: '#BFDBFE',
-        color: '#1D4ED8',
-        borderRadius: 3,
-        padding: '1px 3px',
-        marginBottom: 1,
-        overflow: 'hidden',
-        whiteSpace: 'nowrap',
-        textOverflow: 'ellipsis'
-      }
-    }, r.asset.split(' ').slice(-1)[0])), rents.length > 2 && /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 8,
-        color: '#9CA3AF'
-      }
-    }, "+", rents.length - 2));
-  })))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#fff',
-      borderRadius: 12,
-      border: '1px solid #F3F4F6',
-      overflow: 'hidden'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#111827',
-      padding: '14px 18px'
-    }
-  }, /*#__PURE__*/React.createElement("h3", {
-    style: {
-      fontSize: 14,
-      fontWeight: 700,
-      color: '#fff'
-    }
-  }, "\u23F0 Upcoming Returns")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: 16
-    }
-  }, [...active].sort((a, b) => new Date(a.due_date) - new Date(b.due_date)).map(r => {
-    const d = Math.ceil((new Date(r.due_date) - new Date().setHours(0, 0, 0, 0)) / 86400000);
-    return /*#__PURE__*/React.createElement("div", {
-      key: r.id,
-      style: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '10px 0',
-        borderBottom: '1px solid #F3F4F6',
-        flexWrap: 'wrap',
-        gap: 8
-      }
-    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        fontWeight: 600
-      }
-    }, r.asset), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        color: '#6B7280'
-      }
-    }, r.client_name, " \xB7 ", r.assigned_driver)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: 'right'
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        fontFamily: 'monospace'
-      }
-    }, r.due_date), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 11,
-        fontWeight: 600,
-        color: d < 0 ? '#DC2626' : d <= 2 ? '#D97706' : '#059669'
-      }
-    }, d < 0 ? Math.abs(d) + 'd overdue' : d === 0 ? 'today' : d + 'd left')));
-  }), active.length === 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: 'center',
-      padding: 24,
-      color: '#9CA3AF'
-    }
-  }, "No active rentals"))));
-}
-function Login({
-  onLogin
-}) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [forgot, setForgot] = useState(false);
-  const go = async e => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    await new Promise(r => setTimeout(r, 400));
-    if (username === 'samsoffice2020' && password === 'samsconsDRIVES2020') {
-      onLogin({
-        username: 'samsoffice2020',
-        role: 'secretary',
-        name: 'Secretary'
-      });
-    } else {
-      setError('Invalid username or password.');
-      setLoading(false);
-    }
-  };
-  const inp = {
-    width: '100%',
-    background: '#FAFAFA',
-    border: '1px solid #E5E7EB',
-    borderRadius: 8,
-    padding: '10px 12px',
-    fontSize: 14,
-    outline: 'none'
-  };
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: '100%',
-      maxWidth: 400
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: 'center',
-      marginBottom: 32
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 20,
-      fontWeight: 700
-    }
-  }, "Sams Construction Services LTD"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: '#9CA3AF'
-    }
-  }, "Private Internal System \u2014 Staff Only")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#fff',
-      borderRadius: 14,
-      padding: '32px 28px',
-      boxShadow: '0 4px 24px rgba(0,0,0,0.07)',
-      border: '1px solid #F3F4F6'
-    }
-  }, forgot ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: 'center'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 32,
-      marginBottom: 12
-    }
-  }, "\uD83D\uDD10"), /*#__PURE__*/React.createElement("h2", {
-    style: {
-      fontSize: 16,
-      fontWeight: 700,
-      marginBottom: 8
-    }
-  }, "Forgot Password?"), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 13,
-      color: '#6B7280',
-      marginBottom: 20
-    }
-  }, "Contact the office and we'll reset your access."), /*#__PURE__*/React.createElement("a", {
-    href: "mailto:samsconstructionltd23@outlook.com",
-    style: {
-      display: 'block',
-      padding: '12px',
-      borderRadius: 9,
-      background: '#2563EB',
-      color: '#fff',
-      textDecoration: 'none',
-      fontSize: 14,
-      fontWeight: 700,
-      marginBottom: 10
-    }
-  }, "\u2709 samsconstructionltd23@outlook.com"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setForgot(false),
-    style: {
-      fontSize: 13,
-      color: '#6B7280',
-      background: 'none',
-      border: 'none',
-      cursor: 'pointer',
-      textDecoration: 'underline'
-    }
-  }, "\u2190 Back to Sign In")) : /*#__PURE__*/React.createElement("form", {
-    onSubmit: go,
-    style: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 16
-    }
-  }, /*#__PURE__*/React.createElement("h1", {
-    style: {
-      fontSize: 18,
-      fontWeight: 700
-    }
-  }, "Sign In"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: {
-      fontSize: 11,
-      fontWeight: 700,
-      color: '#6B7280',
-      textTransform: 'uppercase',
-      display: 'block',
-      marginBottom: 6
-    }
-  }, "Username"), /*#__PURE__*/React.createElement("input", {
-    style: inp,
-    type: "text",
-    value: username,
-    onChange: e => setUsername(e.target.value),
-    required: true,
-    placeholder: "Enter username",
-    autoComplete: "username"
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: {
-      fontSize: 11,
-      fontWeight: 700,
-      color: '#6B7280',
-      textTransform: 'uppercase',
-      display: 'block',
-      marginBottom: 6
-    }
-  }, "Password"), /*#__PURE__*/React.createElement("input", {
-    style: inp,
-    type: "password",
-    value: password,
-    onChange: e => setPassword(e.target.value),
-    required: true,
-    placeholder: "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"
-  })), error && /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#FEF2F2',
-      border: '1px solid #FCA5A5',
-      borderRadius: 8,
-      padding: '10px 14px',
-      fontSize: 13,
-      color: '#991B1B'
-    }
-  }, error), /*#__PURE__*/React.createElement("button", {
-    type: "submit",
-    disabled: loading,
-    style: {
-      padding: 12,
-      borderRadius: 9,
-      background: loading ? '#9CA3AF' : '#2563EB',
-      color: '#fff',
-      border: 'none',
-      fontSize: 14,
-      fontWeight: 700,
-      cursor: 'pointer'
-    }
-  }, loading ? 'Signing in...' : 'Sign In'), /*#__PURE__*/React.createElement("button", {
-    type: "button",
-    onClick: () => setForgot(true),
-    style: {
-      fontSize: 12,
-      color: '#9CA3AF',
-      background: 'none',
-      border: 'none',
-      cursor: 'pointer',
-      textDecoration: 'underline',
-      padding: 0
-    }
-  }, "Forgot password?")))));
-}
-
-// ── CLIENT PANEL ──
-function ClientPanel({
-  client,
-  rentals,
-  onClose,
-  copyLink,
-  showToast
-}) {
-  const h = rentals.filter(r => r.client_name === client);
-  const paid = h.filter(r => r.payment_status === 'paid').reduce((s, r) => s + r.price, 0);
-  const owed = h.filter(r => r.payment_status !== 'paid').reduce((s, r) => s + r.price, 0);
-  const r0 = h[0];
-  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-    onClick: onClose,
-    style: {
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(0,0,0,0.25)',
-      zIndex: 200
-    }
-  }), /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: 'fixed',
-      top: 0,
-      right: 0,
-      bottom: 0,
-      width: 440,
-      maxWidth: '100%',
-      background: '#fff',
-      zIndex: 201,
-      boxShadow: '-8px 0 40px rgba(0,0,0,0.12)',
-      overflowY: 'auto'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: '20px 22px',
-      borderBottom: '1px solid #F3F4F6',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      position: 'sticky',
-      top: 0,
-      background: '#fff'
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 10,
-      fontWeight: 700,
-      textTransform: 'uppercase',
-      color: '#9CA3AF'
-    }
-  }, "Client Profile"), /*#__PURE__*/React.createElement("h2", {
-    style: {
-      fontSize: 18,
-      fontWeight: 700
-    }
-  }, client)), /*#__PURE__*/React.createElement("button", {
-    onClick: onClose,
-    style: {
-      width: 28,
-      height: 28,
-      borderRadius: '50%',
-      border: '1px solid #E5E7EB',
-      background: '#F9FAFB',
-      cursor: 'pointer',
-      fontSize: 15,
-      color: '#6B7280'
-    }
-  }, "\xD7")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: '16px 22px',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 14
-    }
-  }, r0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#F9FAFB',
-      borderRadius: 8,
-      padding: '12px 14px',
-      fontSize: 12,
-      lineHeight: 1.9
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("strong", {
-    style: {
-      color: '#6B7280'
-    }
-  }, "Phone:"), " ", r0.client_phone || '—'), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("strong", {
-    style: {
-      color: '#6B7280'
-    }
-  }, "Email:"), " ", r0.client_email || '—'), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("strong", {
-    style: {
-      color: '#6B7280'
-    }
-  }, "Address:"), " ", r0.client_address || '—')), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(3,1fr)',
-      gap: 10
-    }
-  }, [{
-    l: 'Rentals',
-    v: h.length,
-    c: '#111827'
-  }, {
-    l: 'Paid',
-    v: money(paid),
-    c: '#065F46'
-  }, {
-    l: 'Owed',
-    v: money(owed),
-    c: owed > 0 ? '#991B1B' : '#065F46'
-  }].map(s => /*#__PURE__*/React.createElement("div", {
-    key: s.l,
-    style: {
-      background: '#fff',
-      border: '1px solid #F3F4F6',
-      borderRadius: 8,
-      padding: '10px 12px'
-    }
-  }, /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 10,
-      fontWeight: 700,
-      textTransform: 'uppercase',
-      color: '#9CA3AF',
-      marginBottom: 5
-    }
-  }, s.l), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 16,
-      fontWeight: 700,
-      color: s.c
-    }
-  }, s.v)))), /*#__PURE__*/React.createElement("h4", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700
-    }
-  }, "History (", h.length, ")"), h.map(r => /*#__PURE__*/React.createElement("div", {
-    key: r.id,
-    style: {
-      background: '#fff',
-      border: '1px solid #F3F4F6',
-      borderRadius: 8,
-      padding: '12px 14px'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      marginBottom: 6
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700
-    }
-  }, r.asset), /*#__PURE__*/React.createElement(PayBadge, {
-    status: r.payment_status
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: '#6B7280',
-      lineHeight: 1.8
-    }
-  }, "Due: ", fmtDate(r.due_date), " \xB7 ", money(r.price), /*#__PURE__*/React.createElement("br", null), "Driver: ", r.assigned_driver), /*#__PURE__*/React.createElement("button", {
-    onClick: () => copyLink(r.portal_token),
-    style: {
-      marginTop: 8,
-      padding: '4px 10px',
-      borderRadius: 5,
-      fontSize: 11,
-      fontWeight: 600,
-      background: '#F0F7FF',
-      color: '#2563EB',
-      border: '1px solid #BFDBFE',
-      cursor: 'pointer'
-    }
-  }, "\uD83D\uDD17 Copy Portal Link"))))));
-}
-
-// ── MAIN APP ──
-function App() {
-  // Check if this is a client portal link first
-  const path = window.location.hash.slice(1);
-  const portalMatch = path.match(/^\/portal\/(.+)$/);
-  if (portalMatch) return /*#__PURE__*/React.createElement(ClientPortal, {
-    token: portalMatch[1]
-  });
-  const driverMatch = path.match(/^\/driver\/(.+)$/);
-  if (driverMatch) return /*#__PURE__*/React.createElement(DriverView, {
-    name: decodeURIComponent(driverMatch[1])
-  });
-  const [user, setUser] = useState(null);
-  const [lang, setLang] = useState(localStorage.getItem('sams_lang') || 'en');
-  const [tab, setTab] = useState('dashboard');
-  const [rentals, setRentals] = useState([]);
-  const [extensions, setExtensions] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState('');
-  const [showForm, setShowForm] = useState(false);
-  const [showEquip, setShowEquip] = useState(false);
-  const [clientPanel, setClientPanel] = useState(null);
-  const [search, setSearch] = useState('');
-  const [editRental, setEditRental] = useState(null);
-  const [deleted, setDeleted] = useState([]);
-  const [showDeleted, setShowDeleted] = useState(false);
-  useEffect(() => {
-    const u = localStorage.getItem('sams_user');
-    if (u) setUser(JSON.parse(u));
-  }, []);
-  useEffect(() => {
-    if (user) loadData();
-  }, [user]);
-  const loadData = async () => {
-    setLoading(true);
-    const [{
-      data: r
-    }, {
-      data: e
-    }] = await Promise.all([sb.from('rentals').select('*').order('created_at', {
-      ascending: false
-    }), sb.from('extension_requests').select('*').eq('status', 'pending')]);
-    if (r) setRentals(r);
-    if (e) setExtensions(e);
-    setLoading(false);
-  };
-  const showToast = m => {
-    setToast(m);
-    setTimeout(() => setToast(''), 3000);
-  };
-  const copyLink = t => {
-    navigator.clipboard.writeText(`${APP_URL}/#/portal/${t}`);
-    showToast('Portal link copied!');
-  };
-  const softDelete = async id => {
-    if (!window.confirm('Move rental ' + id + ' to Recently Deleted?')) return;
-    if (!window.confirm('Are you sure? You can restore it anytime.')) return;
-    await sb.from('rentals').update({
-      deleted: true
-    }).eq('id', id);
-    showToast('Moved to recently deleted');
-    loadData();
-  };
-  const restoreRental = async id => {
-    await sb.from('rentals').update({
-      deleted: false
-    }).eq('id', id);
-    showToast('Restored ✓');
-    loadData();
-  };
-  const hardDelete = async id => {
-    if (!window.confirm('DELETE PERMANENTLY? This cannot be undone!')) return;
-    if (!window.confirm('FINAL CONFIRMATION: Delete forever?')) return;
-    await sb.from('rentals').delete().eq('id', id);
-    showToast('Permanently deleted');
-    loadData();
-  };
-  const markPaid = async id => {
-    await sb.from('rentals').update({
-      payment_status: 'paid'
-    }).eq('id', id);
-    showToast('Marked paid ✓');
-    loadData();
-  };
-  const setDriverStatus = async (id, status) => {
-    await sb.from('rentals').update({
-      driver_status: status
-    }).eq('id', id);
-    showToast('Status updated ✓');
-    loadData();
-  };
-  const approveExt = async ext => {
-    const r = rentals.find(x => x.id === ext.rental_id);
-    if (!r) return;
-    const d = new Date(r.due_date);
-    d.setDate(d.getDate() + ext.extra_days);
-    await sb.from('rentals').update({
-      due_date: d.toISOString().slice(0, 10),
-      price: r.price + ext.extra_cost
-    }).eq('id', ext.rental_id);
-    await sb.from('extension_requests').update({
-      status: 'approved'
-    }).eq('id', ext.id);
-    showToast('Extension approved ✓');
-    loadData();
-  };
-  const denyExt = async id => {
-    await sb.from('extension_requests').update({
-      status: 'denied'
-    }).eq('id', id);
-    loadData();
-  };
-  const deleteRental = async id => {
-    if (!window.confirm('Delete rental ' + id + '? This cannot be undone.')) return;
-    await sb.from('rentals').delete().eq('id', id);
-    showToast('Rental deleted');
-    loadData();
-  };
-  if (!user) return /*#__PURE__*/React.createElement(Login, {
-    onLogin: u => {
-      localStorage.setItem('sams_user', JSON.stringify(u));
-      setUser(u);
-    }
-  });
-  const filteredRentals = search ? rentals.filter(r => (r.client_name || '').toLowerCase().includes(search.toLowerCase()) || (r.asset || '').toLowerCase().includes(search.toLowerCase()) || (r.id || '').toLowerCase().includes(search.toLowerCase())) : rentals;
-  const active = rentals.filter(r => r.rental_status === 'active').length;
-  const overdue = rentals.filter(r => daysUntil(r.due_date) < 0 && r.payment_status !== 'paid').length;
-  const revenue = rentals.filter(r => r.payment_status === 'paid').reduce((s, r) => s + r.price, 0);
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      minHeight: '100vh'
-    }
-  }, toast && /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: 'fixed',
-      bottom: 24,
-      right: 24,
-      background: '#111827',
-      color: '#fff',
-      padding: '12px 20px',
-      borderRadius: 10,
-      fontWeight: 600,
-      fontSize: 14,
-      zIndex: 500,
-      animation: 'fadeIn 0.3s'
-    }
-  }, toast), showForm && /*#__PURE__*/React.createElement(NewRentalForm, {
-    onSaved: () => {
-      setShowForm(false);
-      loadData();
-      showToast('Rental saved! Portal link ready.');
-    },
-    onClose: () => setShowForm(false),
-    showToast: showToast
-  }), showEquip && /*#__PURE__*/React.createElement(EquipmentManager, {
-    onClose: () => setShowEquip(false),
-    onChange: loadData,
-    showToast: showToast
-  }), clientPanel && /*#__PURE__*/React.createElement(ClientPanel, {
-    client: clientPanel,
-    rentals: rentals,
-    onClose: () => setClientPanel(null),
-    copyLink: copyLink,
-    showToast: showToast
-  }), editRental && /*#__PURE__*/React.createElement(EditRentalModal, {
-    rental: editRental,
-    onClose: () => setEditRental(null),
-    onSaved: () => {
-      setEditRental(null);
-      loadData();
-      showToast('Updated ✓');
-    },
-    showToast: showToast
-  }), editRental && /*#__PURE__*/React.createElement(EditRentalModal, {
-    rental: editRental,
-    onClose: () => setEditRental(null),
-    onSaved: () => {
-      setEditRental(null);
-      loadData();
-      showToast('Rental updated ✓');
-    },
-    showToast: showToast
-  }), /*#__PURE__*/React.createElement("header", {
-    style: {
-      background: '#fff',
-      borderBottom: '1px solid #E5E7EB',
-      padding: '0 20px',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      height: 56,
-      position: 'sticky',
-      top: 0,
-      zIndex: 100,
-      flexWrap: 'wrap'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 14,
-      flexWrap: 'wrap'
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 14,
-      fontWeight: 700
-    }
-  }, "Sams Construction"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 10,
-      fontWeight: 600,
-      color: '#2563EB',
-      background: '#EFF6FF',
-      padding: '2px 6px',
-      borderRadius: 4
-    }
-  }, "SamsOffice"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      position: 'relative',
-      marginRight: 8
-    }
-  }, /*#__PURE__*/React.createElement("input", {
-    value: search,
-    onChange: e => setSearch(e.target.value),
-    placeholder: "\uD83D\uDD0D Search clients...",
-    style: {
-      padding: '6px 14px',
-      border: '1px solid #E5E7EB',
-      borderRadius: 8,
-      fontSize: 12,
-      outline: 'none',
-      background: '#F9FAFB',
-      width: 200
-    }
-  })), /*#__PURE__*/React.createElement("nav", {
-    style: {
-      display: 'flex',
-      gap: 2
-    }
-  }, [{
-    id: 'dashboard',
-    label: 'Dashboard'
-  }, {
-    id: 'drivers',
-    label: '🚛 Drivers'
-  }, {
-    id: 'collections',
-    label: '⚖️ Collections'
-  }, {
-    id: 'invoice',
-    label: '📄 Invoice'
-  }, {
-    id: 'map',
-    label: '🗺 Map'
-  }, {
-    id: 'settings',
-    label: '⚙️ Settings'
-  }].map(t => /*#__PURE__*/React.createElement("button", {
-    key: t.id,
-    onClick: () => setTab(t.id),
-    style: {
-      padding: '5px 11px',
-      borderRadius: 6,
-      fontSize: 12,
-      fontWeight: 500,
-      cursor: 'pointer',
-      border: 'none',
-      background: tab === t.id ? '#F3F4F6' : 'transparent',
-      color: tab === t.id ? '#111827' : '#6B7280'
-    }
-  }, t.label)))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 8,
-      flexWrap: 'wrap'
-    }
-  }, overdue > 0 && /*#__PURE__*/React.createElement("span", {
-    style: {
-      padding: '4px 10px',
-      borderRadius: 20,
-      background: '#FEF2F2',
-      border: '1px solid #FCA5A5',
-      fontSize: 11,
-      fontWeight: 600,
-      color: '#991B1B'
-    }
-  }, overdue, " overdue"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setShowEquip(true),
-    style: {
-      padding: '7px 12px',
-      borderRadius: 8,
-      fontSize: 12,
-      fontWeight: 600,
-      cursor: 'pointer',
-      border: '1px solid #E5E7EB',
-      background: '#fff',
-      color: '#374151'
-    }
-  }, "\u2699 Equipment"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      gap: 4
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setLang('en');
-      localStorage.setItem('sams_lang', 'en');
-    },
-    style: {
-      padding: '4px 8px',
-      borderRadius: 6,
-      fontSize: 11,
-      fontWeight: 600,
-      cursor: 'pointer',
-      border: '1px solid ' + (lang === 'en' ? '#2563EB' : '#E5E7EB'),
-      background: lang === 'en' ? '#EFF6FF' : '#fff',
-      color: lang === 'en' ? '#2563EB' : '#6B7280'
-    }
-  }, "EN"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setLang('es');
-      localStorage.setItem('sams_lang', 'es');
-    },
-    style: {
-      padding: '4px 8px',
-      borderRadius: 6,
-      fontSize: 11,
-      fontWeight: 600,
-      cursor: 'pointer',
-      border: '1px solid ' + (lang === 'es' ? '#2563EB' : '#E5E7EB'),
-      background: lang === 'es' ? '#EFF6FF' : '#fff',
-      color: lang === 'es' ? '#2563EB' : '#6B7280'
-    }
-  }, "ES")), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setShowForm(true),
-    style: {
-      padding: '7px 14px',
-      borderRadius: 8,
-      fontSize: 12,
-      fontWeight: 600,
-      cursor: 'pointer',
-      border: 'none',
-      background: '#2563EB',
-      color: '#fff'
-    }
-  }, "+ New Rental"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      localStorage.removeItem('sams_user');
-      setUser(null);
-    },
-    style: {
-      padding: '7px 12px',
-      borderRadius: 8,
-      fontSize: 12,
-      fontWeight: 600,
-      cursor: 'pointer',
-      border: '1px solid #E5E7EB',
-      background: '#fff',
-      color: '#374151'
-    }
-  }, "Sign Out"))), /*#__PURE__*/React.createElement("main", {
-    style: {
-      padding: '24px 20px',
-      maxWidth: 1400,
-      margin: '0 auto'
-    }
-  }, deleted.length > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => setShowDeleted(s => !s),
-    style: {
-      padding: '6px 14px',
-      borderRadius: 8,
-      fontSize: 12,
-      fontWeight: 600,
-      cursor: 'pointer',
-      border: '1px solid #FDE68A',
-      background: '#FFFBEB',
-      color: '#92400E',
-      marginBottom: 8
-    }
-  }, "\uD83D\uDDD1 Recently Deleted (", deleted.length, ") ", showDeleted ? '▲' : '▼'), showDeleted && /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#FFFBEB',
-      border: '1px solid #FDE68A',
-      borderRadius: 10,
-      padding: '14px 18px'
-    }
-  }, deleted.map(r => /*#__PURE__*/React.createElement("div", {
-    key: r.id,
-    style: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '8px 0',
-      borderBottom: '1px solid #FDE68A',
-      flexWrap: 'wrap',
-      gap: 8
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13
-    }
-  }, /*#__PURE__*/React.createElement("strong", null, r.id), " \u2014 ", r.client_name, " \u2014 ", r.asset, " \u2014 $", r.price), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      gap: 6
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => restoreRental(r.id),
-    style: {
-      padding: '5px 10px',
-      borderRadius: 6,
-      fontSize: 11,
-      fontWeight: 600,
-      cursor: 'pointer',
-      border: 'none',
-      background: '#ECFDF5',
-      color: '#065F46'
-    }
-  }, "\u21A9 Restore"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => hardDelete(r.id),
-    style: {
-      padding: '5px 10px',
-      borderRadius: 6,
-      fontSize: 11,
-      fontWeight: 600,
-      cursor: 'pointer',
-      border: 'none',
-      background: '#FEF2F2',
-      color: '#991B1B'
-    }
-  }, "Delete Forever")))))), loading && /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: 'center',
-      padding: 48
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "spinner",
-    style: {
-      margin: '0 auto'
-    }
-  })), !loading && tab === 'dashboard' && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))',
-      gap: 16,
-      marginBottom: 22
-    }
-  }, [{
-    l: 'Active Rentals',
-    v: active,
-    a: false
-  }, {
-    l: 'Overdue',
-    v: overdue,
-    a: overdue > 0
-  }, {
-    l: 'Total Rentals',
-    v: rentals.length,
-    a: false
-  }, {
-    l: 'Revenue',
-    v: money(revenue),
-    a: false
-  }].map((s, i) => /*#__PURE__*/React.createElement("div", {
-    key: i,
-    style: {
-      background: '#fff',
-      borderRadius: 10,
-      padding: '16px 18px',
-      border: '1px solid #F3F4F6'
-    }
-  }, /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 10,
-      fontWeight: 700,
-      textTransform: 'uppercase',
-      color: '#9CA3AF',
-      marginBottom: 6
-    }
-  }, s.l), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 24,
-      fontWeight: 700,
-      color: s.a ? '#DC2626' : '#111827'
-    }
-  }, s.v)))), extensions.length > 0 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#FFFBEB',
-      border: '1px solid #FCD34D',
-      borderRadius: 10,
-      padding: '14px 18px',
-      marginBottom: 18
-    }
-  }, /*#__PURE__*/React.createElement("h4", {
-    style: {
-      fontSize: 13,
-      fontWeight: 700,
-      color: '#92400E',
-      marginBottom: 10
-    }
-  }, "\uD83D\uDCC5 Pending Extensions (", extensions.length, ")"), extensions.map(ext => /*#__PURE__*/React.createElement("div", {
-    key: ext.id,
-    style: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '8px 0',
-      borderBottom: '1px solid #FDE68A',
-      flexWrap: 'wrap',
-      gap: 8
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 13
-    }
-  }, /*#__PURE__*/React.createElement("strong", null, ext.client_name), " \u2014 ", ext.rental_id, " \u2014 +", ext.extra_days, "d (+", money(ext.extra_cost), ")"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      gap: 8
-    }
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => approveExt(ext),
-    style: {
-      padding: '5px 12px',
-      borderRadius: 6,
-      fontSize: 12,
-      fontWeight: 600,
-      cursor: 'pointer',
-      border: 'none',
-      background: '#ECFDF5',
-      color: '#065F46'
-    }
-  }, "\u2713 Approve"), /*#__PURE__*/React.createElement("button", {
-    onClick: () => denyExt(ext.id),
-    style: {
-      padding: '5px 12px',
-      borderRadius: 6,
-      fontSize: 12,
-      fontWeight: 600,
-      cursor: 'pointer',
-      border: 'none',
-      background: '#FEF2F2',
-      color: '#991B1B'
-    }
-  }, "\u2715 Deny"))))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#fff',
-      borderRadius: 11,
-      overflow: 'hidden',
-      border: '1px solid #F3F4F6'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: '14px 18px',
-      borderBottom: '1px solid #F3F4F6'
-    }
-  }, /*#__PURE__*/React.createElement("h3", {
-    style: {
-      fontSize: 14,
-      fontWeight: 700
-    }
-  }, "All Rentals (", rentals.length, ")")), filteredRentals.length === 0 ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: 48,
-      textAlign: 'center',
-      color: '#9CA3AF'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 32,
-      marginBottom: 8
-    }
-  }, "\uD83D\uDCCB"), "No rentals yet. Click \"+ New Rental\".") : /*#__PURE__*/React.createElement("div", {
-    style: {
-      overflowX: 'auto'
-    }
-  }, /*#__PURE__*/React.createElement("table", {
-    style: {
-      width: '100%',
-      borderCollapse: 'collapse',
-      fontSize: 13
-    }
-  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
-    style: {
-      background: '#FAFAFA'
-    }
-  }, ['ID', 'Asset', 'Client', 'Driver', 'Delivery', 'Due', 'Price', 'Pay', 'Actions'].map(h => /*#__PURE__*/React.createElement("th", {
-    key: h,
-    style: {
-      padding: '9px 12px',
-      textAlign: 'left',
-      fontSize: 10,
-      fontWeight: 700,
-      textTransform: 'uppercase',
-      color: '#9CA3AF',
-      borderBottom: '1px solid #F3F4F6',
-      whiteSpace: 'nowrap'
-    }
-  }, h)))), /*#__PURE__*/React.createElement("tbody", null, filteredRentals.map((r, i) => {
-    const d = daysUntil(r.due_date);
-    const bg = i % 2 === 0 ? '#fff' : '#FAFAFA';
-    return /*#__PURE__*/React.createElement("tr", {
-      key: r.id,
-      style: {
-        background: bg
-      }
-    }, /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: '10px 12px',
-        fontSize: 11,
-        color: '#9CA3AF',
-        borderBottom: '1px solid #F3F4F6',
-        fontFamily: 'monospace'
-      }
-    }, r.id), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: '10px 12px',
-        borderBottom: '1px solid #F3F4F6'
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 600
-      }
-    }, r.asset), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        color: '#9CA3AF'
-      }
-    }, r.category)), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: '10px 12px',
-        borderBottom: '1px solid #F3F4F6'
-      }
-    }, /*#__PURE__*/React.createElement("button", {
-      onClick: () => setClientPanel(r.client_name),
-      style: {
-        background: 'none',
-        border: 'none',
-        padding: 0,
-        cursor: 'pointer',
-        fontWeight: 600,
-        color: '#2563EB',
-        fontSize: 13,
-        textDecoration: 'underline',
-        textDecorationColor: '#BFDBFE'
-      }
-    }, r.client_name), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        color: '#9CA3AF'
-      }
-    }, r.client_phone)), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: '10px 12px',
-        borderBottom: '1px solid #F3F4F6',
-        fontSize: 12
-      }
-    }, r.assigned_driver), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: '10px 12px',
-        borderBottom: '1px solid #F3F4F6'
-      }
-    }, /*#__PURE__*/React.createElement(DriverBadge, {
-      status: r.driver_status
-    })), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: '10px 12px',
-        borderBottom: '1px solid #F3F4F6'
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 11,
-        fontFamily: 'monospace'
-      }
-    }, r.due_date), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        fontWeight: d <= 1 ? 600 : 400,
-        color: d < 0 ? '#DC2626' : d <= 2 ? '#D97706' : '#9CA3AF'
-      }
-    }, d < 0 ? `${Math.abs(d)}d over` : d === 0 ? 'today' : `${d}d left`)), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: '10px 12px',
-        borderBottom: '1px solid #F3F4F6',
-        fontFamily: 'monospace',
-        fontWeight: 600,
-        fontSize: 12
-      }
-    }, money(r.price)), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: '10px 12px',
-        borderBottom: '1px solid #F3F4F6'
-      }
-    }, /*#__PURE__*/React.createElement(PayBadge, {
-      status: r.payment_status
-    })), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: '10px 12px',
-        borderBottom: '1px solid #F3F4F6'
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: 'flex',
-        gap: 5,
-        flexWrap: 'wrap'
-      }
-    }, /*#__PURE__*/React.createElement("button", {
-      onClick: () => copyLink(r.portal_token),
-      style: {
-        padding: '4px 7px',
-        borderRadius: 5,
-        fontSize: 11,
-        fontWeight: 600,
-        background: '#F0F7FF',
-        color: '#2563EB',
-        border: '1px solid #BFDBFE',
-        cursor: 'pointer'
-      }
-    }, "\uD83D\uDD17"), r.payment_status !== 'paid' && /*#__PURE__*/React.createElement("button", {
-      onClick: () => markPaid(r.id),
-      style: {
-        padding: '4px 7px',
-        borderRadius: 5,
-        fontSize: 11,
-        fontWeight: 600,
-        background: '#ECFDF5',
-        color: '#065F46',
-        border: 'none',
-        cursor: 'pointer'
-      }
-    }, "\u2713"), /*#__PURE__*/React.createElement("button", {
-      onClick: () => setEditRental(r),
-      style: {
-        padding: '4px 7px',
-        borderRadius: 5,
-        fontSize: 11,
-        fontWeight: 600,
-        background: '#FFFBEB',
-        color: '#92400E',
-        border: '1px solid #FDE68A',
-        cursor: 'pointer'
-      }
-    }, "\u270F"), r.client_phone && /*#__PURE__*/React.createElement("a", {
-      href: 'tel:' + (r.client_phone || '').replace(/[^0-9]/g, ''),
-      style: {
-        padding: '4px 7px',
-        borderRadius: 5,
-        fontSize: 11,
-        fontWeight: 600,
-        background: '#EFF6FF',
-        color: '#1D4ED8',
-        textDecoration: 'none',
-        border: '1px solid #BFDBFE'
-      }
-    }, "\uD83D\uDCDE"), r.client_email && /*#__PURE__*/React.createElement("a", {
-      href: 'mailto:' + r.client_email + '?subject=NOTICE: Outstanding Invoice ' + r.id + ' — Sams Construction Services LTD&body=Dear ' + r.client_name + ',%0A%0AThis is a formal notice regarding your outstanding balance with Sams Construction Services LTD.%0A%0AEquipment Rented: ' + r.asset + '%0AAmount Due: $' + r.price + '%0APayment Due Date: ' + r.due_date + '%0A%0AImmediate payment is required to avoid further collection action, including equipment repossession and filing of a Mechanic%27s Lien.%0A%0ATo pay now:%0A• Zelle: ' + (localStorage.getItem('sams_zelle') || '+1 (917) 663-6369') + '%0A• Call us: +1 (917) 663-6369%0A%0APlease treat this matter with urgency.%0A%0ASams Construction Services LTD%0A+1 (917) 663-6369%0Asamsconstructionltd23@outlook.com',
-      style: {
-        padding: '4px 7px',
-        borderRadius: 5,
-        fontSize: 11,
-        fontWeight: 600,
-        background: '#FDF4FF',
-        color: '#7C3AED',
-        textDecoration: 'none',
-        border: '1px solid #E9D5FF'
-      }
-    }, "\u2709"), /*#__PURE__*/React.createElement("button", {
-      onClick: () => softDelete(r.id),
-      style: {
-        padding: '4px 7px',
-        borderRadius: 5,
-        fontSize: 11,
-        fontWeight: 600,
-        background: '#FEF2F2',
-        color: '#991B1B',
-        border: 'none',
-        cursor: 'pointer'
-      }
-    }, "\uD83D\uDDD1"))));
-  })))))), !loading && tab === 'drivers' && /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))',
-      gap: 20
-    }
-  }, WORKERS.map(driver => {
-    const jobs = rentals.filter(r => r.assigned_driver === driver && r.rental_status !== 'completed');
-    return /*#__PURE__*/React.createElement("div", {
-      key: driver,
-      style: {
-        background: '#fff',
-        borderRadius: 12,
-        border: '1px solid #F3F4F6',
-        overflow: 'hidden'
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        padding: '14px 18px',
-        background: '#111827',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        width: 32,
-        height: 32,
-        borderRadius: '50%',
-        background: '#374151',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: 14,
-        fontWeight: 700,
-        color: '#fff'
-      }
-    }, driver[0]), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 14,
-        fontWeight: 700,
-        color: '#fff'
-      }
-    }, driver))), /*#__PURE__*/React.createElement("span", {
-      style: {
-        background: '#374151',
-        padding: '3px 10px',
-        borderRadius: 20,
-        fontSize: 11,
-        color: '#9CA3AF'
-      }
-    }, jobs.length, " job", jobs.length !== 1 ? 's' : '')), /*#__PURE__*/React.createElement("div", {
-      style: {
-        padding: 12
-      }
-    }, jobs.length === 0 ? /*#__PURE__*/React.createElement("div", {
-      style: {
-        textAlign: 'center',
-        padding: 20,
-        color: '#9CA3AF',
-        fontSize: 12
-      }
-    }, "No active jobs") : jobs.map(r => {
-      const cs = driverStep(r.driver_status);
-      const nextStep = DRIVER_FLOW[DRIVER_FLOW.findIndex(x => x.key === r.driver_status) + 1];
-      return /*#__PURE__*/React.createElement("div", {
-        key: r.id,
-        style: {
-          background: '#F9FAFB',
-          borderRadius: 8,
-          padding: 12,
-          marginBottom: 8,
-          border: '1px solid #F3F4F6'
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontWeight: 700,
-          marginBottom: 4
-        }
-      }, r.asset), /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: 11,
-          color: '#6B7280',
-          marginBottom: 8
-        }
-      }, r.client_name, " \xB7 ", r.client_address), /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: 12,
-          fontWeight: 600,
-          color: '#1D4ED8',
-          marginBottom: 8
-        }
-      }, cs.label), nextStep && /*#__PURE__*/React.createElement("button", {
-        onClick: () => setDriverStatus(r.id, nextStep.key),
-        style: {
-          width: '100%',
-          padding: '10px',
-          borderRadius: 7,
-          fontSize: 13,
-          fontWeight: 700,
-          cursor: 'pointer',
-          border: 'none',
-          background: '#2563EB',
-          color: '#fff',
-          marginBottom: 8
-        }
-      }, "Tap: ", nextStep.label), /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: 'flex',
-          gap: 6
-        }
-      }, /*#__PURE__*/React.createElement("a", {
-        href: `tel:${(r.client_phone || '').replace(/\D/g, '')}`,
-        style: {
-          flex: 1,
-          padding: '8px',
-          borderRadius: 5,
-          fontSize: 11,
-          fontWeight: 600,
-          background: '#EFF6FF',
-          color: '#1D4ED8',
-          textDecoration: 'none',
-          textAlign: 'center'
-        }
-      }, "\uD83D\uDCDE Call"), /*#__PURE__*/React.createElement("a", {
-        href: `https://maps.google.com?q=${encodeURIComponent(r.client_address || '')}`,
-        target: "_blank",
-        style: {
-          flex: 1,
-          padding: '8px',
-          borderRadius: 5,
-          fontSize: 11,
-          fontWeight: 600,
-          background: '#ECFDF5',
-          color: '#065F46',
-          textDecoration: 'none',
-          textAlign: 'center'
-        }
-      }, "\uD83D\uDDFA Map")));
-    })));
-  })), !loading && tab === 'collections' && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#FEF2F2',
-      border: '1px solid #FCA5A5',
-      borderRadius: 10,
-      padding: '14px 18px',
-      marginBottom: 20
-    }
-  }, /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 14,
-      fontWeight: 700,
-      color: '#991B1B'
-    }
-  }, "\u2696\uFE0F Total Outstanding: ", money(rentals.filter(r => r.payment_status !== 'paid').reduce((s, r) => s + r.price, 0)))), rentals.filter(r => r.payment_status !== 'paid').length === 0 ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#fff',
-      borderRadius: 12,
-      padding: 48,
-      textAlign: 'center',
-      color: '#9CA3AF',
-      border: '1px solid #F3F4F6'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 32
-    }
-  }, "\u2705"), "All accounts current") : rentals.filter(r => r.payment_status !== 'paid').map(r => {
-    const d = daysUntil(r.due_date);
-    const od = d < 0 ? Math.abs(d) : 0;
-    const lien = `NOTICE OF INTENT TO FILE MECHANIC'S LIEN\n\nDate: ${new Date().toLocaleDateString()}\n\nTO: ${r.client_name}\n${r.client_address}\n\nFROM: ${COMPANY}\n188-16 Woodhull Ave, Hollis NY 11423\nTel: +1 (917) 663-6369\n\nRE: Unpaid invoice ${r.id} — ${money(r.price)}\nEquipment: ${r.asset}\n\n${COMPANY} intends to file a Mechanic's Lien against the property at ${r.client_address} for the unpaid amount of ${money(r.price)}.\n\nFull payment must be received within 10 days to avoid this filing.\n\nPay via Zelle: +1 (917) 663-6369\nor Check payable to: ${COMPANY}\n\n${COMPANY}`;
-    return /*#__PURE__*/React.createElement("div", {
-      key: r.id,
-      style: {
-        background: '#fff',
-        borderRadius: 11,
-        border: '1px solid #F3F4F6',
-        padding: '16px 18px',
-        marginBottom: 12
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: 10
-      }
-    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        marginBottom: 6,
-        flexWrap: 'wrap'
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 15,
-        fontWeight: 700
-      }
-    }, r.client_name), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 11,
-        color: '#9CA3AF',
-        fontFamily: 'monospace'
-      }
-    }, r.id), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 12,
-        fontWeight: 600,
-        color: od > 14 ? '#991B1B' : od > 7 ? '#D97706' : '#374151'
-      }
-    }, od > 14 ? '⛔ Lien Stage' : od > 7 ? '🔴 Final Notice' : od > 0 ? '🟡 Overdue' : '⏳ Not Due')), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 13,
-        fontWeight: 700,
-        color: '#DC2626'
-      }
-    }, money(r.price), " ", od > 0 && /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontWeight: 400,
-        fontSize: 12
-      }
-    }, "\u2014 ", od, "d overdue")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        color: '#6B7280'
-      }
-    }, r.asset, " \xB7 ", r.client_phone)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: 'flex',
-        gap: 8,
-        flexWrap: 'wrap'
-      }
-    }, /*#__PURE__*/React.createElement("a", {
-      href: `tel:${(r.client_phone || '').replace(/\D/g, '')}`,
-      style: {
-        padding: '6px 12px',
-        borderRadius: 6,
-        fontSize: 12,
-        fontWeight: 600,
-        background: '#EFF6FF',
-        color: '#1D4ED8',
-        textDecoration: 'none',
-        border: '1px solid #BFDBFE'
-      }
-    }, "\uD83D\uDCDE Call"), /*#__PURE__*/React.createElement("button", {
-      onClick: () => copyLink(r.portal_token),
-      style: {
-        padding: '6px 12px',
-        borderRadius: 6,
-        fontSize: 12,
-        fontWeight: 600,
-        background: '#F0F7FF',
-        color: '#2563EB',
-        border: '1px solid #BFDBFE',
-        cursor: 'pointer'
-      }
-    }, "\uD83D\uDD17 Portal"), od >= 7 && /*#__PURE__*/React.createElement("a", {
-      href: `mailto:${r.client_email}?subject=NOTICE OF INTENT TO FILE MECHANIC'S LIEN — ${r.id}&body=${encodeURIComponent(lien)}`,
-      style: {
-        padding: '6px 12px',
-        borderRadius: 6,
-        fontSize: 12,
-        fontWeight: 600,
-        background: '#FEF2F2',
-        color: '#991B1B',
-        textDecoration: 'none',
-        border: '1px solid #FCA5A5'
-      }
-    }, "\u2696\uFE0F Lien Notice"), /*#__PURE__*/React.createElement("button", {
-      onClick: () => markPaid(r.id),
-      style: {
-        padding: '6px 12px',
-        borderRadius: 6,
-        fontSize: 12,
-        fontWeight: 600,
-        background: '#ECFDF5',
-        color: '#065F46',
-        border: 'none',
-        cursor: 'pointer'
-      }
-    }, "\u2713 Paid"))));
-  })), !loading && tab === 'invoice' && /*#__PURE__*/React.createElement(InvoiceTab, {
-    rentals: rentals,
-    showToast: showToast
-  }), !loading && tab === 'settings' && /*#__PURE__*/React.createElement(SettingsTab, {
-    showToast: showToast
-  }), !loading && tab === 'map' && /*#__PURE__*/React.createElement(MapTab, {
-    rentals: rentals
-  })));
-}
-
-// ── DRIVER VIEW (standalone for driver links) ──
 function DriverView({
   name
 }) {
