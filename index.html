@@ -71,7 +71,7 @@ const DRIVER_FLOW=[
   {key:'delivered',label:{en:'✅ Delivered & Confirmed',es:'✅ Entregado y Confirmado'},pct:100},
 ];
 
-const CLIENT_TAGS=['Good Standing','Paying Client','Chronically Delinquent','Cash Only','New Client'];
+const CLIENT_TAGS=['Good Standing','Paying Client','Chronically Delinquent','Cash Only','New Client','VIP Client','Do Not Rent','Payment Plan','First Offense','Blacklisted'];
 const PRESET_EQUIPMENT={
   Machine:['Caterpillar Excavator CAT 320','Caterpillar Excavator CAT 336','Mini Excavator','Kubota Skid Steer','Bobcat Skid Steer','Backhoe Loader','Wheel Loader','Bulldozer D6','Motor Grader','Dump Truck','Scissor Lift 26ft','Scissor Lift 32ft','Boom Lift 45ft','Telescopic Forklift','Rough Terrain Forklift','Crane 30 Ton','Compact Track Loader','Trencher','Skid Steer','Articulated Dump Truck'],
   Tool:['Demolition Hammer Set','Jackhammer','Concrete Mixer','Concrete Saw','Plate Compactor','Jumping Jack Compactor','Pressure Washer','Generator 10kW','Generator 20kW','Air Compressor','Pipe Threader','Welding Machine','Water Pump','Light Tower','Floor Grinder','Tile Saw','Core Drill','Rebar Bender','Scaffolding Set','Heater']
@@ -251,7 +251,7 @@ function ClientPortal({token}){
             <div style={{display:'flex',flexDirection:'column',gap:8,marginBottom:14}}>
               {['zelle','check','credit'].map(m=>(
                 <button key={m} onClick={()=>setPayMethod(payMethod===m?'':m)} style={{padding:'12px 14px',borderRadius:9,border:'2px solid '+(payMethod===m?'#2563EB':'#E5E7EB'),background:payMethod===m?'#EFF6FF':'#fff',textAlign:'left',cursor:'pointer',fontSize:13,fontWeight:600,color:payMethod===m?'#1D4ED8':'#374151',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-                  <span>{{zelle:'⚡ Zelle',check:'🏦 '+(es?'Cheque':'Check'),credit:'💳 '+(es?'Tarjeta de Crédito':'Credit Card')}[m]}</span>
+                  <span>{{zelle:'⚡ Zelle',check:'🏦 '+(es?'Cheque':'Check'),credit:'💳 '+(es?'Tarjeta de Crédito':'Credit Card'),cash:'💵 '+(es?'Efectivo':'Cash'),venmo:'💜 Venmo',bank:'🏛 '+(es?'Transferencia Bancaria':'Bank Transfer')}[m]||m}</span>
                   <span style={{fontSize:11,color:'#9CA3AF'}}>{payMethod===m?'▲':'▼'}</span>
                 </button>
               ))}
@@ -265,8 +265,20 @@ function ClientPortal({token}){
               <div style={{fontWeight:700,marginBottom:6}}>{es?'Pago con Cheque':'Check Payment'} — {money(rental.price)}</div>
               <div style={{lineHeight:1.9}}>{es?'Pagable a:':'Payable to:'} <strong>Sams Construction Services LTD</strong><br/>
               {es?'Opciones de entrega:':'Delivery options:'}<br/>
-              • {es?'Entregar en oficina: '+OFFICE_ADDR:'Drop off at office: '+OFFICE_ADDR}<br/>
+              • {es?'Entregar en oficina (llame primero): '+OFFICE_PHONE:'Drop off at office (call first): '+OFFICE_PHONE}<br/>
               • {es?`Llamar para recoger: ${OFFICE_PHONE}`:`Call for pickup: ${OFFICE_PHONE}`}</div>
+            </div>}
+            {payMethod==='cash'&&<div style={{background:'#ECFDF5',border:'1px solid #A7F3D0',borderRadius:10,padding:'14px'}}>
+              <div style={{fontSize:14,fontWeight:700,color:'#065F46',marginBottom:4}}>{es?'Efectivo':'Cash'}</div>
+              <div style={{fontSize:13}}>{es?'Pague en efectivo en nuestra oficina o al conductor al momento de la entrega. Llame para confirmar:':'Pay cash at our office or to the driver at delivery. Call to confirm:'} <strong>{OFFICE_PHONE}</strong></div>
+            </div>}
+            {payMethod==='venmo'&&<div style={{background:'#F5F3FF',border:'1px solid #DDD6FE',borderRadius:10,padding:'14px'}}>
+              <div style={{fontSize:14,fontWeight:700,color:'#5B21B6',marginBottom:4}}>Venmo</div>
+              <div style={{fontSize:13}}>{es?'Envíe su pago a Venmo y luego llame para confirmar:':'Send your Venmo payment then call to confirm:'} <strong>{OFFICE_PHONE}</strong></div>
+            </div>}
+            {payMethod==='bank'&&<div style={{background:'#F0F9FF',border:'1px solid #BAE6FD',borderRadius:10,padding:'14px'}}>
+              <div style={{fontSize:14,fontWeight:700,color:'#0369A1',marginBottom:4}}>{es?'Transferencia Bancaria':'Bank Transfer'}</div>
+              <div style={{fontSize:13}}>{es?'Para información de transferencia bancaria llame a la oficina:':'For bank transfer details call the office:'} <strong>{OFFICE_PHONE}</strong></div>
             </div>}
             {payMethod==='credit'&&<div style={{borderRadius:10,border:'1px solid #E5E7EB',overflow:'hidden'}}>
               <div style={{background:'#FFFBEB',border:'1px solid #FDE68A',padding:'12px 14px'}}>
@@ -309,7 +321,7 @@ function DriverView({name}){
   const [jobs,setJobs]=useState([]);
   const [loading,setLoading]=useState(true);
   const [lang,setLang]=useState('en');
-  const load=async()=>{const {data}=await sb.from('rentals').select('*').eq('assigned_driver',name).neq('rental_status','completed').order('due_date');if(data)setJobs(data);setLoading(false);};
+  const load=async()=>{const {data}=await sb.from('rentals').select('*').eq('assigned_driver',name).eq('deleted',false).order('due_date');if(data)setJobs(data.filter(r=>r.rental_status!=='completed'&&r.rental_status!=='cancelled'));setLoading(false);};
   useEffect(()=>{load();},[]);
   const setStatus=async(id,s)=>{await sb.from('rentals').update({driver_status:s}).eq('id',id);load();};
   const es=lang==='es';
@@ -479,7 +491,7 @@ function NewRentalForm({onSaved,onClose,showToast,lang,existingClients}){
               </div>
               <div><label style={lbl}>{es?'Método de Pago':'Payment Method'}</label>
                 <select style={{...inp,cursor:'pointer'}} value={form.payment_method} onChange={e=>set('payment_method',e.target.value)}>
-                  <option value="">—</option>{['Cash','Check','Zelle','Credit Card'].map(m=><option key={m}>{m}</option>)}
+                  <option value="">—</option>{['Cash','Check','Zelle','Venmo','Bank Transfer','Credit Card'].map(m=><option key={m}>{m}</option>)}
                 </select>
               </div>
             </div>
@@ -618,6 +630,81 @@ function ClientPanel({client,rentals,onClose,copyLink,lang,showToast}){
   );
 }
 
+
+// ── SCHEDULE TAB ──
+function ScheduleTab({rentals,lang}){
+  const es=lang==='es';
+  const today=new Date();
+  const days=Array.from({length:30},(_,i)=>{const d=new Date(today);d.setDate(d.getDate()+i);return d;});
+  const activeRentals=rentals.filter(r=>r.rental_status==='active');
+  
+  const getRentalsForDay=(date)=>{
+    const ds=date.toISOString().slice(0,10);
+    return activeRentals.filter(r=>{
+      const start=r.start_date;const end=r.due_date;
+      return ds>=start&&ds<=end;
+    });
+  };
+
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:20}}>
+      {/* Equipment availability */}
+      <div style={{background:'#fff',borderRadius:12,border:'1px solid #F3F4F6',overflow:'hidden'}}>
+        <div style={{background:'#111827',padding:'14px 18px'}}><h3 style={{fontSize:14,fontWeight:700,color:'#fff'}}>📋 {es?'Estado Actual del Equipo':'Current Equipment Status'}</h3></div>
+        <div style={{padding:'16px',display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))',gap:10}}>
+          {activeRentals.length===0?<div style={{gridColumn:'1/-1',textAlign:'center',padding:24,color:'#9CA3AF'}}>{es?'No hay equipo rentado actualmente':'No equipment currently rented'}</div>
+          :activeRentals.map(r=>{
+            const d=daysUntil(r.due_date);
+            return <div key={r.id} style={{background:'#F9FAFB',borderRadius:8,padding:'12px',border:'1px solid '+(d<0?'#FCA5A5':d<=2?'#FDE68A':'#E5E7EB')}}>
+              <div style={{fontSize:13,fontWeight:700,marginBottom:4}}>{r.asset}</div>
+              <div style={{fontSize:11,color:'#6B7280',marginBottom:4}}>{es?'Cliente:':'Client:'} {r.client_name}</div>
+              <div style={{fontSize:11,color:'#6B7280',marginBottom:4}}>{es?'Conductor:':'Driver:'} {r.assigned_driver}</div>
+              <div style={{fontSize:11,marginBottom:6}}>{es?'Retorno:':'Return:'} <strong>{fmtDate(r.due_date)}</strong></div>
+              <span style={{fontSize:10,fontWeight:700,padding:'2px 8px',borderRadius:10,background:d<0?'#FEF2F2':d<=2?'#FFFBEB':'#ECFDF5',color:d<0?'#991B1B':d<=2?'#92400E':'#065F46'}}>{d<0?`${Math.abs(d)}d ${es?'vencido':'overdue'}`:d===0?(es?'vence hoy':'due today'):`${d}d ${es?'restantes':'left'}`}</span>
+            </div>;
+          })}
+        </div>
+      </div>
+
+      {/* 30-day calendar view */}
+      <div style={{background:'#fff',borderRadius:12,border:'1px solid #F3F4F6',overflow:'hidden'}}>
+        <div style={{background:'#111827',padding:'14px 18px'}}><h3 style={{fontSize:14,fontWeight:700,color:'#fff'}}>📅 {es?'Calendario de 30 Días':'30-Day Schedule'}</h3></div>
+        <div style={{padding:'16px',overflowX:'auto'}}>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:6,minWidth:560}}>
+            {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=><div key={d} style={{textAlign:'center',fontSize:10,fontWeight:700,color:'#9CA3AF',padding:'4px'}}>{d}</div>)}
+            {/* offset for first day */}
+            {Array.from({length:today.getDay()}).map((_,i)=><div key={'off'+i}/>)}
+            {days.map((date,i)=>{
+              const rents=getRentalsForDay(date);
+              const isToday=date.toISOString().slice(0,10)===today.toISOString().slice(0,10);
+              return <div key={i} style={{border:'1px solid #F3F4F6',borderRadius:6,padding:'4px',minHeight:60,background:isToday?'#EFF6FF':'#fff'}}>
+                <div style={{fontSize:10,fontWeight:isToday?700:400,color:isToday?'#2563EB':'#6B7280',marginBottom:3}}>{date.getDate()}</div>
+                {rents.slice(0,2).map((r,j)=><div key={j} style={{fontSize:8,fontWeight:600,background:'#BFDBFE',color:'#1D4ED8',borderRadius:3,padding:'1px 3px',marginBottom:2,overflow:'hidden',whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{r.asset.split(' ').slice(-1)[0]}</div>)}
+                {rents.length>2&&<div style={{fontSize:8,color:'#9CA3AF'}}>+{rents.length-2}</div>}
+              </div>;
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Return schedule */}
+      <div style={{background:'#fff',borderRadius:12,border:'1px solid #F3F4F6',overflow:'hidden'}}>
+        <div style={{background:'#111827',padding:'14px 18px'}}><h3 style={{fontSize:14,fontWeight:700,color:'#fff'}}>⏰ {es?'Próximas Devoluciones':'Upcoming Returns'}</h3></div>
+        <div style={{padding:'16px'}}>
+          {activeRentals.sort((a,b)=>new Date(a.due_date)-new Date(b.due_date)).map(r=>{
+            const d=daysUntil(r.due_date);
+            return <div key={r.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'10px 0',borderBottom:'1px solid #F3F4F6',flexWrap:'wrap',gap:8}}>
+              <div><div style={{fontSize:13,fontWeight:600}}>{r.asset}</div><div style={{fontSize:11,color:'#6B7280'}}>{r.client_name} · {r.assigned_driver}</div></div>
+              <div style={{textAlign:'right'}}><div style={{fontSize:12,fontFamily:'monospace'}}>{fmtDate(r.due_date)}</div><span style={{fontSize:11,fontWeight:600,color:d<0?'#DC2626':d<=2?'#D97706':'#059669'}}>{d<0?`${Math.abs(d)}d ${es?'vencido':'overdue'}`:d===0?(es?'hoy':'today'):`${d}d`}</span></div>
+            </div>;
+          })}
+          {activeRentals.length===0&&<div style={{textAlign:'center',padding:24,color:'#9CA3AF'}}>{es?'Sin rentas activas':'No active rentals'}</div>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── MAIN APP ──
 function App(){
   const path=window.location.hash.slice(1);
@@ -705,7 +792,7 @@ function App(){
           <span style={{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',fontSize:14,color:'#9CA3AF'}}>🔍</span>
         </div>
         <nav style={{display:'flex',gap:2,flexWrap:'wrap'}}>
-          {[{id:'dashboard',label:t.dashboard},{id:'drivers',label:t.drivers},{id:'collections',label:'⚖️ '+t.collections},{id:'invoice',label:'📄 '+t.invoice},{id:'map',label:'🗺 '+t.map},{id:'settings',label:'⚙️ '+t.settings}].map(tb=><button key={tb.id} onClick={()=>setTab(tb.id)} style={{padding:'5px 10px',borderRadius:6,fontSize:11,fontWeight:500,cursor:'pointer',border:'none',background:tab===tb.id?'#F3F4F6':'transparent',color:tab===tb.id?'#111827':'#6B7280',whiteSpace:'nowrap'}}>{tb.label}</button>)}
+          {[{id:'dashboard',label:t.dashboard},{id:'drivers',label:t.drivers},{id:'collections',label:'⚖️ '+t.collections},{id:'invoice',label:'📄 '+t.invoice},{id:'map',label:'🗺 '+t.map},{id:'schedule',label:'📅 Schedule'},{id:'settings',label:'⚙️ '+t.settings}].map(tb=><button key={tb.id} onClick={()=>setTab(tb.id)} style={{padding:'5px 10px',borderRadius:6,fontSize:11,fontWeight:500,cursor:'pointer',border:'none',background:tab===tb.id?'#F3F4F6':'transparent',color:tab===tb.id?'#111827':'#6B7280',whiteSpace:'nowrap'}}>{tb.label}</button>)}
         </nav>
         <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
           {overdue>0&&<span style={{padding:'3px 8px',borderRadius:20,background:'#FEF2F2',border:'1px solid #FCA5A5',fontSize:11,fontWeight:600,color:'#991B1B'}}>{overdue} {es?'vencidas':'overdue'}</span>}
@@ -773,6 +860,8 @@ function App(){
                     <button onClick={()=>copyLink(r.portal_token)} style={{padding:'4px 7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#F0F7FF',color:'#2563EB',border:'1px solid #BFDBFE',cursor:'pointer'}}>🔗</button>
                     {r.payment_status!=='paid'&&<button onClick={()=>markPaid(r.id)} style={{padding:'4px 7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#ECFDF5',color:'#065F46',border:'none',cursor:'pointer'}}>✓</button>}
                     <button onClick={()=>setEditRental(r)} style={{padding:'4px 7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#FFFBEB',color:'#92400E',border:'1px solid #FDE68A',cursor:'pointer'}}>✏</button>
+                    {r.client_phone&&<a href={'tel:'+(r.client_phone||'').replace(/\D/g,'')} style={{padding:'4px 7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#EFF6FF',color:'#1D4ED8',textDecoration:'none',border:'1px solid #BFDBFE'}}>📞</a>}
+                    {r.client_email&&<a href={'mailto:'+r.client_email+'?subject=Invoice '+r.id+' — Sams Construction&body=Dear '+r.client_name+',%0A%0APlease find your rental invoice attached.%0A%0AInvoice: '+r.id+'%0AEquipment: '+r.asset+'%0AAmount Due: $'+r.price+'%0ADue Date: '+r.due_date+'%0A%0AView your portal: '+APP_URL+'/%23/portal/'+r.portal_token+'%0A%0APay via Zelle: '+getZelle()+'%0A%0AThank you,%0ASams Construction Services LTD%0A'+OFFICE_PHONE} style={{padding:'4px 7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#FDF4FF',color:'#7C3AED',textDecoration:'none',border:'1px solid #E9D5FF'}}>✉</a>}
                     <button onClick={()=>softDelete(r.id)} style={{padding:'4px 7px',borderRadius:5,fontSize:11,fontWeight:600,background:'#FEF2F2',color:'#991B1B',border:'none',cursor:'pointer'}}>🗑</button>
                   </div></td>
                 </tr>;
@@ -805,6 +894,7 @@ function App(){
         </div>}
 
         {!loading&&tab==='invoice'&&<InvoiceTab rentals={rentals} showToast={showToast} lang={lang}/>}
+        {!loading&&tab==='schedule'&&<ScheduleTab rentals={rentals} lang={lang}/>}
         {!loading&&tab==='map'&&<MapTab rentals={rentals} lang={lang}/>}
         {!loading&&tab==='settings'&&<SettingsTab showToast={showToast} lang={lang}/>}
       </main>
@@ -867,7 +957,47 @@ function InvoiceTab({rentals,showToast,lang}){
   const li=items.filter(i=>i.desc||i.amount);
   const plainText=()=>{let t=`SAMS CONSTRUCTION SERVICES LTD\n${OFFICE_ADDR}\nTel: ${OFFICE_PHONE}  |  BIC# 4376\n${'='.repeat(44)}\nInvoice No: ${invNo||'—'}\nDate: ${fmtDate(invDate)}\n\nBILL TO:\n${client}\n${addr}\n${phone}\n${'='.repeat(44)}\n${'DESCRIPTION'.padEnd(26)}${'DATE'.padEnd(12)}AMOUNT\n${'-'.repeat(44)}\n`;li.forEach(i=>{t+=`${(i.desc||'').slice(0,24).padEnd(26)}${(i.date||'').padEnd(12)}${money(i.amount)}\n`;});t+=`${'-'.repeat(44)}\n`;if(taxA>0)t+=`Sales Tax:`.padEnd(38)+money(taxA)+'\n';if(otherA>0)t+=`Other:`.padEnd(38)+money(otherA)+'\n';t+=`TOTAL:`.padEnd(38)+money(total)+`\n${'='.repeat(44)}\n`;if(method)t+=`Payment Method: ${method}\n`;t+=`\nPay via Zelle: ${getZelle()}\nDrop off at: ${OFFICE_ADDR}\nCall for pickup: ${OFFICE_PHONE}`;return t;};
   const copyText=()=>{navigator.clipboard.writeText(plainText());showToast(es?'¡Factura copiada!':'Invoice copied!');};
-  const exportExcel=()=>{const rows=[['SAMS CONSTRUCTION SERVICES LTD'],[OFFICE_ADDR],[`Tel: ${OFFICE_PHONE}`,'','BIC# 4376'],[],[`Invoice No:`,invNo||'—'],['Date:',fmtDate(invDate)],[],[`Bill To:`,client],['Address:',addr],['Phone:',phone],[],['Description','Date','Amount'],...li.map(i=>[i.desc,i.date,parseFloat(i.amount)||0]),[]];if(taxA>0)rows.push(['','Sales Tax',taxA]);if(otherA>0)rows.push(['','Other',otherA]);rows.push(['','TOTAL',total]);if(method)rows.push([],['Payment Method:',method]);rows.push([],['Pay via Zelle:',getZelle()]);const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:32},{wch:14},{wch:14}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Invoice');XLSX.writeFile(wb,`Invoice_${invNo||'SAMS'}.xlsx`);showToast(es?'Excel descargado ✓':'Excel downloaded ✓');};
+  const exportExcel=()=>{
+    const rows=[
+      ['SAMS CONSTRUCTION SERVICES LTD','',''],
+      [OFFICE_ADDR,'',''],
+      [`Tel: ${OFFICE_PHONE}`,'','BIC# 4376'],
+      ['','',''],
+      ['Invoice No:',invNo||'—',''],
+      ['Invoice Date:',fmtDate(invDate),''],
+      ['','',''],
+      ['BILL TO:',client,''],
+      ['Address:',addr,''],
+      ['Phone:',phone,''],
+      ['','',''],
+      ['Description','Date','Amount ($)'],
+      ...li.map(i=>[i.desc||'',i.date||'',parseFloat(i.amount)||0]),
+      ['','',''],
+      ['','Subtotal',sub],
+    ];
+    if(taxA>0)rows.push(['','Sales Tax',taxA]);
+    if(otherA>0)rows.push(['','Other Charges',otherA]);
+    rows.push(['','TOTAL DUE',total]);
+    rows.push(['','','']);
+    if(method)rows.push(['Payment Method:',method,'']);
+    rows.push(['Pay via Zelle:',getZelle(),'']);
+    rows.push(['Drop off / Call:',OFFICE_PHONE,'']);
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols']=[{wch:36},{wch:18},{wch:16}];
+    // Bold header
+    if(!ws['A1'].s)ws['A1'].s={};
+    ws['A1'].s={font:{bold:true,sz:14}};
+    // Format amount cells as currency
+    const range=XLSX.utils.decode_range(ws['!ref']);
+    for(let R=11;R<=range.e.r;R++){
+      const cell=ws[XLSX.utils.encode_cell({r:R,c:2})];
+      if(cell&&typeof cell.v==='number'){cell.z='$#,##0.00';}
+    }
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Invoice');
+    XLSX.writeFile(wb,`Invoice_${invNo||'SAMS'}_${client.replace(/\s+/g,'_')}.xlsx`);
+    showToast(es?'Excel descargado ✓':'Excel downloaded ✓');
+  };
   return(
     <div style={{maxWidth:760,margin:'0 auto'}}>
       {rentals.length>0&&<div style={{background:'#EFF6FF',border:'1px solid #BFDBFE',borderRadius:10,padding:'14px 18px',marginBottom:20,display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}><span>⚡</span><div style={{flex:1}}><p style={{fontSize:13,fontWeight:600,color:'#1D4ED8'}}>{es?'Autocompletar desde renta':'Auto-fill from rental'}</p></div><select style={{...inp,width:'auto',minWidth:180,cursor:'pointer',background:'#fff'}} value={prefill} onChange={e=>doPrefill(e.target.value)}><option value="">{es?'Seleccionar renta...':'Select rental...'}</option>{rentals.map(r=><option key={r.id} value={r.id}>{r.id} — {r.client_name}</option>)}</select></div>}
@@ -891,7 +1021,7 @@ function InvoiceTab({rentals,showToast,lang}){
           <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
             <div><label style={lbl}>{es?'Impuesto ($)':'Sales Tax ($)'}</label><input type="number" style={inp} placeholder="0.00" value={tax} onChange={e=>setTax(e.target.value)}/></div>
             <div><label style={lbl}>{es?'Otro ($)':'Other ($)'}</label><input type="number" style={inp} placeholder="0.00" value={other} onChange={e=>setOther(e.target.value)}/></div>
-            <div><label style={lbl}>{es?'Método de Pago':'Payment Method'}</label><select style={{...inp,cursor:'pointer'}} value={method} onChange={e=>setMethod(e.target.value)}><option value="">—</option>{['Cash','Check','Zelle','Credit Card'].map(m=><option key={m}>{m}</option>)}</select></div>
+            <div><label style={lbl}>{es?'Método de Pago':'Payment Method'}</label><select style={{...inp,cursor:'pointer'}} value={method} onChange={e=>setMethod(e.target.value)}><option value="">—</option>{['Cash','Check','Zelle','Venmo','Bank Transfer','Credit Card'].map(m=><option key={m}>{m}</option>)}</select></div>
           </div>
           <div style={{background:'#F9FAFB',borderRadius:8,border:'1px solid #F3F4F6',padding:'12px 16px',display:'flex',justifyContent:'flex-end'}}><div style={{fontSize:16,fontWeight:700}}>TOTAL: {money(total)}</div></div>
           <div><label style={lbl}>{es?'Vista Previa':'Preview (what gets copied)'}</label><pre style={{background:'#111827',color:'#E5E7EB',padding:'14px',borderRadius:8,fontSize:11,fontFamily:'monospace',overflowX:'auto',whiteSpace:'pre',lineHeight:1.5}}>{plainText()}</pre></div>
@@ -930,7 +1060,7 @@ function MapTab({rentals,lang}){
       <div style={{background:'#fff',borderRadius:12,border:'1px solid #F3F4F6',padding:'18px'}}>
         <h3 style={{fontSize:14,fontWeight:700,marginBottom:12}}>🚛 {es?'Planificador de Rutas':'Driver Route Planner'}</h3>
         <div style={{display:'flex',gap:8,flexWrap:'wrap',marginBottom:12}}>
-          {['','Sams','Gustavo','Jose Luis'].map(d=><button key={d} onClick={()=>setRouteDriver(d)} style={{padding:'8px 14px',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer',border:'2px solid '+(routeDriver===d?'#2563EB':'#E5E7EB'),background:routeDriver===d?'#EFF6FF':'#fff',color:routeDriver===d?'#1D4ED8':'#374151'}}>{d||es?'Todos':'All'}</button>)}
+          {['','Sams','Gustavo','Jose Luis'].map(d=><button key={d} onClick={()=>setRouteDriver(d)} style={{padding:'8px 14px',borderRadius:8,fontSize:12,fontWeight:600,cursor:'pointer',border:'2px solid '+(routeDriver===d?'#2563EB':'#E5E7EB'),background:routeDriver===d?'#EFF6FF':'#fff',color:routeDriver===d?'#1D4ED8':'#374151'}}>{d||(es?'Todos':'All')}</button>)}
         </div>
         {routeDriver&&driverJobs.length>0&&<>
           <div style={{background:'#F0F7FF',borderRadius:8,padding:'12px 14px',marginBottom:12}}>{driverJobs.map((r,i)=><div key={r.id} style={{fontSize:12,padding:'4px 0',borderBottom:'1px solid #BFDBFE'}}><strong>{es?'Parada':'Stop'} {i+1}:</strong> {r.client_name} — {r.client_address}</div>)}</div>
