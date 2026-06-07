@@ -7,23 +7,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-<style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'DM Sans',sans-serif;background:#F9FAFB;color:#111827;}
-input,select,textarea,button{font-family:'DM Sans',sans-serif;}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.spinner{width:32px;height:32px;border:3px solid #E5E7EB;border-top-color:#2563EB;border-radius:50%;animation:spin 1s linear infinite;}
-</style>
 </head>
 <body>
 <div id="root"></div>
 <script>
-window.addEventListener("load",function(){
-try{
 const {
   useState,
   useEffect,
@@ -5400,8 +5388,6 @@ function SettingsTab({
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(/*#__PURE__*/React.createElement(App, null));
 window.addEventListener('hashchange', () => root.render(/*#__PURE__*/React.createElement(App, null)));
-}catch(e){document.getElementById("root").innerHTML="<div style='padding:40px;color:red;font-family:sans-serif'><h2>Error: "+e.message+"</h2></div>";console.error(e);}
-});
 </script>
 </body>
 </html>
