@@ -1131,10 +1131,17 @@ function DriverView({
   const [loading, setLoading] = useState(true);
   const [lang, setLang] = useState('en');
   const load = async () => {
-    const {
-      data
-    } = await sb.from('rentals').select('*').eq('assigned_driver', name).eq('deleted', false).order('due_date');
-    if (data) setJobs(data.filter(r => r.rental_status !== 'completed' && r.rental_status !== 'cancelled'));
+    try {
+      const {
+        data
+      } = await sb.from('rentals').select('*').eq('assigned_driver', name).eq('deleted', false).order('due_date');
+      if (data) setJobs(data.filter(r => r.rental_status !== 'completed' && r.rental_status !== 'cancelled'));
+    } catch (e) {
+      const {
+        data
+      } = await sb.from('rentals').select('*').eq('assigned_driver', name).order('due_date');
+      if (data) setJobs(data.filter(r => r.rental_status !== 'completed'));
+    }
     setLoading(false);
   };
   useEffect(() => {
@@ -2726,17 +2733,27 @@ function App() {
   }, [user]);
   const loadData = async () => {
     setLoading(true);
-    const [{
-      data: r
-    }, {
-      data: d
-    }] = await Promise.all([sb.from('rentals').select('*').eq('deleted', false).order('created_at', {
-      ascending: false
-    }), sb.from('rentals').select('*').eq('deleted', true).order('updated_at', {
-      ascending: false
-    })]);
-    if (r) setRentals(r);
-    if (d) setDeleted(d);
+    try {
+      const [{
+        data: r
+      }, {
+        data: d
+      }] = await Promise.all([sb.from('rentals').select('*').eq('deleted', false).order('created_at', {
+        ascending: false
+      }), sb.from('rentals').select('*').eq('deleted', true).order('updated_at', {
+        ascending: false
+      })]);
+      if (r) setRentals(r);
+      if (d) setDeleted(d);
+    } catch (e) {
+      // Fallback if deleted column doesn't exist yet
+      const {
+        data: r
+      } = await sb.from('rentals').select('*').order('created_at', {
+        ascending: false
+      });
+      if (r) setRentals(r);
+    }
     setLoading(false);
   };
   const showToast = m => {
