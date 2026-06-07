@@ -511,7 +511,8 @@ function SettingsTab({showToast}){
 function App(){
   const hash=window.location.hash.slice(1);
   if(hash.match(/^\/portal\//))return <div>Portal loading... <a href={'portal.html'+window.location.hash}>Open Portal</a></div>;
-  if(hash.match(/^\/driver\/(.+)$/))return <DriverApp name={decodeURIComponent(hash.match(/^\/driver\/(.+)$/)[1])}/>;
+  const driverMatch=hash.match(/^\/driver\/(.+)$/);
+  if(driverMatch)return <DriverApp name={decodeURIComponent(driverMatch[1])}/>;
 
   const [user,setUser]=useState(null);
   const [tab,setTab]=useState('dashboard');
@@ -744,54 +745,83 @@ function App(){
 
 // ── DRIVER APP ──
 function DriverApp({name}){
-  const [jobs,setJobs]=useState([]);const [loading,setLoading]=useState(true);
-  const load=async()=>{const {data}=await sb.from('rentals').select('*').eq('assigned_driver',name).order('due_date');if(data)setJobs(data.filter(r=>r.rental_status!=='completed'&&r.rental_status!=='cancelled'));setLoading(false);};
+  const [jobs,setJobs]=useState([]);
+  const [loading,setLoading]=useState(true);
+  const load=async()=>{
+    const {data}=await sb.from('rentals').select('*').eq('assigned_driver',name).order('due_date');
+    if(data)setJobs(data.filter(r=>r.rental_status!=='completed'&&r.rental_status!=='cancelled'));
+    setLoading(false);
+  };
   useEffect(()=>{load();},[]);
   const setStatus=async(id,s)=>{await sb.from('rentals').update({driver_status:s}).eq('id',id);load();};
-  const CHECKLIST=['Inspect equipment for pre-existing damage','Confirm client name and address','Photograph equipment before unloading','Unload equipment safely','Walk client through operation','Collect signed delivery receipt','Note any client concerns'];
-  if(loading)return<div style={{minHeight:'100vh',background:'#F9FAFB',display:'flex',alignItems:'center',justifyContent:'center'}}><div className="spinner"/></div>;
-  return<div style={{minHeight:'100vh',background:'#F9FAFB'}}>
-    <div style={{background:'#fff',padding:'16px 20px',borderBottom:'1px solid #E5E7EB'}}><h1 style={{fontSize:20,fontWeight:700}}>👷 {name}</h1><p style={{fontSize:12,color:'#9CA3AF'}}>{jobs.length} active jobs · Sams Construction</p></div>
+  const CHECKLIST=[
+    'Inspeccionar el equipo por daños previos',
+    'Confirmar nombre del cliente y dirección',
+    'Fotografiar el equipo antes de descargar',
+    'Descargar el equipo de forma segura',
+    'Explicar al cliente el uso del equipo',
+    'Obtener recibo de entrega firmado',
+    'Anotar cualquier problema o comentario',
+  ];
+  const STEPS_ES=[
+    {key:'assigned',label:'📋 Asignado',pct:10},
+    {key:'preparing',label:'🔧 Preparando Equipo',pct:25},
+    {key:'loading',label:'📦 Cargando en Camión',pct:40},
+    {key:'on_the_way',label:'🚛 En Camino',pct:60},
+    {key:'arrived',label:'📍 Llegó al Lugar',pct:80},
+    {key:'delivered',label:'✅ Entregado y Confirmado',pct:100},
+  ];
+  const getStepEs=s=>STEPS_ES.find(x=>x.key===s)||STEPS_ES[0];
+  if(loading)return <div style={{minHeight:'100vh',background:'#F9FAFB',display:'flex',alignItems:'center',justifyContent:'center'}}><div className="spinner"/></div>;
+  return <div style={{minHeight:'100vh',background:'#F9FAFB'}}>
+    <div style={{background:'#fff',padding:'16px 20px',borderBottom:'1px solid #E5E7EB',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+      <div><h1 style={{fontSize:20,fontWeight:700}}>👷 {name}</h1><p style={{fontSize:12,color:'#9CA3AF'}}>{jobs.length} trabajos activos · Sams Construction</p></div>
+    </div>
     <div style={{padding:16,display:'flex',flexDirection:'column',gap:16}}>
-      {jobs.length===0?<div style={{textAlign:'center',padding:60,color:'#9CA3AF'}}><div style={{fontSize:48}}>✅</div>No active jobs</div>
-      :jobs.map(r=>{
-        const step=getStep(r.driver_status);const stepIdx=STEPS.findIndex(x=>x.key===r.driver_status);
-        const next=STEPS[stepIdx+1];const prev=STEPS[stepIdx-1];const d=days(r.due_date);
-        return<div key={r.id} style={{background:'#fff',borderRadius:14,overflow:'hidden',border:'1px solid #E5E7EB'}}>
-          <div style={{padding:'14px 16px',borderBottom:'1px solid #E5E7EB',background:'#F9FAFB'}}>
-            <div style={{fontSize:18,fontWeight:700}}>{r.asset}</div>
-            <div style={{fontSize:13,color:'#6B7280'}}>{r.client_name}</div>
-          </div>
-          <div style={{padding:'12px 16px',fontSize:13,color:'#374151',lineHeight:2,borderBottom:'1px solid #E5E7EB'}}>
-            <div>📍 {r.client_address}</div>
-            <div>📅 Due: {r.due_date} ({d<0?Math.abs(d)+'d overdue':d===0?'today':d+'d left'})</div>
-            <div>💰 {money(r.price)} · {r.payment_status.toUpperCase()}</div>
-            {r.notes&&<div style={{marginTop:6,padding:'8px 10px',background:'#FFFBEB',borderRadius:6,fontSize:12,color:'#92400E'}}>📝 Office Notes: {r.notes}</div>}
-          </div>
-          {/* Progress */}
-          <div style={{padding:'12px 16px',borderBottom:'1px solid #E5E7EB'}}>
-            <div style={{fontSize:12,fontWeight:600,color:'#111827',marginBottom:8}}>Status: <span style={{color:'#2563EB'}}>{step.label}</span></div>
-            <div style={{height:6,background:'#F3F4F6',borderRadius:10,marginBottom:12}}><div style={{height:'100%',width:step.pct+'%',background:step.pct===100?'#10B981':'#2563EB',borderRadius:10}}/></div>
-            {next&&<button onClick={()=>setStatus(r.id,next.key)} style={{width:'100%',padding:14,borderRadius:10,fontSize:16,fontWeight:700,cursor:'pointer',border:'none',background:'#2563EB',color:'#fff',marginBottom:8}}>✅ Tap when: {next.label}</button>}
-            {prev&&<button onClick={()=>{if(window.confirm('Go back one step?'))setStatus(r.id,prev.key);}} style={{width:'100%',padding:10,borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer',border:'1px solid #E5E7EB',background:'#fff',color:'#6B7280'}}>↩ Undo — Go Back</button>}
-          </div>
-          {/* Checklist */}
-          <div style={{padding:'12px 16px',borderBottom:'1px solid #E5E7EB'}}>
-            <div style={{fontSize:12,fontWeight:700,marginBottom:8}}>📋 Delivery Checklist</div>
-            {CHECKLIST.map((item,i)=>{
-              const [checked,setChecked]=useState(false);
-              return<div key={i} onClick={()=>setChecked(c=>!c)} style={{display:'flex',gap:8,alignItems:'flex-start',padding:'5px 0',cursor:'pointer'}}>
-                <div style={{width:18,height:18,borderRadius:4,border:'2px solid '+(checked?'#2563EB':'#D1D5DB'),background:checked?'#2563EB':'#fff',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:1}}>{checked&&<span style={{color:'#fff',fontSize:11,fontWeight:700}}>✓</span>}</div>
-                <span style={{fontSize:12,color:checked?'#9CA3AF':'#374151',textDecoration:checked?'line-through':'none',lineHeight:1.4}}>{item}</span>
-              </div>;
-            })}
-          </div>
-          <div style={{padding:'12px 16px',display:'flex',gap:8}}>
-            <a href={'tel:'+(r.client_phone||'').replace(/[^0-9]/g,'')} style={{flex:1,padding:12,borderRadius:9,background:'#1D4ED8',color:'#fff',textDecoration:'none',fontSize:14,fontWeight:600,textAlign:'center'}}>📞 Call</a>
-            <a href={'https://maps.google.com?q='+encodeURIComponent(r.client_address||'')} target="_blank" style={{flex:1,padding:12,borderRadius:9,background:'#065F46',color:'#fff',textDecoration:'none',fontSize:14,fontWeight:600,textAlign:'center'}}>🗺 Directions</a>
-          </div>
-        </div>;
-      })}
+      {jobs.length===0
+        ?<div style={{textAlign:'center',padding:60,color:'#9CA3AF'}}><div style={{fontSize:48}}>✅</div>Sin trabajos activos</div>
+        :jobs.map(r=>{
+          const step=getStepEs(r.driver_status);
+          const stepIdx=STEPS_ES.findIndex(x=>x.key===r.driver_status);
+          const next=STEPS_ES[stepIdx+1];
+          const prev=STEPS_ES[stepIdx-1];
+          const d=days(r.due_date);
+          return <div key={r.id} style={{background:'#fff',borderRadius:14,overflow:'hidden',border:'1px solid #E5E7EB'}}>
+            <div style={{padding:'14px 16px',borderBottom:'1px solid #E5E7EB',background:'#F9FAFB'}}>
+              <div style={{fontSize:18,fontWeight:700}}>{r.asset}</div>
+              <div style={{fontSize:13,color:'#6B7280'}}>{r.client_name}</div>
+            </div>
+            <div style={{padding:'12px 16px',fontSize:13,color:'#374151',lineHeight:2,borderBottom:'1px solid #E5E7EB'}}>
+              <div>📍 {r.client_address}</div>
+              <div>📅 Vence: {r.due_date} ({d<0?Math.abs(d)+'d vencido':d===0?'hoy':d+'d restantes'})</div>
+              <div>💰 {money(r.price)} · {r.payment_status==='paid'?'PAGADO':r.payment_status==='partial'?'PARCIAL':'NO PAGADO'}</div>
+              {r.notes&&<div style={{marginTop:6,padding:'8px 10px',background:'#FFFBEB',borderRadius:6,fontSize:12,color:'#92400E'}}>📝 Notas de Oficina: {r.notes}</div>}
+            </div>
+            <div style={{padding:'12px 16px',borderBottom:'1px solid #E5E7EB'}}>
+              <div style={{height:8,background:'#F3F4F6',borderRadius:10,marginBottom:10}}>
+                <div style={{height:'100%',width:step.pct+'%',background:step.pct===100?'#10B981':'#2563EB',borderRadius:10}}/>
+              </div>
+              <div style={{fontSize:12,fontWeight:600,color:'#111827',marginBottom:10}}>Estado: <span style={{color:'#2563EB'}}>{step.label}</span></div>
+              {next&&<button onClick={()=>setStatus(r.id,next.key)} style={{width:'100%',padding:14,borderRadius:10,fontSize:16,fontWeight:700,cursor:'pointer',border:'none',background:'#2563EB',color:'#fff',marginBottom:8}}>✅ Confirmar: {next.label}</button>}
+              {prev&&<button onClick={()=>{if(window.confirm('¿Regresar un paso?'))setStatus(r.id,prev.key);}} style={{width:'100%',padding:10,borderRadius:10,fontSize:13,fontWeight:600,cursor:'pointer',border:'1px solid #E5E7EB',background:'#fff',color:'#6B7280'}}>↩ Deshacer — Regresar un Paso</button>}
+            </div>
+            <div style={{padding:'12px 16px',borderBottom:'1px solid #E5E7EB'}}>
+              <div style={{fontSize:12,fontWeight:700,marginBottom:8}}>📋 Lista de Verificación de Entrega</div>
+              {CHECKLIST.map((item,i)=>{
+                const [checked,setChecked]=useState(false);
+                return <div key={i} onClick={()=>setChecked(c=>!c)} style={{display:'flex',gap:8,alignItems:'flex-start',padding:'5px 0',cursor:'pointer'}}>
+                  <div style={{width:18,height:18,borderRadius:4,border:'2px solid '+(checked?'#2563EB':'#D1D5DB'),background:checked?'#2563EB':'#fff',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,marginTop:1}}>{checked&&<span style={{color:'#fff',fontSize:11,fontWeight:700}}>✓</span>}</div>
+                  <span style={{fontSize:12,color:checked?'#9CA3AF':'#374151',textDecoration:checked?'line-through':'none',lineHeight:1.4}}>{item}</span>
+                </div>;
+              })}
+            </div>
+            <div style={{padding:'12px 16px',display:'flex',gap:8}}>
+              <a href={'tel:'+(r.client_phone||'').replace(/[^0-9]/g,'')} style={{flex:1,padding:12,borderRadius:9,background:'#1D4ED8',color:'#fff',textDecoration:'none',fontSize:14,fontWeight:600,textAlign:'center'}}>📞 Llamar</a>
+              <a href={'https://maps.google.com?q='+encodeURIComponent(r.client_address||'')} target="_blank" style={{flex:1,padding:12,borderRadius:9,background:'#065F46',color:'#fff',textDecoration:'none',fontSize:14,fontWeight:600,textAlign:'center'}}>🗺 Mapa</a>
+            </div>
+          </div>;
+        })
+      }
     </div>
   </div>;
 }
