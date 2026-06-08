@@ -812,43 +812,7 @@ By renting equipment from Sams Construction Services LTD, the client agrees to t
       </div>
       <div style={{maxWidth:500,margin:'0 auto',padding:'20px 16px',display:'flex',flexDirection:'column',gap:14}}>
 
-        {/* ── ESCALATING NOTICES ── */}
-        {noticeLevel==='warning'&&!isPaid&&<div style={{background:'#FFFBEB',border:'2px solid #F59E0B',borderRadius:12,padding:'16px 18px'}}>
-          <div style={{fontSize:15,fontWeight:700,color:'#92400E',marginBottom:6}}>⚠️ URGENT: Payment Past Due</div>
-          <div style={{fontSize:13,color:'#92400E',lineHeight:1.7}}>Invoice <strong>{rental.id}</strong> is <strong>{od} day(s) overdue</strong>. Please pay <strong>{money(rental.price)}</strong> immediately to avoid further action.</div>
-          <a href="tel:+19176636369" style={{display:'block',marginTop:10,padding:'10px',borderRadius:8,background:'#92400E',color:'#fff',textDecoration:'none',fontSize:13,fontWeight:700,textAlign:'center'}}>📞 Call to Pay Now</a>
-        </div>}
 
-        {noticeLevel==='final'&&!isPaid&&<div style={{background:'#FEF2F2',border:'2px solid #EF4444',borderRadius:12,padding:'16px 18px'}}>
-          <div style={{fontSize:15,fontWeight:700,color:'#991B1B',marginBottom:6}}>🔴 URGENT FINAL NOTICE — {od} Days Overdue</div>
-          <div style={{fontSize:13,color:'#991B1B',lineHeight:1.7,marginBottom:10}}>Invoice <strong>{rental.id}</strong> for <strong>{money(rental.price)}</strong> is critically overdue. Immediate payment is required within 72 hours to avoid:</div>
-          <ul style={{fontSize:12,color:'#991B1B',lineHeight:2.2,paddingLeft:16,marginBottom:10}}>
-            <li>Equipment repossession scheduling</li>
-            <li>Filing of Mechanic's Lien on your property</li>
-            <li>Legal action and attorney fees added to balance</li>
-            <li>Permanent suspension of rental privileges</li>
-          </ul>
-          <a href="tel:+19176636369" style={{display:'block',padding:'12px',borderRadius:8,background:'#991B1B',color:'#fff',textDecoration:'none',fontSize:14,fontWeight:700,textAlign:'center'}}>📞 URGENT — Call +1 (917) 663-6369</a>
-        </div>}
-
-        {noticeLevel==='legal'&&!isPaid&&<div style={{background:'#7F1D1D',border:'2px solid #DC2626',borderRadius:12,padding:'18px',color:'#fff'}}>
-          <div style={{fontSize:16,fontWeight:700,marginBottom:8}}>⚖️ FORMAL LEGAL NOTICE</div>
-          <div style={{fontSize:13,lineHeight:1.8,marginBottom:10}}>This is a formal legal notice. Invoice <strong>{rental.id}</strong> is <strong>{od} days overdue</strong>. The outstanding balance of <strong>{money(rental.price)}</strong> has been referred for legal action.</div>
-          <ul style={{fontSize:12,lineHeight:2.2,paddingLeft:16,marginBottom:10}}>
-            <li>A Mechanic's Lien WILL be filed on your property</li>
-            <li>Equipment repossession has been scheduled</li>
-            <li>Legal proceedings have been initiated</li>
-            <li>All attorney fees will be added to your balance</li>
-            <li>No extensions will be granted under any circumstances</li>
-          </ul>
-          <div style={{padding:'10px',background:'rgba(0,0,0,0.3)',borderRadius:8,fontSize:13,fontWeight:700,textAlign:'center'}}>📞 Call immediately to resolve: +1 (917) 663-6369</div>
-        </div>}
-
-        {noticeLevel==='collections'&&!isPaid&&<div style={{background:'#111827',border:'2px solid #374151',borderRadius:12,padding:'18px',color:'#fff'}}>
-          <div style={{fontSize:16,fontWeight:700,marginBottom:8}}>🚨 ACCOUNT REFERRED TO LEGAL COUNSEL</div>
-          <div style={{fontSize:13,lineHeight:1.8,marginBottom:10}}>Your account ({od} days overdue) has been formally referred to our legal team. A Mechanic's Lien has been filed. Legal proceedings are underway. Contact our office immediately.</div>
-          <a href="tel:+19176636369" style={{display:'block',padding:'12px',borderRadius:8,background:'#DC2626',color:'#fff',textDecoration:'none',fontSize:14,fontWeight:700,textAlign:'center'}}>📞 +1 (917) 663-6369 — Call Now</a>
-        </div>}
 
         <div><p style={{fontSize:13,color:'#9CA3AF'}}>Hello,</p><h1 style={{fontSize:22,fontWeight:700}}>{rental.client_name}</h1></div>
 
