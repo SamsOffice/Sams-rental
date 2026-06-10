@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Payment Solutions — Sams Construction</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:#0F172A;color:#fff;overflow-x:hidden;}
+.slide{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:60px 40px;position:relative;border-bottom:1px solid #1E293B;}
+.slide-num{position:absolute;top:24px;right:32px;font-size:12px;color:#475569;font-weight:600;}
+.tag{display:inline-block;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:20px;}
+.tag.blue{background:#1D4ED8;color:#fff;}
+.tag.green{background:#065F46;color:#fff;}
+.tag.yellow{background:#92400E;color:#FDE68A;}
+.tag.purple{background:#5B21B6;color:#fff;}
+.tag.red{background:#991B1B;color:#fff;}
+h1{font-size:52px;font-weight:800;text-align:center;line-height:1.1;margin-bottom:16px;}
+h2{font-size:38px;font-weight:800;margin-bottom:8px;}
+.sub{font-size:18px;color:#94A3B8;text-align:center;max-width:600px;line-height:1.6;}
+.logo-box{width:140px;height:140px;border-radius:24px;display:flex;align-items:center;justify-content:center;margin-bottom:24px;overflow:hidden;background:#fff;}
+.logo-box img{width:100%;height:100%;object-fit:contain;padding:16px;}
+.card{background:#1E293B;border-radius:20px;padding:32px;width:100%;max-width:700px;border:1px solid #334155;}
+.points{display:flex;flex-direction:column;gap:14px;margin-top:24px;}
+.point{display:flex;align-items:flex-start;gap:12px;font-size:16px;line-height:1.5;}
+.point .icon{font-size:20px;flex-shrink:0;margin-top:2px;}
+.point strong{color:#38BDF8;}
+.fee-big{font-size:48px;font-weight:800;color:#38BDF8;margin:16px 0;}
+.fee-note{font-size:14px;color:#64748B;}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;max-width:900px;}
+.grid-card{background:#1E293B;border-radius:16px;padding:24px;border:1px solid #334155;display:flex;flex-direction:column;align-items:center;text-align:center;gap:12px;}
+.grid-card img{width:80px;height:80px;object-fit:contain;background:#fff;border-radius:12px;padding:8px;}
+.grid-card .name{font-size:16px;font-weight:700;}
+.grid-card .fee{font-size:22px;font-weight:800;color:#38BDF8;}
+.grid-card .desc{font-size:12px;color:#64748B;line-height:1.5;}
+.recommended{border:2px solid #38BDF8;position:relative;}
+.rec-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#38BDF8;color:#0F172A;font-size:10px;font-weight:800;padding:3px 12px;border-radius:20px;white-space:nowrap;}
+.compare-table{width:100%;max-width:900px;border-collapse:collapse;}
+.compare-table th{background:#1E293B;padding:16px;text-align:left;font-size:13px;color:#64748B;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #334155;}
+.compare-table td{padding:16px;border-bottom:1px solid #1E293B;font-size:14px;vertical-align:middle;}
+.compare-table tr:hover td{background:#1E293B20;}
+.compare-table .logo-cell{display:flex;align-items:center;gap:12px;}
+.compare-table img{width:40px;height:40px;object-fit:contain;background:#fff;border-radius:8px;padding:4px;}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge.yes{background:#065F46;color:#6EE7B7;}
+.badge.no{background:#7F1D1D;color:#FCA5A5;}
+.badge.rec{background:#1D4ED8;color:#93C5FD;}
+.strategy-box{background:linear-gradient(135deg,#1D4ED8,#7C3AED);border-radius:24px;padding:40px;max-width:700px;width:100%;text-align:center;}
+.strategy-box h3{font-size:28px;font-weight:800;margin-bottom:24px;}
+.strategy-row{display:flex;justify-content:space-between;gap:20px;margin-top:20px;flex-wrap:wrap;}
+.strategy-item{flex:1;min-width:140px;background:rgba(255,255,255,0.1);border-radius:12px;padding:20px;text-align:center;}
+.strategy-item .amount{font-size:28px;font-weight:800;color:#fff;}
+.strategy-item .label{font-size:12px;color:rgba(255,255,255,0.7);margin-top:4px;}
+.cover-accent{width:200px;height:4px;background:linear-gradient(90deg,#38BDF8,#7C3AED);border-radius:2px;margin:24px auto;}
+@media(max-width:600px){h1{font-size:32px;}h2{font-size:26px;}.grid{grid-template-columns:1fr;}.fee-big{font-size:36px;}}
+</style>
+</head>
+<body>
+
+<!-- SLIDE 1: COVER -->
+<div class="slide" style="background:linear-gradient(135deg,#0F172A 0%,#1E293B 100%);text-align:center;">
+  <div class="tag blue">Sams Construction Services LTD</div>
+  <h1>Payment<br/>Solutions</h1>
+  <div class="cover-accent"></div>
+  <p class="sub">Comparing the top payment processors — fees, receipts, and benefits — so you never lose money again.</p>
+  <div class="slide-num">1 / 13</div>
+</div>
+
+<!-- SLIDE 2: SQUARE -->
+<div class="slide">
+  <div class="tag green">⭐ Top Pick</div>
+  <div class="logo-box" style="background:#fff;">
+    <img src="https://logo.clearbit.com/squareup.com" alt="Square" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Square%2C_Inc._-_Square_logo.svg/1200px-Square%2C_Inc._-_Square_logo.svg.png'"/>
+  </div>
+  <h2>Square</h2>
+  <div class="fee-big">2.6% + 10¢</div>
+  <p class="fee-note">per transaction — lowest major processor rate</p>
+  <div class="card">
+    <div class="points">
+      <div class="point"><span class="icon">✅</span><span>Automatic email receipt to client <strong>instantly</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Automatic copy sent to <strong>office email</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Payment link embedded <strong>directly in client portal</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Fee passed to client legally under <strong>NY State law</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>You always collect <strong>100% of what you're owed</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>No monthly fee — <strong>only pay when you collect</strong></span></div>
+    </div>
+  </div>
+  <div class="slide-num">2 / 13</div>
+</div>
+
+<!-- SLIDE 3: STRIPE -->
+<div class="slide">
+  <div class="tag blue">Industry Standard</div>
+  <div class="logo-box">
+    <img src="https://logo.clearbit.com/stripe.com" alt="Stripe"/>
+  </div>
+  <h2>Stripe</h2>
+  <div class="fee-big">2.9% + 30¢</div>
+  <p class="fee-note">per transaction</p>
+  <div class="card">
+    <div class="points">
+      <div class="point"><span class="icon">✅</span><span>Automatic email receipt <strong>instantly</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Built specifically for <strong>custom web portals</strong> like SamsOffice</span></div>
+      <div class="point"><span class="icon">✅</span><span>Used by <strong>Amazon, Google, Uber</strong> and major companies</span></div>
+      <div class="point"><span class="icon">✅</span><span>Fee passed to client per <strong>NY State law</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Most trusted processor <strong>worldwide</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>No monthly fee — <strong>pay as you go</strong></span></div>
+    </div>
+  </div>
+  <div class="slide-num">3 / 13</div>
+</div>
+
+<!-- SLIDE 4: QUICKBOOKS -->
+<div class="slide">
+  <div class="tag green">Accounting Built In</div>
+  <div class="logo-box">
+    <img src="https://logo.clearbit.com/quickbooks.intuit.com" alt="QuickBooks"/>
+  </div>
+  <h2>QuickBooks Payments</h2>
+  <div class="fee-big">2.99% + 25¢</div>
+  <p class="fee-note">per transaction</p>
+  <div class="card">
+    <div class="points">
+      <div class="point"><span class="icon">✅</span><span>Automatic receipts with <strong>full accounting sync</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Tracks all payments and <strong>expenses together</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Professional invoicing <strong>built in</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Best if company uses <strong>QuickBooks for books</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>One platform for <strong>everything financial</strong></span></div>
+    </div>
+  </div>
+  <div class="slide-num">4 / 13</div>
+</div>
+
+<!-- SLIDE 5: WAVE -->
+<div class="slide">
+  <div class="tag purple">Budget Friendly</div>
+  <div class="logo-box">
+    <img src="https://logo.clearbit.com/waveapps.com" alt="Wave"/>
+  </div>
+  <h2>Wave Payments</h2>
+  <div class="fee-big">2.9% + 60¢</div>
+  <p class="fee-note">per transaction</p>
+  <div class="card">
+    <div class="points">
+      <div class="point"><span class="icon">✅</span><span>Free invoicing software <strong>included</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Automatic email receipts to <strong>client and office</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Full payment dashboard to <strong>track everything</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Best for small businesses <strong>on a budget</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span><strong>No monthly fee</strong></span></div>
+    </div>
+  </div>
+  <div class="slide-num">5 / 13</div>
+</div>
+
+<!-- SLIDE 6: PAYKENRCT -->
+<div class="slide">
+  <div class="tag yellow">Construction Specific</div>
+  <div class="logo-box" style="background:#1E293B;border:2px solid #334155;">
+    <img src="https://logo.clearbit.com/paykenrct.com" alt="PayKenrct" onerror="this.style.display='none';this.parentElement.innerHTML='<span style=font-size:40px>🏗️</span>'"/>
+  </div>
+  <h2>PayKenrct</h2>
+  <div class="fee-big">Varies</div>
+  <p class="fee-note">by plan</p>
+  <div class="card">
+    <div class="points">
+      <div class="point"><span class="icon">✅</span><span>Built <strong>specifically for construction</strong> and trade businesses</span></div>
+      <div class="point"><span class="icon">✅</span><span>Invoicing and payment <strong>in one platform</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Includes <strong>job tracking and equipment features</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Designed for contractors <strong>like Sams Construction</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>All-in-one solution for <strong>construction companies</strong></span></div>
+    </div>
+  </div>
+  <div class="slide-num">6 / 13</div>
+</div>
+
+<!-- SLIDE 7: AUTHORIZE.NET -->
+<div class="slide">
+  <div class="tag blue">Most Reliable</div>
+  <div class="logo-box">
+    <img src="https://logo.clearbit.com/authorize.net" alt="Authorize.net"/>
+  </div>
+  <h2>Authorize.net</h2>
+  <div class="fee-big">2.9% + 30¢</div>
+  <p class="fee-note">per transaction + $25/month</p>
+  <div class="card">
+    <div class="points">
+      <div class="point"><span class="icon">✅</span><span>Trusted by over <strong>440,000 businesses</strong> since 1996</span></div>
+      <div class="point"><span class="icon">✅</span><span>Automatic email receipts <strong>instantly</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Works with <strong>any website or portal</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Very high security and <strong>fraud protection</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>One of the oldest and most <strong>reliable processors</strong></span></div>
+    </div>
+  </div>
+  <div class="slide-num">7 / 13</div>
+</div>
+
+<!-- SLIDE 8: BRAINTREE -->
+<div class="slide">
+  <div class="tag blue">Owned by PayPal</div>
+  <div class="logo-box">
+    <img src="https://logo.clearbit.com/braintreepayments.com" alt="Braintree"/>
+  </div>
+  <h2>Braintree</h2>
+  <div class="fee-big">2.59% + 49¢</div>
+  <p class="fee-note">per transaction</p>
+  <div class="card">
+    <div class="points">
+      <div class="point"><span class="icon">✅</span><span>Owned by PayPal — <strong>very trusted brand</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Automatic receipts to <strong>client and office</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Built for <strong>custom web apps and portals</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Supports <strong>all major cards</strong> and payment methods</span></div>
+      <div class="point"><span class="icon">✅</span><span>Used by <strong>major companies worldwide</strong></span></div>
+    </div>
+  </div>
+  <div class="slide-num">8 / 13</div>
+</div>
+
+<!-- SLIDE 9: ADYEN -->
+<div class="slide">
+  <div class="tag green">Enterprise Level</div>
+  <div class="logo-box">
+    <img src="https://logo.clearbit.com/adyen.com" alt="Adyen"/>
+  </div>
+  <h2>Adyen</h2>
+  <div class="fee-big">0.3% + 5¢</div>
+  <p class="fee-note">per transaction — lowest fee on this list</p>
+  <div class="card">
+    <div class="points">
+      <div class="point"><span class="icon">✅</span><span><strong>Lowest percentage fee</strong> on this entire list</span></div>
+      <div class="point"><span class="icon">✅</span><span>Used by <strong>Uber, Microsoft, McDonald's</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Automatic receipts <strong>instantly</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Global payment support — <strong>200+ countries</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span><strong>Enterprise level</strong> security</span></div>
+    </div>
+  </div>
+  <div class="slide-num">9 / 13</div>
+</div>
+
+<!-- SLIDE 10: HELCIM -->
+<div class="slide">
+  <div class="tag purple">Cheaper Than Stripe</div>
+  <div class="logo-box">
+    <img src="https://logo.clearbit.com/helcim.com" alt="Helcim"/>
+  </div>
+  <h2>Helcim</h2>
+  <div class="fee-big">0.5% + 25¢</div>
+  <p class="fee-note">per transaction</p>
+  <div class="card">
+    <div class="points">
+      <div class="point"><span class="icon">✅</span><span>Much <strong>cheaper than Stripe</strong> for high volume</span></div>
+      <div class="point"><span class="icon">✅</span><span>Automatic receipts to <strong>client and office</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Built for <strong>small and medium businesses</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span><strong>No contracts</strong> — cancel anytime</span></div>
+      <div class="point"><span class="icon">✅</span><span>Fee decreases <strong>as volume grows</strong></span></div>
+    </div>
+  </div>
+  <div class="slide-num">10 / 13</div>
+</div>
+
+<!-- SLIDE 11: STAX -->
+<div class="slide">
+  <div class="tag yellow">High Volume</div>
+  <div class="logo-box">
+    <img src="https://logo.clearbit.com/staxpayments.com" alt="Stax"/>
+  </div>
+  <h2>Stax</h2>
+  <div class="fee-big">$99/mo flat</div>
+  <p class="fee-note">zero percentage per transaction</p>
+  <div class="card">
+    <div class="points">
+      <div class="point"><span class="icon">✅</span><span><strong>Zero percentage</strong> taken per transaction</span></div>
+      <div class="point"><span class="icon">✅</span><span>Best for companies processing <strong>over $5,000/month</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span>Automatic receipts <strong>included</strong></span></div>
+      <div class="point"><span class="icon">✅</span><span><strong>Unlimited transactions</strong> for flat fee</span></div>
+      <div class="point"><span class="icon">✅</span><span>Break even after just <strong>a few large invoices</strong></span></div>
+    </div>
+  </div>
+  <div class="slide-num">11 / 13</div>
+</div>
+
+<!-- SLIDE 12: COMPARISON TABLE -->
+<div class="slide" style="align-items:flex-start;padding:60px 24px;">
+  <div style="width:100%;max-width:900px;margin:0 auto;">
+    <div class="tag blue" style="margin-bottom:24px;">Side by Side</div>
+    <h2 style="margin-bottom:32px;">Full Comparison</h2>
+    <table class="compare-table">
+      <thead>
+        <tr>
+          <th>Processor</th>
+          <th>Fee</th>
+          <th>Auto Receipt</th>
+          <th>Monthly Fee</th>
+          <th>Best For</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="logo-cell"><img src="https://logo.clearbit.com/squareup.com" alt="Square"/> <span style="font-weight:700">Square <span class="badge rec">TOP PICK</span></span></div></td>
+          <td style="color:#38BDF8;font-weight:700">2.6% + 10¢</td>
+          <td><span class="badge yes">✓ Yes</span></td>
+          <td style="color:#6EE7B7">Free</td>
+          <td style="color:#94A3B8;font-size:12px">Most clients</td>
+        </tr>
+        <tr>
+          <td><div class="logo-cell"><img src="https://logo.clearbit.com/stripe.com" alt="Stripe"/> Stripe</div></td>
+          <td>2.9% + 30¢</td>
+          <td><span class="badge yes">✓ Yes</span></td>
+          <td style="color:#6EE7B7">Free</td>
+          <td style="color:#94A3B8;font-size:12px">Web portals</td>
+        </tr>
+        <tr>
+          <td><div class="logo-cell"><img src="https://logo.clearbit.com/adyen.com" alt="Adyen"/> Adyen</div></td>
+          <td style="color:#6EE7B7;font-weight:700">0.3% + 5¢</td>
+          <td><span class="badge yes">✓ Yes</span></td>
+          <td style="color:#6EE7B7">Free</td>
+          <td style="color:#94A3B8;font-size:12px">Enterprise</td>
+        </tr>
+        <tr>
+          <td><div class="logo-cell"><img src="https://logo.clearbit.com/helcim.com" alt="Helcim"/> Helcim</div></td>
+          <td>0.5% + 25¢</td>
+          <td><span class="badge yes">✓ Yes</span></td>
+          <td style="color:#6EE7B7">Free</td>
+          <td style="color:#94A3B8;font-size:12px">High volume</td>
+        </tr>
+        <tr>
+          <td><div class="logo-cell"><img src="https://logo.clearbit.com/braintreepayments.com" alt="Braintree"/> Braintree</div></td>
+          <td>2.59% + 49¢</td>
+          <td><span class="badge yes">✓ Yes</span></td>
+          <td style="color:#6EE7B7">Free</td>
+          <td style="color:#94A3B8;font-size:12px">Custom portals</td>
+        </tr>
+        <tr>
+          <td><div class="logo-cell"><img src="https://logo.clearbit.com/authorize.net" alt="Authorize.net"/> Authorize.net</div></td>
+          <td>2.9% + 30¢</td>
+          <td><span class="badge yes">✓ Yes</span></td>
+          <td style="color:#FCA5A5">$25/mo</td>
+          <td style="color:#94A3B8;font-size:12px">Reliability</td>
+        </tr>
+        <tr>
+          <td><div class="logo-cell"><img src="https://logo.clearbit.com/quickbooks.intuit.com" alt="QuickBooks"/> QuickBooks</div></td>
+          <td>2.99% + 25¢</td>
+          <td><span class="badge yes">✓ Yes</span></td>
+          <td style="color:#6EE7B7">Free</td>
+          <td style="color:#94A3B8;font-size:12px">Accounting</td>
+        </tr>
+        <tr>
+          <td><div class="logo-cell"><img src="https://logo.clearbit.com/waveapps.com" alt="Wave"/> Wave</div></td>
+          <td>2.9% + 60¢</td>
+          <td><span class="badge yes">✓ Yes</span></td>
+          <td style="color:#6EE7B7">Free</td>
+          <td style="color:#94A3B8;font-size:12px">Budget</td>
+        </tr>
+        <tr>
+          <td><div class="logo-cell"><img src="https://logo.clearbit.com/staxpayments.com" alt="Stax"/> Stax</div></td>
+          <td style="color:#6EE7B7;font-weight:700">0% per txn</td>
+          <td><span class="badge yes">✓ Yes</span></td>
+          <td style="color:#FCA5A5">$99/mo</td>
+          <td style="color:#94A3B8;font-size:12px">$5k+/month</td>
+        </tr>
+        <tr>
+          <td><div class="logo-cell"><span style="font-size:32px">🏗️</span> PayKenrct</div></td>
+          <td>Varies</td>
+          <td><span class="badge yes">✓ Yes</span></td>
+          <td style="color:#94A3B8">Varies</td>
+          <td style="color:#94A3B8;font-size:12px">Construction</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="slide-num">12 / 13</div>
+</div>
+
+<!-- SLIDE 13: STRATEGY -->
+<div class="slide">
+  <div class="tag green">Final Decision</div>
+  <h2 style="text-align:center;margin-bottom:8px;">You Never Lose Money</h2>
+  <p class="sub" style="margin-bottom:32px;">Our strategy ensures 100% collection every time</p>
+  <div class="strategy-box">
+    <h3>How It Works in the Portal</h3>
+    <div style="display:flex;flex-direction:column;gap:16px;text-align:left;">
+      <div style="background:rgba(255,255,255,0.1);border-radius:12px;padding:16px;display:flex;gap:12px;align-items:center;">
+        <span style="font-size:28px">⚡</span>
+        <div><div style="font-weight:700;font-size:16px">Zelle / Cash — FREE</div><div style="font-size:13px;color:rgba(255,255,255,0.7);">Client pays original amount. You receive 100%. No fees.</div></div>
+      </div>
+      <div style="background:rgba(255,255,255,0.1);border-radius:12px;padding:16px;display:flex;gap:12px;align-items:center;">
+        <span style="font-size:28px">💳</span>
+        <div><div style="font-weight:700;font-size:16px">Card — 3.5% Surcharge Added</div><div style="font-size:13px;color:rgba(255,255,255,0.7);">Client pays original amount + surcharge. You receive 100%. Fee is theirs.</div></div>
+      </div>
+      <div style="background:rgba(255,255,255,0.15);border-radius:12px;padding:16px;text-align:center;border:1px solid rgba(255,255,255,0.3);">
+        <div style="font-size:22px;font-weight:800;">Result: You always collect exactly what you're owed.</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-top:4px;">Permitted under NY State law. No exceptions.</div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-num">13 / 13</div>
+</div>
+
+</body>
+</html>
