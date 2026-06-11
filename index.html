@@ -963,8 +963,7 @@ function ClientPortal({token}){
 
         {/* INVOICE DETAILS */}
         <div style={{background:'#fff',borderRadius:12,padding:'16px 18px',border:'1px solid #F3F4F6'}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
-            <h3 style={{fontSize:14,fontWeight:700}}>{es?'Detalles de Factura':'Invoice Details'}</h3>
+          <h3 style={{fontSize:14,fontWeight:700,marginBottom:12}}>{es?'Detalles de Factura':'Invoice Details'}</h3>
             {rental.invoice_data&&<button onClick={()=>{
               const inv=JSON.parse(rental.invoice_data);
               const w=window.open('','_blank');
@@ -983,7 +982,7 @@ function ClientPortal({token}){
               w.document.write("<tr class=tot><td style='padding:8px 10px;text-align:right;width:77%'>TOTAL</td><td style='padding:8px 14px;text-align:right;border-left:2px solid #1D4ED8;font-size:14px'>$ "+parseFloat(inv.total).toFixed(2)+"</td></tr></table>");
               w.document.write("</body></html>");
               w.document.close();
-            }} style={{padding:'6px 14px',borderRadius:8,fontSize:12,fontWeight:700,cursor:'pointer',border:'none',background:'#1D4ED8',color:'#fff'}}>📄 {es?'Ver Factura':'View Invoice'}</button>}
+            }} style={{width:'100%',padding:'16px',borderRadius:12,fontSize:18,fontWeight:800,cursor:'pointer',border:'none',background:'#1D4ED8',color:'#fff',marginTop:12,display:'block',textAlign:'center',boxShadow:'0 4px 12px rgba(37,99,235,0.4)'}}>📄 {es?'VER MI FACTURA':'VIEW MY INVOICE'}</button>}
           </div>
           {[[es?'Factura':'Invoice',rental.id],[es?'Equipo':'Equipment',rental.asset],[es?'Inicio':'Start',fmtD(rental.start_date)],[es?'Vence':'Due',fmtD(rental.due_date)],[es?'Duración':'Duration',rental.duration_days+(es?' días':' days')],[es?'Conductor':'Driver',rental.assigned_driver]].map(([l,v])=>(
             <div key={l} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid #F9FAFB',fontSize:13}}><span style={{color:'#9CA3AF'}}>{l}</span><span style={{fontWeight:500}}>{v}</span></div>
