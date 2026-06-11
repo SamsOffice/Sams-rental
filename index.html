@@ -804,24 +804,24 @@ function ClientPortal({token}){
 
   // ── CONFIRMATION SCREEN ──
   if(!confirmed&&!isPaid)return(
-    <div style={{minHeight:'100vh',background:'#0F172A',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24}}>
+    <div style={{minHeight:'100vh',background:'#F9FAFB',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24}}>
       <div style={{maxWidth:480,width:'100%'}}>
         {/* Language toggle */}
         <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginBottom:20}}>
-          <button onClick={()=>setLang('en')} style={{padding:'4px 12px',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer',border:'none',background:lang==='en'?'#2563EB':'#1E293B',color:'#fff'}}>EN</button>
-          <button onClick={()=>setLang('es')} style={{padding:'4px 12px',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer',border:'none',background:lang==='es'?'#2563EB':'#1E293B',color:'#fff'}}>ES</button>
+          <button onClick={()=>setLang('en')} style={{padding:'4px 12px',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer',border:'none',background:lang==='en'?'#2563EB':'#E5E7EB',color:lang==='en'?'#fff':'#374151'}}>EN</button>
+          <button onClick={()=>setLang('es')} style={{padding:'4px 12px',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer',border:'none',background:lang==='es'?'#2563EB':'#E5E7EB',color:lang==='es'?'#fff':'#374151'}}>ES</button>
         </div>
-        <div style={{background:'#1E293B',borderRadius:16,padding:28,border:'1px solid #334155',marginBottom:16}}>
+        <div style={{background:'#fff',borderRadius:16,padding:28,border:'1px solid #E5E7EB',marginBottom:16,boxShadow:'0 4px 24px rgba(0,0,0,0.07)'}}>
           <div style={{fontSize:13,fontWeight:700,color:'#9CA3AF',textTransform:'uppercase',marginBottom:6}}>Sams Construction Services LTD</div>
-          <h2 style={{fontSize:22,fontWeight:800,color:'#fff',marginBottom:20}}>{es?'Acuerdo de Renta':'Rental Agreement'}</h2>
-          <div style={{background:'#0F172A',borderRadius:10,padding:16,marginBottom:20,border:'1px solid #334155'}}>
-            <div style={{fontSize:13,color:'#94A3B8',marginBottom:8}}>{es?'Yo,':'I,'} <strong style={{color:'#fff'}}>{rental.client_name}</strong>, {es?'confirmo que debo a Sams Construction Services LTD:':'confirm I owe Sams Construction Services LTD:'}</div>
+          <h2 style={{fontSize:22,fontWeight:800,color:'#111827',marginBottom:20}}>{es?'Acuerdo de Renta':'Rental Agreement'}</h2>
+          <div style={{background:'#F9FAFB',borderRadius:10,padding:16,marginBottom:20,border:'1px solid #E5E7EB'}}>
+            <div style={{fontSize:13,color:'#6B7280',marginBottom:8}}>{es?'Yo,':'I,'} <strong style={{color:'#111827'}}>{rental.client_name}</strong>, {es?'confirmo que debo a Sams Construction Services LTD:':'confirm I owe Sams Construction Services LTD:'}</div>
             <div style={{fontSize:28,fontWeight:900,color:'#38BDF8',marginBottom:4}}>{money(rental.price)}</div>
-            <div style={{fontSize:13,color:'#94A3B8'}}>{es?'Por:':'For:'} <strong style={{color:'#fff'}}>{rental.asset}</strong></div>
-            <div style={{fontSize:13,color:'#94A3B8'}}>{es?'Fecha de vencimiento:':'Due date:'} <strong style={{color:'#fff'}}>{fmtD(rental.due_date)}</strong></div>
+            <div style={{fontSize:13,color:'#6B7280'}}>{es?'Por:':'For:'} <strong style={{color:'#111827'}}>{rental.asset}</strong></div>
+            <div style={{fontSize:13,color:'#6B7280'}}>{es?'Fecha de vencimiento:':'Due date:'} <strong style={{color:'#111827'}}>{fmtD(rental.due_date)}</strong></div>
           </div>
-          <div style={{fontSize:12,color:'#64748B',lineHeight:1.8,marginBottom:20,padding:'12px',background:'#0F172A',borderRadius:8,border:'1px solid #1E293B'}}>
-            <strong style={{color:'#94A3B8'}}>{es?'TÉRMINOS Y CONDICIONES:':'TERMS & CONDITIONS:'}</strong><br/>
+          <div style={{fontSize:12,color:'#6B7280',lineHeight:1.8,marginBottom:20,padding:'12px',background:'#F9FAFB',borderRadius:8,border:'1px solid #E5E7EB'}}>
+            <strong style={{color:'#374151'}}>{es?'TÉRMINOS Y CONDICIONES:':'TERMS & CONDITIONS:'}</strong><br/>
             {es?'• El pago completo debe realizarse en o antes de la fecha de vencimiento.':'• Full payment is due on or before the due date.'}<br/>
             {es?'• El incumplimiento de pago resultará en el reposo inmediato del equipo.':'• Non-payment will result in immediate equipment repossession.'}<br/>
             {es?'• Se presentará un gravamen mecánico sobre su propiedad por falta de pago.':'• A Mechanic Lien will be filed on your property for non-payment.'}<br/>
@@ -834,7 +834,7 @@ function ClientPortal({token}){
           </button>
           <div style={{fontSize:11,color:'#475569',textAlign:'center'}}>{es?'Al confirmar, su dirección IP y la hora serán registradas.':'By confirming, your IP address and timestamp will be recorded.'}</div>
         </div>
-        <div style={{textAlign:'center'}}><a href="tel:+19176636369" style={{color:'#475569',fontSize:12}}>{es?'¿Preguntas? Llame:':'Questions? Call:'} +1 (917) 663-6369</a></div>
+        <div style={{textAlign:'center'}}><a href="tel:+19176636369" style={{color:'#6B7280',fontSize:12}}>{es?'¿Preguntas? Llame:':'Questions? Call:'} +1 (917) 663-6369</a></div>
       </div>
     </div>
   );
