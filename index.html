@@ -765,14 +765,32 @@ function ClientPortal({token}){
   const [loading,setLoading]=useState(true);
   const [notFound,setNotFound]=useState(false);
   const [payChoice,setPayChoice]=useState('');
+  const [confirmed,setConfirmed]=useState(false);
+  const [lang,setLang]=useState('en');
+  const es=lang==='es';
+
   useEffect(()=>{
     sb.from('rentals').select('*').eq('portal_token',token).single().then(({data,error})=>{
       if(error||!data)setNotFound(true);else setRental(data);
       setLoading(false);
     });
   },[token]);
+
+  const logConfirmation=async()=>{
+    const ts=new Date().toISOString();
+    await sb.from('rentals').update({
+      portal_confirmed:true,
+      portal_confirmed_at:ts,
+    }).eq('portal_token',token);
+    if(rental?.client_phone){
+      // Log confirmation - Twilio will pick this up later
+    }
+    setConfirmed(true);
+  };
+
   if(loading)return <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center'}}><div className="spinner"/></div>;
-  if(notFound)return <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:20,textAlign:'center'}}><div><div style={{fontSize:48}}>🔍</div><h1 style={{fontSize:20,fontWeight:700,margin:'12px 0'}}>Invoice Not Found</h1><a href="tel:+19176636369" style={{color:'#2563EB'}}>Call +1 (917) 663-6369</a></div></div>;
+  if(notFound)return <div style={{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:20,textAlign:'center'}}><div><div style={{fontSize:48}}>🔍</div><h1 style={{fontSize:20,fontWeight:700,margin:'12px 0'}}>{es?'Factura No Encontrada':'Invoice Not Found'}</h1><a href="tel:+19176636369" style={{color:'#2563EB'}}>+1 (917) 663-6369</a></div></div>;
+
   const d=days(rental.due_date);
   const od=d<0?Math.abs(d):0;
   const isPaid=rental.payment_status==='paid';
@@ -781,176 +799,230 @@ function ClientPortal({token}){
   const ccTotal=Math.round(rental.price*1.035*100)/100;
   const zelle=localStorage.getItem('sams_zelle')||PHONE;
 
-  // ── POLICY TEXT ──
-  const POLICY=`RENTAL POLICY — SAMS CONSTRUCTION SERVICES LTD
+  // Notice level
+  const noticeLevel=od===0?'none':od<7?'warning':od<14?'final':od<30?'legal':'blacklist';
 
-By renting equipment from Sams Construction Services LTD, the client agrees to the following terms:
-
-1. PAYMENT: Full payment is due on or before the due date.
-2. MECHANIC'S LIEN: Failure to pay will result in the immediate filing of a Mechanic's Lien on your job site property.
-3. REPOSSESSION: Equipment will be repossessed after 14 days of non-payment without further notice.
-4. LEGAL ACTION: Unpaid balances will be referred to legal counsel. All attorney fees and court costs will be added to the outstanding balance.
-5. NO EXTENSIONS: Extensions are not granted without prior written approval from the office.
-6. RENTAL SUSPENSION: Non-payment will result in permanent suspension of all future rental privileges with this company.`;
-
-  // ── ESCALATING NOTICE LEVEL ──
-  const noticeLevel = od===0?'none':od<7?'warning':od<14?'final':od<30?'legal':'collections';
-
-  // ── CLIENT TIMELINE ──
-  const startDate=rental.start_date?new Date(rental.start_date+'T00:00:00'):null;
-  const dueDate=rental.due_date?new Date(rental.due_date+'T00:00:00'):null;
-  const today=new Date();today.setHours(0,0,0,0);
-  const totalDays=startDate&&dueDate?Math.ceil((dueDate-startDate)/86400000):0;
-  const elapsed=startDate?Math.ceil((today-startDate)/86400000):0;
-  const pct=totalDays>0?Math.min(100,Math.max(0,Math.round((elapsed/totalDays)*100))):0;
+  // ── CONFIRMATION SCREEN ──
+  if(!confirmed&&!isPaid)return(
+    <div style={{minHeight:'100vh',background:'#0F172A',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24}}>
+      <div style={{maxWidth:480,width:'100%'}}>
+        {/* Language toggle */}
+        <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginBottom:20}}>
+          <button onClick={()=>setLang('en')} style={{padding:'4px 12px',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer',border:'none',background:lang==='en'?'#2563EB':'#1E293B',color:'#fff'}}>EN</button>
+          <button onClick={()=>setLang('es')} style={{padding:'4px 12px',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer',border:'none',background:lang==='es'?'#2563EB':'#1E293B',color:'#fff'}}>ES</button>
+        </div>
+        <div style={{background:'#1E293B',borderRadius:16,padding:28,border:'1px solid #334155',marginBottom:16}}>
+          <div style={{fontSize:13,fontWeight:700,color:'#9CA3AF',textTransform:'uppercase',marginBottom:6}}>Sams Construction Services LTD</div>
+          <h2 style={{fontSize:22,fontWeight:800,color:'#fff',marginBottom:20}}>{es?'Acuerdo de Renta':'Rental Agreement'}</h2>
+          <div style={{background:'#0F172A',borderRadius:10,padding:16,marginBottom:20,border:'1px solid #334155'}}>
+            <div style={{fontSize:13,color:'#94A3B8',marginBottom:8}}>{es?'Yo,':'I,'} <strong style={{color:'#fff'}}>{rental.client_name}</strong>, {es?'confirmo que debo a Sams Construction Services LTD:':'confirm I owe Sams Construction Services LTD:'}</div>
+            <div style={{fontSize:28,fontWeight:900,color:'#38BDF8',marginBottom:4}}>{money(rental.price)}</div>
+            <div style={{fontSize:13,color:'#94A3B8'}}>{es?'Por:':'For:'} <strong style={{color:'#fff'}}>{rental.asset}</strong></div>
+            <div style={{fontSize:13,color:'#94A3B8'}}>{es?'Fecha de vencimiento:':'Due date:'} <strong style={{color:'#fff'}}>{fmtD(rental.due_date)}</strong></div>
+          </div>
+          <div style={{fontSize:12,color:'#64748B',lineHeight:1.8,marginBottom:20,padding:'12px',background:'#0F172A',borderRadius:8,border:'1px solid #1E293B'}}>
+            <strong style={{color:'#94A3B8'}}>{es?'TÉRMINOS Y CONDICIONES:':'TERMS & CONDITIONS:'}</strong><br/>
+            {es?'• El pago completo debe realizarse en o antes de la fecha de vencimiento.':'• Full payment is due on or before the due date.'}<br/>
+            {es?'• El incumplimiento de pago resultará en el reposo inmediato del equipo.':'• Non-payment will result in immediate equipment repossession.'}<br/>
+            {es?'• Se presentará un gravamen mecánico sobre su propiedad por falta de pago.':'• A Mechanic Lien will be filed on your property for non-payment.'}<br/>
+            {es?'• No se otorgan extensiones sin aprobación previa de la oficina.':'• No extensions granted without prior office approval.'}<br/>
+            {es?'• La cuenta será suspendida permanentemente por falta de pago.':'• Account permanently suspended for non-payment.'}<br/>
+            {es?'• Todos los costos de cobranza serán añadidos al saldo pendiente.':'• All collection costs added to outstanding balance.'}
+          </div>
+          <button onClick={logConfirmation} style={{width:'100%',padding:'16px',borderRadius:10,background:'#2563EB',color:'#fff',border:'none',fontSize:16,fontWeight:800,cursor:'pointer',marginBottom:10}}>
+            {es?`✓ CONFIRMO QUE DEBO ${money(rental.price)}`:`✓ I CONFIRM I OWE ${money(rental.price)}`}
+          </button>
+          <div style={{fontSize:11,color:'#475569',textAlign:'center'}}>{es?'Al confirmar, su dirección IP y la hora serán registradas.':'By confirming, your IP address and timestamp will be recorded.'}</div>
+        </div>
+        <div style={{textAlign:'center'}}><a href="tel:+19176636369" style={{color:'#475569',fontSize:12}}>{es?'¿Preguntas? Llame:':'Questions? Call:'} +1 (917) 663-6369</a></div>
+      </div>
+    </div>
+  );
 
   return(
     <div style={{minHeight:'100vh',background:'#F9FAFB'}}>
-      <div style={{background:'#111827',padding:'16px 20px'}}>
-        <div style={{fontSize:15,fontWeight:700,color:'#fff'}}>SAMS CONSTRUCTION SERVICES LTD</div>
-        <div style={{fontSize:11,color:'#9CA3AF',marginTop:2}}>188-16 Woodhull Ave, Hollis NY 11423 · +1 (917) 663-6369</div>
+      <div style={{background:'#111827',padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+        <div>
+          <div style={{fontSize:14,fontWeight:700,color:'#fff'}}>SAMS CONSTRUCTION SERVICES LTD</div>
+          <div style={{fontSize:10,color:'#9CA3AF'}}>188-16 Woodhull Ave, Hollis NY 11423 · +1 (917) 663-6369</div>
+        </div>
+        <div style={{display:'flex',gap:6}}>
+          <button onClick={()=>setLang('en')} style={{padding:'3px 10px',borderRadius:5,fontSize:11,fontWeight:700,cursor:'pointer',border:'none',background:lang==='en'?'#2563EB':'#374151',color:'#fff'}}>EN</button>
+          <button onClick={()=>setLang('es')} style={{padding:'3px 10px',borderRadius:5,fontSize:11,fontWeight:700,cursor:'pointer',border:'none',background:lang==='es'?'#2563EB':'#374151',color:'#fff'}}>ES</button>
+        </div>
       </div>
+
       <div style={{maxWidth:500,margin:'0 auto',padding:'20px 16px',display:'flex',flexDirection:'column',gap:14}}>
 
+        {/* ESCALATING NOTICES */}
+        {noticeLevel==='warning'&&!isPaid&&<div style={{background:'#FFFBEB',border:'2px solid #F59E0B',borderRadius:12,padding:'16px 18px'}}>
+          <div style={{fontSize:15,fontWeight:800,color:'#92400E',marginBottom:6}}>⚠️ {es?'PAGO VENCIDO - URGENTE':'PAYMENT OVERDUE — URGENT'}</div>
+          <div style={{fontSize:13,color:'#92400E',lineHeight:1.7,marginBottom:10}}>{es?`${rental.client_name}, su factura lleva ${od} dia(s) vencida. Pague ${money(rental.price)} AHORA para evitar consecuencias.`:`${rental.client_name}, your invoice is ${od} day(s) overdue. Pay ${money(rental.price)} NOW to avoid consequences.`}</div>
+          <a href="tel:+19176636369" style={{display:'block',padding:'10px',borderRadius:8,background:'#92400E',color:'#fff',textDecoration:'none',fontSize:13,fontWeight:800,textAlign:'center'}}>📞 {es?'LLAME AHORA':'CALL NOW'} — +1 (917) 663-6369</a>
+        </div>}
 
+        {noticeLevel==='final'&&!isPaid&&<div style={{background:'#FEF2F2',border:'2px solid #DC2626',borderRadius:12,padding:'16px 18px'}}>
+          <div style={{fontSize:15,fontWeight:800,color:'#991B1B',marginBottom:6}}>🚨 {es?'AVISO FINAL - 72 HORAS':'FINAL NOTICE — 72 HOURS'}</div>
+          <div style={{fontSize:13,color:'#991B1B',lineHeight:1.7,marginBottom:10}}>{es?`${rental.client_name}, tiene 72 horas para pagar ${money(rental.price)} o el equipo será RETIRADO de su obra. No hay extensiones. No hay negociación.`:`${rental.client_name}, you have 72 hours to pay ${money(rental.price)} or equipment will be REMOVED from your job site. No extensions. No negotiation.`}</div>
+          <div style={{fontSize:12,color:'#991B1B',marginBottom:10,padding:'8px',background:'rgba(220,38,38,0.1)',borderRadius:6}}>
+            {es?'• Retiro del equipo programado':'• Equipment pickup scheduled'}<br/>
+            {es?'• Gravamen mecánico será presentado':'• Mechanic Lien will be filed'}<br/>
+            {es?'• Cuenta suspendida permanentemente':'• Account permanently suspended'}
+          </div>
+          <a href="tel:+19176636369" style={{display:'block',padding:'12px',borderRadius:8,background:'#991B1B',color:'#fff',textDecoration:'none',fontSize:14,fontWeight:800,textAlign:'center'}}>📞 {es?'LLAME INMEDIATAMENTE':'CALL IMMEDIATELY'} — +1 (917) 663-6369</a>
+        </div>}
 
-        <div><p style={{fontSize:13,color:'#9CA3AF'}}>Hello,</p><h1 style={{fontSize:22,fontWeight:700}}>{rental.client_name}</h1></div>
+        {noticeLevel==='legal'&&!isPaid&&<div style={{background:'#7F1D1D',border:'2px solid #DC2626',borderRadius:12,padding:'18px',color:'#fff'}}>
+          <div style={{fontSize:16,fontWeight:800,marginBottom:8}}>⛔ {es?'AVISO DE GRAVAMEN MECANICO':'MECHANIC LIEN NOTICE'}</div>
+          <div style={{fontSize:13,lineHeight:1.8,marginBottom:10}}>{es?`${rental.client_name}, su propiedad en `:`${rental.client_name}, your property at `}<strong>{rental.client_address}</strong>{es?' ha sido marcada para la presentacion de un GRAVAMEN MECANICO. El equipo será retirado de su obra sin previo aviso adicional.':' has been flagged for MECHANIC LIEN filing. Equipment will be removed from your job site without further notice.'}</div>
+          <div style={{fontSize:12,lineHeight:2,marginBottom:12,padding:'10px',background:'rgba(0,0,0,0.3)',borderRadius:8}}>
+            {es?'• Gravamen mecánico en proceso de presentacion':'• Mechanic Lien in process of being filed'}<br/>
+            {es?'• Equipo será retirado HOY':'• Equipment will be removed TODAY'}<br/>
+            {es?'• Cuenta PERMANENTEMENTE cerrada':'• Account PERMANENTLY closed'}<br/>
+            {es?'• Usted es responsable de todos los costos':'• You are responsible for all costs'}
+          </div>
+          <a href="tel:+19176636369" style={{display:'block',padding:'14px',borderRadius:9,background:'#DC2626',color:'#fff',textDecoration:'none',fontSize:15,fontWeight:900,textAlign:'center'}}>📞 {es?'LLAME AHORA MISMO':'CALL RIGHT NOW'} — +1 (917) 663-6369</a>
+        </div>}
 
-        {/* ── CLIENT PERSONAL SCHEDULE ── */}
+        {noticeLevel==='blacklist'&&!isPaid&&<div style={{background:'#111827',border:'2px solid #374151',borderRadius:12,padding:'18px',color:'#fff'}}>
+          <div style={{fontSize:16,fontWeight:800,marginBottom:8,color:'#EF4444'}}>🔒 {es?'CUENTA TERMINADA':'ACCOUNT TERMINATED'}</div>
+          <div style={{fontSize:13,lineHeight:1.8,marginBottom:12,color:'#9CA3AF'}}>{es?`${rental.client_name}, su cuenta ha sido PERMANENTEMENTE cerrada. El gravamen mecánico ha sido presentado sobre su propiedad. El equipo ha sido retirado. Usted está en la lista negra de Sams Construction Services LTD.`:`${rental.client_name}, your account has been PERMANENTLY closed. Mechanic Lien has been filed on your property. Equipment has been removed. You are blacklisted from Sams Construction Services LTD.`}</div>
+          <a href="tel:+19176636369" style={{display:'block',padding:'12px',borderRadius:9,background:'#DC2626',color:'#fff',textDecoration:'none',fontSize:14,fontWeight:800,textAlign:'center'}}>📞 +1 (917) 663-6369</a>
+        </div>}
+
+        <div><p style={{fontSize:13,color:'#9CA3AF'}}>{es?'Hola,':'Hello,'}</p><h1 style={{fontSize:22,fontWeight:700}}>{rental.client_name}</h1></div>
+
+        {/* CLIENT TIMELINE */}
+        {(()=>{
+          const startDate=rental.start_date?new Date(rental.start_date+'T00:00:00'):null;
+          const dueDate=rental.due_date?new Date(rental.due_date+'T00:00:00'):null;
+          const today2=new Date();today2.setHours(0,0,0,0);
+          const totalDays=startDate&&dueDate?Math.ceil((dueDate-startDate)/86400000):0;
+          const elapsed=startDate?Math.ceil((today2-startDate)/86400000):0;
+          const pct=totalDays>0?Math.min(100,Math.max(0,Math.round((elapsed/totalDays)*100))):0;
+          return <div style={{background:'#fff',borderRadius:12,padding:'18px',border:'1px solid #F3F4F6'}}>
+            <h3 style={{fontSize:14,fontWeight:700,marginBottom:14}}>{es?'📅 Tu Cronograma de Renta':'📅 Your Rental Timeline'}</h3>
+            <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'#9CA3AF',marginBottom:6}}>
+              <span>{es?'Inicio:':'Start:'} {fmtD(rental.start_date)}</span>
+              <span>{es?'Vence:':'Due:'} {fmtD(rental.due_date)}</span>
+            </div>
+            <div style={{height:10,background:'#F3F4F6',borderRadius:10,marginBottom:10,overflow:'hidden'}}>
+              <div style={{height:'100%',width:pct+'%',background:od>0?'#EF4444':pct>80?'#F59E0B':'#2563EB',borderRadius:10}}/>
+            </div>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontSize:12,color:'#6B7280'}}>{elapsed<=0?(es?'Comenzando pronto':'Starting soon'):(elapsed+' '+( es?'de':'of')+' '+totalDays+(es?' días usados':' days used'))}</span>
+              <span style={{fontSize:12,fontWeight:700,color:od>0?'#DC2626':d<=2?'#D97706':'#2563EB'}}>{od>0?od+(es?'d vencido':'d overdue'):d===0?(es?'Vence hoy':'Due today'):d+(es?'d restantes':'d left')}</span>
+            </div>
+          </div>;
+        })()}
+
+        {/* ORDER TRACKING */}
         <div style={{background:'#fff',borderRadius:12,padding:'18px',border:'1px solid #F3F4F6'}}>
-          <h3 style={{fontSize:14,fontWeight:700,marginBottom:14}}>📅 Your Rental Timeline</h3>
-          <div style={{display:'flex',justifyContent:'space-between',fontSize:11,color:'#9CA3AF',marginBottom:6}}>
-            <span>Start: {fmtD(rental.start_date)}</span>
-            <span>Due: {fmtD(rental.due_date)}</span>
-          </div>
-          <div style={{height:10,background:'#F3F4F6',borderRadius:10,marginBottom:10,overflow:'hidden'}}>
-            <div style={{height:'100%',width:pct+'%',background:od>0?'#EF4444':pct>80?'#F59E0B':'#2563EB',borderRadius:10,transition:'width 0.6s'}}/>
-          </div>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-            <span style={{fontSize:12,color:'#6B7280'}}>{elapsed<=0?'Starting soon':elapsed+' of '+totalDays+' days used'}</span>
-            <span style={{fontSize:12,fontWeight:700,color:od>0?'#DC2626':d<=2?'#D97706':'#2563EB'}}>{od>0?od+'d overdue':d===0?'Due today':d+'d remaining'}</span>
-          </div>
-          {totalDays>0&&<div style={{marginTop:12,display:'flex',gap:0}}>
-            {[
-              {label:'📦 Delivered',day:0,done:elapsed>=0},
-              {label:'⏳ Midpoint',day:Math.floor(totalDays/2),done:elapsed>=Math.floor(totalDays/2)},
-              {label:'⚠️ 2 Days Left',day:totalDays-2,done:elapsed>=totalDays-2},
-              {label:'📅 Due',day:totalDays,done:elapsed>=totalDays},
-            ].map((m,i)=><div key={i} style={{flex:1,textAlign:'center'}}>
-              <div style={{width:12,height:12,borderRadius:'50%',background:m.done?'#2563EB':'#E5E7EB',margin:'0 auto 4px'}}/>
-              <div style={{fontSize:9,color:m.done?'#2563EB':'#9CA3AF',fontWeight:m.done?700:400,lineHeight:1.3}}>{m.label}</div>
-            </div>)}
-          </div>}
-        </div>
-
-        {/* ── ORDER TRACKING ── */}
-        <div style={{background:'#fff',borderRadius:12,padding:'18px',border:'1px solid #F3F4F6'}}>
-          <h3 style={{fontSize:14,fontWeight:700,marginBottom:14}}>📦 Delivery Tracking</h3>
+          <h3 style={{fontSize:14,fontWeight:700,marginBottom:14}}>{es?'📦 Seguimiento de Entrega':'📦 Delivery Tracking'}</h3>
           <div style={{height:8,background:'#F3F4F6',borderRadius:10,marginBottom:16}}>
-            <div style={{height:'100%',width:step.pct+'%',background:step.pct===100?'#10B981':'#2563EB',borderRadius:10,transition:'width 0.6s'}}/>
+            <div style={{height:'100%',width:step.pct+'%',background:step.pct===100?'#10B981':'#2563EB',borderRadius:10}}/>
           </div>
           <div style={{display:'flex',flexDirection:'column',gap:10}}>
             {STEPS.map((st,i)=>{
               const done=i<=stepIdx;const current=i===stepIdx;
               return <div key={st.key} style={{display:'flex',alignItems:'center',gap:10}}>
                 <div style={{width:24,height:24,borderRadius:'50%',background:done?'#2563EB':'#E5E7EB',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,color:'#fff',fontWeight:700,flexShrink:0,opacity:done?1:0.4}}>{done?'✓':i+1}</div>
-                <span style={{fontSize:13,fontWeight:current?700:400,color:current?'#2563EB':'#374151',opacity:done?1:0.5}}>{st.label}{current&&<span style={{fontSize:11,background:'#EFF6FF',color:'#2563EB',padding:'1px 6px',borderRadius:8,marginLeft:6,fontWeight:600}}>Now</span>}</span>
+                <span style={{fontSize:13,fontWeight:current?700:400,color:current?'#2563EB':'#374151',opacity:done?1:0.5}}>{st.label}{current&&<span style={{fontSize:11,background:'#EFF6FF',color:'#2563EB',padding:'1px 6px',borderRadius:8,marginLeft:6,fontWeight:600}}>{es?'Ahora':'Now'}</span>}</span>
               </div>;
             })}
           </div>
         </div>
 
-        {/* ── STATUS BADGE ── */}
+        {/* STATUS */}
         <div style={{background:isPaid?'#ECFDF5':od>0?'#FEF2F2':d<=2?'#FFFBEB':'#EFF6FF',border:'1px solid '+(isPaid?'#A7F3D0':od>0?'#FCA5A5':d<=2?'#FDE68A':'#BFDBFE'),borderRadius:12,padding:'16px 18px'}}>
-          <div style={{fontSize:16,fontWeight:700,color:isPaid?'#065F46':od>0?'#991B1B':d<=2?'#92400E':'#1D4ED8'}}>{isPaid?'✅ PAID IN FULL':od>0?`⚠️ ${od} DAYS OVERDUE`:d===0?'⏰ DUE TODAY':`${d} DAYS REMAINING`}</div>
-          {!isPaid&&<div style={{fontSize:12,color:'#6B7280',marginTop:4}}>Due: {fmtD(rental.due_date)}</div>}
+          <div style={{fontSize:16,fontWeight:700,color:isPaid?'#065F46':od>0?'#991B1B':d<=2?'#92400E':'#1D4ED8'}}>{isPaid?(es?'✅ PAGADO EN SU TOTALIDAD':'✅ PAID IN FULL'):od>0?(es?`⚠️ ${od} DÍAS VENCIDO`:`⚠️ ${od} DAYS OVERDUE`):d===0?(es?'⏰ VENCE HOY':'⏰ DUE TODAY'):(es?`${d} DÍAS RESTANTES`:`${d} DAYS REMAINING`)}</div>
+          {!isPaid&&<div style={{fontSize:12,color:'#6B7280',marginTop:4}}>{es?'Vence:':'Due:'} {fmtD(rental.due_date)}</div>}
         </div>
 
-        {/* ── INVOICE DETAILS ── */}
+        {/* INVOICE DETAILS */}
         <div style={{background:'#fff',borderRadius:12,padding:'16px 18px',border:'1px solid #F3F4F6'}}>
-          <h3 style={{fontSize:14,fontWeight:700,marginBottom:12}}>Invoice Details</h3>
-          {[['Invoice',rental.id],['Equipment',rental.asset],['Start',fmtD(rental.start_date)],['Due',fmtD(rental.due_date)],['Duration',rental.duration_days+' days'],['Driver',rental.assigned_driver]].map(([l,v])=>(
+          <h3 style={{fontSize:14,fontWeight:700,marginBottom:12}}>{es?'Detalles de Factura':'Invoice Details'}</h3>
+          {[[es?'Factura':'Invoice',rental.id],[es?'Equipo':'Equipment',rental.asset],[es?'Inicio':'Start',fmtD(rental.start_date)],[es?'Vence':'Due',fmtD(rental.due_date)],[es?'Duración':'Duration',rental.duration_days+(es?' días':' days')],[es?'Conductor':'Driver',rental.assigned_driver]].map(([l,v])=>(
             <div key={l} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid #F9FAFB',fontSize:13}}><span style={{color:'#9CA3AF'}}>{l}</span><span style={{fontWeight:500}}>{v}</span></div>
           ))}
-          <div style={{display:'flex',justifyContent:'space-between',paddingTop:10,fontSize:16,fontWeight:700}}><span>Total Due</span><span>{money(rental.price)}</span></div>
+          <div style={{display:'flex',justifyContent:'space-between',paddingTop:10,fontSize:16,fontWeight:700}}><span>{es?'Total a Pagar':'Total Due'}</span><span>{money(rental.price)}</span></div>
         </div>
 
-        {/* ── PAYMENT OPTIONS ── */}
+        {/* PAYMENT OPTIONS */}
         {!isPaid&&<div style={{background:'#fff',borderRadius:12,border:'1px solid #F3F4F6',overflow:'hidden'}}>
-          <div style={{background:'#111827',padding:'14px 18px'}}><h3 style={{fontSize:14,fontWeight:700,color:'#fff'}}>💳 How Would You Like to Pay?</h3></div>
+          <div style={{background:'#111827',padding:'14px 18px'}}><h3 style={{fontSize:14,fontWeight:700,color:'#fff'}}>💳 {es?'¿Cómo desea pagar?':'How Would You Like to Pay?'}</h3></div>
           <div style={{padding:'14px 18px'}}>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:14}}>
-              {[{key:'zelle',icon:'⚡',label:'Zelle'},{key:'cash',icon:'💵',label:'Cash'},{key:'check',icon:'🏦',label:'Check'},{key:'venmo',icon:'💜',label:'Venmo'},{key:'credit',icon:'💳',label:'Credit Card'},{key:'bank',icon:'🏛',label:'Bank Transfer'}].map(m=>(
+              {[{key:'zelle',icon:'⚡',label:'Zelle'},{key:'cash',icon:'💵',label:es?'Efectivo':'Cash'},{key:'check',icon:'🏦',label:es?'Cheque':'Check'},{key:'venmo',icon:'💜',label:'Venmo'},{key:'credit',icon:'💳',label:es?'Tarjeta':'Credit Card'},{key:'bank',icon:'🏛',label:es?'Transferencia':'Bank Transfer'}].map(m=>(
                 <button key={m.key} onClick={()=>setPayChoice(payChoice===m.key?'':m.key)} style={{padding:'10px 8px',borderRadius:9,border:'2px solid '+(payChoice===m.key?'#2563EB':'#E5E7EB'),background:payChoice===m.key?'#EFF6FF':'#F9FAFB',fontSize:13,fontWeight:600,cursor:'pointer',color:payChoice===m.key?'#1D4ED8':'#374151',textAlign:'center'}}>{m.icon} {m.label}</button>
               ))}
             </div>
             {payChoice==='zelle'&&<div style={{background:'#F0F7FF',border:'1px solid #BFDBFE',borderRadius:10,padding:'16px'}}>
-              <div style={{fontSize:15,fontWeight:700,color:'#1D4ED8',marginBottom:8}}>⚡ Pay via Zelle</div>
-              <div style={{fontSize:13,marginBottom:4}}>Amount: <strong>{money(rental.price)}</strong></div>
-              <div style={{fontSize:13,marginBottom:12}}>Send to: <strong style={{fontSize:16}}>{zelle}</strong></div>
-              <button onClick={()=>navigator.clipboard.writeText(zelle)} style={{width:'100%',padding:'10px',borderRadius:8,border:'none',background:'#2563EB',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',marginBottom:8}}>📋 Copy Zelle Number</button>
-              <div style={{fontSize:11,color:'#6B7280',textAlign:'center'}}>After sending call to confirm: +1 (917) 663-6369</div>
+              <div style={{fontSize:15,fontWeight:700,color:'#1D4ED8',marginBottom:8}}>⚡ {es?'Pagar por Zelle':'Pay via Zelle'}</div>
+              <div style={{fontSize:13,marginBottom:4}}>{es?'Monto:':'Amount:'} <strong>{money(rental.price)}</strong></div>
+              <div style={{fontSize:13,marginBottom:12}}>{es?'Enviar a:':'Send to:'} <strong style={{fontSize:16}}>{zelle}</strong></div>
+              <button onClick={()=>navigator.clipboard.writeText(zelle)} style={{width:'100%',padding:'10px',borderRadius:8,border:'none',background:'#2563EB',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',marginBottom:8}}>📋 {es?'Copiar Número de Zelle':'Copy Zelle Number'}</button>
+              <div style={{fontSize:11,color:'#6B7280',textAlign:'center'}}>{es?'Después de enviar, llame para confirmar:':'After sending, call to confirm:'} +1 (917) 663-6369</div>
             </div>}
             {payChoice==='cash'&&<div style={{background:'#ECFDF5',border:'1px solid #A7F3D0',borderRadius:10,padding:'16px'}}>
-              <div style={{fontSize:15,fontWeight:700,color:'#065F46',marginBottom:8}}>💵 Cash — {money(rental.price)}</div>
-              <div style={{fontSize:13,marginBottom:12}}>Pay cash to the driver at delivery or call to arrange:</div>
+              <div style={{fontSize:15,fontWeight:700,color:'#065F46',marginBottom:8}}>💵 {es?'Efectivo':'Cash'} — {money(rental.price)}</div>
+              <div style={{fontSize:13,marginBottom:12}}>{es?'Pague en efectivo al conductor en la entrega o llame para coordinar:':'Pay cash to driver at delivery or call to arrange:'}</div>
               <a href="tel:+19176636369" style={{display:'block',padding:'12px',borderRadius:9,background:'#065F46',color:'#fff',textDecoration:'none',fontSize:14,fontWeight:700,textAlign:'center'}}>📞 +1 (917) 663-6369</a>
             </div>}
             {payChoice==='check'&&<div style={{background:'#F9FAFB',border:'1px solid #E5E7EB',borderRadius:10,padding:'16px'}}>
-              <div style={{fontSize:15,fontWeight:700,marginBottom:8}}>🏦 Check — {money(rental.price)}</div>
-              <div style={{fontSize:13,marginBottom:4}}>Payable to: <strong>Sams Construction Services LTD</strong></div>
-              <div style={{fontSize:13,marginBottom:12}}>Call to arrange drop-off or pickup:</div>
+              <div style={{fontSize:15,fontWeight:700,marginBottom:8}}>🏦 {es?'Cheque':'Check'} — {money(rental.price)}</div>
+              <div style={{fontSize:13,marginBottom:4}}>{es?'A nombre de:':'Payable to:'} <strong>Sams Construction Services LTD</strong></div>
+              <div style={{fontSize:13,marginBottom:12}}>{es?'Llame para coordinar entrega:':'Call to arrange drop-off:'}</div>
               <a href="tel:+19176636369" style={{display:'block',padding:'12px',borderRadius:9,background:'#374151',color:'#fff',textDecoration:'none',fontSize:14,fontWeight:700,textAlign:'center'}}>📞 +1 (917) 663-6369</a>
             </div>}
             {payChoice==='venmo'&&<div style={{background:'#F5F3FF',border:'1px solid #DDD6FE',borderRadius:10,padding:'16px'}}>
               <div style={{fontSize:15,fontWeight:700,color:'#5B21B6',marginBottom:8}}>💜 Venmo — {money(rental.price)}</div>
-              <div style={{fontSize:13,marginBottom:12}}>Send via Venmo then call to confirm:</div>
+              <div style={{fontSize:13,marginBottom:12}}>{es?'Envíe su pago por Venmo y luego llame para confirmar:':'Send Venmo payment then call to confirm:'}</div>
               <a href="tel:+19176636369" style={{display:'block',padding:'12px',borderRadius:9,background:'#5B21B6',color:'#fff',textDecoration:'none',fontSize:14,fontWeight:700,textAlign:'center'}}>📞 +1 (917) 663-6369</a>
             </div>}
             {payChoice==='credit'&&<div style={{borderRadius:10,border:'1px solid #FDE68A',overflow:'hidden'}}>
               <div style={{background:'#FFFBEB',padding:'12px 16px'}}>
-                <div style={{fontSize:13,fontWeight:700,color:'#92400E',marginBottom:4}}>⚠️ NY State Credit Card Surcharge</div>
-                <div style={{fontSize:12,color:'#92400E',marginBottom:6}}>Pursuant to NY State law, a <strong>3.5% processing fee</strong> applies to card payments.</div>
-                <div style={{fontSize:14,fontWeight:700,color:'#92400E'}}>New Total: {money(ccTotal)}</div>
+                <div style={{fontSize:13,fontWeight:700,color:'#92400E',marginBottom:4}}>⚠️ {es?'Cargo adicional por tarjeta — Ley de NY':'NY State Credit Card Surcharge'}</div>
+                <div style={{fontSize:12,color:'#92400E',marginBottom:6}}>{es?'Conforme a la ley del Estado de Nueva York, los pagos con tarjeta están sujetos a un recargo del 3.5%.':'Pursuant to NY State law, card payments are subject to a 3.5% surcharge.'}</div>
+                <div style={{fontSize:14,fontWeight:700,color:'#92400E'}}>{es?'Nuevo total:':'New Total:'} {money(ccTotal)}</div>
               </div>
-              <div style={{background:'#ECFDF5',padding:'8px 16px',display:'flex',gap:8,alignItems:'center'}}><span>🔒</span><div style={{fontSize:11,color:'#065F46',fontWeight:600}}>PCI-DSS Compliant · SSL Encrypted</div></div>
               <div style={{padding:'14px 16px',background:'#fff'}}>
-                <a href="tel:+19176636369" style={{display:'block',padding:'12px',borderRadius:9,background:'#2563EB',color:'#fff',textDecoration:'none',fontSize:14,fontWeight:700,textAlign:'center'}}>📞 Call to process: +1 (917) 663-6369</a>
+                <a href="tel:+19176636369" style={{display:'block',padding:'12px',borderRadius:9,background:'#2563EB',color:'#fff',textDecoration:'none',fontSize:14,fontWeight:700,textAlign:'center'}}>📞 {es?'Llame para procesar:':'Call to process:'} +1 (917) 663-6369</a>
               </div>
             </div>}
             {payChoice==='bank'&&<div style={{background:'#F0F9FF',border:'1px solid #BAE6FD',borderRadius:10,padding:'16px'}}>
-              <div style={{fontSize:15,fontWeight:700,color:'#0369A1',marginBottom:8}}>🏛 Bank Transfer — {money(rental.price)}</div>
-              <div style={{fontSize:13,marginBottom:12}}>Call for bank transfer details:</div>
+              <div style={{fontSize:15,fontWeight:700,color:'#0369A1',marginBottom:8}}>🏛 {es?'Transferencia Bancaria':'Bank Transfer'} — {money(rental.price)}</div>
+              <div style={{fontSize:13,marginBottom:12}}>{es?'Llame para obtener detalles de transferencia bancaria:':'Call for bank transfer details:'}</div>
               <a href="tel:+19176636369" style={{display:'block',padding:'12px',borderRadius:9,background:'#0369A1',color:'#fff',textDecoration:'none',fontSize:14,fontWeight:700,textAlign:'center'}}>📞 +1 (917) 663-6369</a>
             </div>}
-            {!payChoice&&<div style={{textAlign:'center',padding:'14px',color:'#9CA3AF',fontSize:13}}>👆 Select a payment method above</div>}
+            {!payChoice&&<div style={{textAlign:'center',padding:'14px',color:'#9CA3AF',fontSize:13}}>{es?'👆 Seleccione un método de pago':'👆 Select a payment method above'}</div>}
           </div>
         </div>}
 
-        {/* ── STRICT POLICY ── */}
+        {/* POLICY */}
         <div style={{background:'#F9FAFB',border:'1px solid #E5E7EB',borderRadius:12,padding:'16px 18px'}}>
-          <h3 style={{fontSize:13,fontWeight:700,marginBottom:10,color:'#374151'}}>📋 Rental Policy</h3>
-          <div style={{fontSize:11,color:'#6B7280',lineHeight:2}}>
-            <div>⚖️ <strong>Mechanic's Lien</strong> will be filed for any unpaid balance</div>
-            <div>🔧 <strong>Equipment repossession</strong> scheduled after 14 days overdue</div>
-            <div>🚫 <strong>No extensions</strong> without prior office approval</div>
-            <div>⚠️ <strong>Legal action</strong> will be initiated — all attorney fees added to balance</div>
-            <div>🔒 <strong>Future rentals suspended</strong> for non-payment</div>
+          <h3 style={{fontSize:13,fontWeight:700,marginBottom:10,color:'#374151'}}>📋 {es?'Política de Renta':'Rental Policy'}</h3>
+          <div style={{fontSize:11,color:'#6B7280',lineHeight:2.2}}>
+            <div>⚖️ {es?<span><strong>Gravamen Mecánico</strong> será presentado por cualquier saldo impago</span>:<span><strong>Mechanic Lien</strong> will be filed for any unpaid balance</span>}</div>
+            <div>🔧 {es?<span><strong>Retiro del equipo</strong> programado después de 14 días vencidos</span>:<span><strong>Equipment repossession</strong> scheduled after 14 days overdue</span>}</div>
+            <div>🚫 {es?<span><strong>Sin extensiones</strong> sin aprobación previa de la oficina</span>:<span><strong>No extensions</strong> without prior office approval</span>}</div>
+            <div>💰 {es?<span><strong>Todos los costos de cobranza</strong> añadidos al saldo</span>:<span><strong>All collection costs</strong> added to outstanding balance</span>}</div>
+            <div>🔒 {es?<span><strong>Cuenta suspendida permanentemente</strong> por falta de pago</span>:<span><strong>Account permanently suspended</strong> for non-payment</span>}</div>
           </div>
         </div>
 
-        {/* ── NO EXTENSION ── */}
+        {/* NO EXTENSION */}
         {!isPaid&&<div style={{background:'#fff',borderRadius:12,border:'1px solid #F3F4F6',padding:'16px 18px'}}>
-          <h3 style={{fontSize:14,fontWeight:700,marginBottom:8}}>📅 Need More Time?</h3>
-          <p style={{fontSize:13,color:'#6B7280',marginBottom:12}}>Extensions cannot be requested online and are not guaranteed. Call our office directly — approval required.</p>
-          <a href="tel:+19176636369" style={{display:'block',padding:'12px',borderRadius:9,background:'#111827',color:'#fff',textDecoration:'none',fontSize:14,fontWeight:700,textAlign:'center'}}>📞 Call the Office — +1 (917) 663-6369</a>
+          <h3 style={{fontSize:14,fontWeight:700,marginBottom:8}}>{es?'📅 ¿Necesita más tiempo?':'📅 Need More Time?'}</h3>
+          <p style={{fontSize:13,color:'#6B7280',marginBottom:12}}>{es?'Las extensiones no se pueden solicitar en línea y no están garantizadas. Llame a la oficina directamente.':'Extensions cannot be requested online and are not guaranteed. Call our office directly.'}</p>
+          <a href="tel:+19176636369" style={{display:'block',padding:'12px',borderRadius:9,background:'#111827',color:'#fff',textDecoration:'none',fontSize:14,fontWeight:700,textAlign:'center'}}>📞 {es?'Llamar a la Oficina':'Call the Office'} — +1 (917) 663-6369</a>
         </div>}
 
         <div style={{background:'#fff',borderRadius:12,padding:'14px 18px',border:'1px solid #F3F4F6',display:'flex',gap:10}}>
-          <a href="tel:+19176636369" style={{flex:1,padding:12,borderRadius:9,background:'#EFF6FF',color:'#1D4ED8',textDecoration:'none',fontSize:13,fontWeight:600,textAlign:'center'}}>📞 Call</a>
+          <a href="tel:+19176636369" style={{flex:1,padding:12,borderRadius:9,background:'#EFF6FF',color:'#1D4ED8',textDecoration:'none',fontSize:13,fontWeight:600,textAlign:'center'}}>📞 {es?'Llamar':'Call'}</a>
           <a href="mailto:samsconstructionltd23@outlook.com" style={{flex:1,padding:12,borderRadius:9,background:'#F9FAFB',color:'#374151',textDecoration:'none',fontSize:13,fontWeight:600,textAlign:'center',border:'1px solid #E5E7EB'}}>✉ Email</a>
         </div>
-        <p style={{fontSize:11,color:'#9CA3AF',textAlign:'center'}}>This invoice is private and only accessible via this link.</p>
+        <p style={{fontSize:11,color:'#9CA3AF',textAlign:'center'}}>{es?'Esta factura es privada y solo accesible a través de este enlace.':'This invoice is private and only accessible via this link.'}</p>
       </div>
     </div>
   );
