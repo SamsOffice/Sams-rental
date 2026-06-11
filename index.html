@@ -404,7 +404,13 @@ function InvoiceTab({rentals}){
     const portalLine=r?'%0A%0AView your portal: '+APP+'/#/portal/'+r.portal_token:'';
     const itemLines=li.map(i=>((i.desc||'').substring(0,30)+'                              ').substring(0,30)+' $'+(parseFloat(i.amount)||0).toFixed(2)).join('%0A');
     const body='Dear '+billTo+',%0A%0APlease find your invoice from Sams Construction Services LTD.%0A%0ASAMS CONSTRUCTION SERVICES LTD%0A188-16 Woodhull Ave, Hollis NY 11423%0A+1 (917) 663-6369 | BIC%234376%0A%0AINVOICE: '+(invNo||'—')+'%0ADATE: '+fd(invDate)+'%0A%0ABILL TO: '+billTo+'%0A'+(addr1?'ADDRESS: '+addr1+(addr2?' '+addr2:'')+'%0A':'')+(phone?'PHONE: '+phone+'%0A':'')+'%0A----%0A'+itemLines+'%0A----%0A'+(parseFloat(tax)>0?'Sales Tax: $'+parseFloat(tax).toFixed(2)+'%0A':'')+(parseFloat(other)>0?'Other: $'+parseFloat(other).toFixed(2)+'%0A':'')+'TOTAL DUE: $'+total.toFixed(2)+'%0A%0APAY VIA ZELLE: '+(localStorage.getItem('sams_zelle')||'+1 (917) 663-6369')+'%0ACALL: +1 (917) 663-6369'+portalLine+'%0A%0AThank you,%0ASams Construction Services LTD';
-    window.location.href='mailto:'+emailTo+'?subject=Invoice '+(invNo||'—')+' — Sams Construction Services LTD&body='+body;
+    const mailto='mailto:'+emailTo+'?subject=Invoice '+(invNo||'—')+' - Sams Construction Services LTD&body='+body;
+    const a=document.createElement('a');
+    a.href=mailto;
+    a.target='_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     showToast('Email opened ✓');
   };
   const Doc=()=>(
