@@ -807,9 +807,12 @@ function ClientPortal({token}){
     <div style={{minHeight:'100vh',background:'#ffffff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24}}>
       <div style={{maxWidth:480,width:'100%'}}>
         {/* Language toggle */}
-        <div style={{display:'flex',justifyContent:'flex-end',gap:8,marginBottom:20}}>
-          <button onClick={()=>setLang('en')} style={{padding:'4px 12px',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer',border:'none',background:lang==='en'?'#2563EB':'#E5E7EB',color:lang==='en'?'#fff':'#374151'}}>EN</button>
-          <button onClick={()=>setLang('es')} style={{padding:'4px 12px',borderRadius:6,fontSize:12,fontWeight:700,cursor:'pointer',border:'none',background:lang==='es'?'#2563EB':'#E5E7EB',color:lang==='es'?'#fff':'#374151'}}>ES</button>
+        <div style={{background:'#fff',borderRadius:14,padding:'16px',marginBottom:20,border:'1px solid #E5E7EB',boxShadow:'0 2px 8px rgba(0,0,0,0.06)',textAlign:'center'}}>
+          <div style={{fontSize:14,fontWeight:600,color:'#6B7280',marginBottom:12}}>🌐 Choose Your Language / Elija su Idioma</div>
+          <div style={{display:'flex',gap:10}}>
+            <button onClick={()=>setLang('en')} style={{flex:1,padding:'16px',borderRadius:10,fontSize:18,fontWeight:800,cursor:'pointer',border:'3px solid '+(lang==='en'?'#2563EB':'#E5E7EB'),background:lang==='en'?'#2563EB':'#F9FAFB',color:lang==='en'?'#fff':'#9CA3AF'}}>🇺🇸 ENGLISH</button>
+            <button onClick={()=>setLang('es')} style={{flex:1,padding:'16px',borderRadius:10,fontSize:18,fontWeight:800,cursor:'pointer',border:'3px solid '+(lang==='es'?'#2563EB':'#E5E7EB'),background:lang==='es'?'#2563EB':'#F9FAFB',color:lang==='es'?'#fff':'#9CA3AF'}}>🇲🇽 ESPAÑOL</button>
+          </div>
         </div>
         <div style={{background:'#fff',borderRadius:16,padding:28,border:'1px solid #E5E7EB',marginBottom:16,boxShadow:'0 2px 12px rgba(0,0,0,0.08)'}}>
           <div style={{fontSize:13,fontWeight:700,color:'#9CA3AF',textTransform:'uppercase',marginBottom:6}}>Sams Construction Services LTD</div>
