@@ -396,6 +396,52 @@ function InvoiceTab({rentals}){
     const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Invoice');
     XLSX.writeFile(wb,'Invoice_'+(invNo||'SAMS')+'_'+(billTo||'').replace(/\s+/g,'_')+'.xlsx');
   };
+
+  const saveAndSend=async()=>{
+    if(!prefill){showToast('Select a rental first to save invoice');return;}
+    const invoiceData={
+      inv_no:invNo,inv_date:invDate,bill_to:billTo,addr1,addr2,phone,
+      items:li,tax,other,method,notes,total
+    };
+    // Save invoice to rental record
+    await sb.from('rentals').update({invoice_data:JSON.stringify(invoiceData)}).eq('id',prefill);
+    // Open email with invoice in body
+    const r=rentals.find(x=>x.id===prefill);
+    if(r&&r.client_email){
+      const body=encodeURIComponent(
+        'Dear '+billTo+',\n\n'+
+        'Please find your invoice from Sams Construction Services LTD below.\n\n'+
+        '════════════════════════════════\n'+
+        'SAMS CONSTRUCTION SERVICES LTD\n'+
+        '188-16 Woodhull Ave, Hollis NY 11423\n'+
+        '+1 (917) 663-6369 | BIC#4376\n'+
+        '════════════════════════════════\n\n'+
+        'INVOICE NO: '+(invNo||prefill)+'\n'+
+        'DATE: '+fd(invDate)+'\n\n'+
+        'BILL TO: '+billTo+'\n'+
+        'ADDRESS: '+addr1+(addr2?' '+addr2:'')+'\n'+
+        'PHONE: '+phone+'\n\n'+
+        '────────────────────────────────\n'+
+        'DESCRIPTION                    AMOUNT\n'+
+        '────────────────────────────────\n'+
+        li.map(i=>i.desc.padEnd(30)+' $'+parseFloat(i.amount).toFixed(2)).join('\n')+'\n'+
+        '────────────────────────────────\n'+
+        (parseFloat(tax)>0?'Sales Tax:                      $'+parseFloat(tax).toFixed(2)+'\n':'')+
+        (parseFloat(other)>0?'Other:                          $'+parseFloat(other).toFixed(2)+'\n':'')+
+        'TOTAL DUE:                      $'+total.toFixed(2)+'\n\n'+
+        '════════════════════════════════\n\n'+
+        'PAYMENT OPTIONS:\n'+
+        '• Zelle: '+(localStorage.getItem('sams_zelle')||'+1 (917) 663-6369')+'\n'+
+        '• Call to arrange: +1 (917) 663-6369\n\n'+
+        'View your invoice online: '+APP+'/#/portal/'+r.portal_token+'\n\n'+
+        'Thank you,\n'+
+        'Sams Construction Services LTD\n'+
+        '+1 (917) 663-6369'
+      );
+      window.open('mailto:'+r.client_email+'?subject=Invoice '+(invNo||prefill)+' — Sams Construction Services LTD&body='+body);
+    }
+    showToast('Invoice saved to portal ✓');
+  };
   const Doc=()=>(
     <div style={{background:'#fff',border:'1px solid #ccc',padding:'28px 32px',fontFamily:'Arial,sans-serif',maxWidth:680,margin:'0 auto',fontSize:12,color:'#111'}}>
       <div style={{marginBottom:14}}><div style={{fontSize:17,fontWeight:700,color:'#1D4ED8'}}>SAMS CONSTRUCTION SERVICES LTD</div><div style={{height:3,background:'#1D4ED8',marginTop:4}}/></div>
@@ -470,9 +516,10 @@ function InvoiceTab({rentals}){
             <div><label style={lbl}>Notes</label><input style={inp} placeholder="not tax included..." value={notes} onChange={e=>setNotes(e.target.value)}/></div>
           </div>
           <div style={{background:'#D6E8F7',border:'1px solid #90BEE0',borderRadius:8,padding:'12px 16px',textAlign:'right'}}><span style={{fontSize:16,fontWeight:700}}>TOTAL: $ {total.toLocaleString('en-US',{minimumFractionDigits:2})}</span></div>
-          <div style={{display:'flex',gap:10}}>
-            <button onClick={()=>setPreview(true)} style={{flex:1,padding:13,background:'#1D4ED8',color:'#fff',border:'none',borderRadius:9,fontSize:14,fontWeight:700,cursor:'pointer'}}>👁 Preview Invoice</button>
-            <button onClick={doExcel} style={{flex:1,padding:13,background:'#065F46',color:'#fff',border:'none',borderRadius:9,fontSize:14,fontWeight:700,cursor:'pointer'}}>📊 Export to Excel</button>
+          <div style={{display:'flex',gap:10,flexWrap:'wrap'}}>
+            <button onClick={()=>setPreview(true)} style={{flex:1,minWidth:140,padding:13,background:'#1D4ED8',color:'#fff',border:'none',borderRadius:9,fontSize:14,fontWeight:700,cursor:'pointer'}}>👁 Preview</button>
+            <button onClick={doExcel} style={{flex:1,minWidth:140,padding:13,background:'#065F46',color:'#fff',border:'none',borderRadius:9,fontSize:14,fontWeight:700,cursor:'pointer'}}>📊 Export Excel</button>
+            <button onClick={saveAndSend} style={{flex:1,minWidth:140,padding:13,background:'#7C3AED',color:'#fff',border:'none',borderRadius:9,fontSize:14,fontWeight:700,cursor:'pointer'}}>📧 Save & Send</button>
           </div>
         </div>
       </div>
@@ -944,7 +991,28 @@ function ClientPortal({token}){
 
         {/* INVOICE DETAILS */}
         <div style={{background:'#fff',borderRadius:12,padding:'16px 18px',border:'1px solid #F3F4F6'}}>
-          <h3 style={{fontSize:14,fontWeight:700,marginBottom:12}}>{es?'Detalles de Factura':'Invoice Details'}</h3>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+            <h3 style={{fontSize:14,fontWeight:700}}>{es?'Detalles de Factura':'Invoice Details'}</h3>
+            {rental.invoice_data&&<button onClick={()=>{
+              const inv=JSON.parse(rental.invoice_data);
+              const w=window.open('','_blank');
+              w.document.write('<html><head><title>Invoice</title><style>body{font-family:Arial,sans-serif;padding:32px;max-width:680px;margin:0 auto;font-size:12px;}.hdr{font-size:17px;font-weight:700;color:#1D4ED8;margin-bottom:4px;}.line{height:3px;background:#1D4ED8;margin-bottom:16px;}.grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:16px;}.bill{border:1px solid #90BEE0;border-collapse:collapse;width:100%;}.bill td{padding:4px 8px;font-size:11px;}.bill tr:nth-child(odd){background:#D6E8F7;}.bill tr:nth-child(even){background:#EAF4FB;}table.items{width:100%;border-collapse:collapse;border:1px solid #90BEE0;}table.items th{background:#1D4ED8;color:#fff;padding:7px 10px;text-align:left;font-size:12px;}table.items td{padding:6px 10px;border-bottom:1px solid #BDD6E8;font-size:11px;}table.items tr:nth-child(even){background:#EAF4FB;}.tot{background:#D6E8F7;font-weight:700;}</style></head><body>');
+              w.document.write("<div class=hdr>SAMS CONSTRUCTION SERVICES LTD</div><div class=line></div>");
+              w.document.write("<div class=grid><div style='font-size:11px;line-height:2'>188-16 WOODHULL AVE<br>Hollis NY 11423<br>+1 (917) 663-6369<br>BIC#4376</div>");
+              w.document.write("<div><table style='font-size:11px;width:100%;border-collapse:collapse;margin-bottom:8px'><tr><td style='color:#555'>Invoice No.</td><td style='font-weight:700'>"+(inv.inv_no||'—')+"</td></tr><tr><td style='color:#555'>Invoice Date:</td><td style='font-weight:700'>"+inv.inv_date+"</td></tr></table>");
+              w.document.write("<table class=bill><tr><td style='font-weight:700'>Bill to:</td><td style='font-weight:700'>"+inv.bill_to+"</td></tr><tr><td>Address:</td><td>"+inv.addr1+" "+inv.addr2+"</td></tr><tr><td>Phone</td><td>"+inv.phone+"</td></tr></table></div></div>");
+              w.document.write("<table class=items><thead><tr><th style='width:55%'>Description</th><th style='text-align:center;width:22%'>Date</th><th style='text-align:right;width:23%'>Amount</th></tr></thead><tbody>");
+              (inv.items||[]).forEach(function(item){w.document.write("<tr><td style='font-style:italic'>"+item.desc+"</td><td style='text-align:center'>"+item.date+"</td><td style='text-align:right'>"+( item.amount?"$ "+parseFloat(item.amount).toFixed(2):"")+"</td></tr>");});
+              for(var i=(inv.items||[]).length;i<8;i++)w.document.write("<tr><td>&nbsp;</td><td></td><td></td></tr>");
+              w.document.write("</tbody></table>");
+              w.document.write("<table style='width:100%;border-collapse:collapse;border:1px solid #90BEE0'>");
+              w.document.write("<tr style='border-bottom:1px solid #BDD6E8'><td style='padding:5px 10px;width:55%;font-style:italic;color:#555'>"+inv.notes+"</td><td style='padding:5px 10px;text-align:right;color:#555'>Sales Tax</td><td style='padding:5px 10px;text-align:right;border-left:2px solid #1D4ED8'>"+( parseFloat(inv.tax)>0?"$ "+parseFloat(inv.tax).toFixed(2):"")+"</td></tr>");
+              w.document.write("<tr style='border-bottom:1px solid #BDD6E8'><td></td><td style='padding:5px 10px;text-align:right;color:#555'>Other</td><td style='padding:5px 10px;text-align:right;border-left:2px solid #1D4ED8'>"+( parseFloat(inv.other)>0?"$ "+parseFloat(inv.other).toFixed(2):"")+"</td></tr>");
+              w.document.write("<tr class=tot><td style='padding:8px 10px;text-align:right;width:77%'>TOTAL</td><td style='padding:8px 14px;text-align:right;border-left:2px solid #1D4ED8;font-size:14px'>$ "+parseFloat(inv.total).toFixed(2)+"</td></tr></table>");
+              w.document.write("</body></html>");
+              w.document.close();
+            }} style={{padding:'6px 14px',borderRadius:8,fontSize:12,fontWeight:700,cursor:'pointer',border:'none',background:'#1D4ED8',color:'#fff'}}>📄 {es?'Ver Factura':'View Invoice'}</button>}
+          </div>
           {[[es?'Factura':'Invoice',rental.id],[es?'Equipo':'Equipment',rental.asset],[es?'Inicio':'Start',fmtD(rental.start_date)],[es?'Vence':'Due',fmtD(rental.due_date)],[es?'Duración':'Duration',rental.duration_days+(es?' días':' days')],[es?'Conductor':'Driver',rental.assigned_driver]].map(([l,v])=>(
             <div key={l} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid #F9FAFB',fontSize:13}}><span style={{color:'#9CA3AF'}}>{l}</span><span style={{fontWeight:500}}>{v}</span></div>
           ))}
