@@ -3921,12 +3921,14 @@ function ClientPortal({
       setLoading(false);
     });
   }, [token]);
-  const logConfirmation = async () => {
-    await sb.from('rentals').update({
+  const logConfirmation = () => {
+    // Always set confirmed immediately for good UX
+    setConfirmed(true);
+    // Save to DB in background
+    sb.from('rentals').update({
       portal_confirmed: true,
       portal_confirmed_at: new Date().toISOString()
     }).eq('portal_token', token).catch(() => {});
-    setConfirmed(true);
   };
   if (loading) return /*#__PURE__*/React.createElement("div", {
     style: {
