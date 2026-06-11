@@ -847,8 +847,8 @@ function ClientPortal({token}){
           <div style={{fontSize:10,color:'#9CA3AF'}}>188-16 Woodhull Ave, Hollis NY 11423 · +1 (917) 663-6369</div>
         </div>
         <div style={{display:'flex',gap:6}}>
-          <button onClick={()=>setLang('en')} style={{padding:'3px 10px',borderRadius:5,fontSize:11,fontWeight:700,cursor:'pointer',border:'none',background:lang==='en'?'#2563EB':'#374151',color:'#fff'}}>EN</button>
-          <button onClick={()=>setLang('es')} style={{padding:'3px 10px',borderRadius:5,fontSize:11,fontWeight:700,cursor:'pointer',border:'none',background:lang==='es'?'#2563EB':'#374151',color:'#fff'}}>ES</button>
+          <button onClick={()=>setLang('en')} style={{padding:'6px 14px',borderRadius:8,fontSize:13,fontWeight:800,cursor:'pointer',border:'2px solid '+(lang==='en'?'#fff':'#4B5563'),background:lang==='en'?'#fff':'transparent',color:lang==='en'?'#111827':'#9CA3AF'}}>🇺🇸 EN</button>
+          <button onClick={()=>setLang('es')} style={{padding:'6px 14px',borderRadius:8,fontSize:13,fontWeight:800,cursor:'pointer',border:'2px solid '+(lang==='es'?'#fff':'#4B5563'),background:lang==='es'?'#fff':'transparent',color:lang==='es'?'#111827':'#9CA3AF'}}>🇲🇽 ES</button>
         </div>
       </div>
 
