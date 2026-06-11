@@ -397,21 +397,22 @@ function InvoiceTab({rentals}){
     XLSX.writeFile(wb,'Invoice_'+(invNo||'SAMS')+'_'+(billTo||'').replace(/\s+/g,'_')+'.xlsx');
   };
 
-  const saveAndSend=()=>{
+  const saveAndSend=async()=>{
     if(!billTo){showToast('Fill in the invoice first');return;}
     const r=prefill?rentals.find(x=>x.id===prefill):null;
     const emailTo=r&&r.client_email?r.client_email:'';
     const portalLine=r?'%0A%0AView your portal: '+APP+'/#/portal/'+r.portal_token:'';
     const itemLines=li.map(i=>((i.desc||'').substring(0,30)+'                              ').substring(0,30)+' $'+(parseFloat(i.amount)||0).toFixed(2)).join('%0A');
     const body='Dear '+billTo+',%0A%0APlease find your invoice from Sams Construction Services LTD.%0A%0ASAMS CONSTRUCTION SERVICES LTD%0A188-16 Woodhull Ave, Hollis NY 11423%0A+1 (917) 663-6369 | BIC%234376%0A%0AINVOICE: '+(invNo||'—')+'%0ADATE: '+fd(invDate)+'%0A%0ABILL TO: '+billTo+'%0A'+(addr1?'ADDRESS: '+addr1+(addr2?' '+addr2:'')+'%0A':'')+(phone?'PHONE: '+phone+'%0A':'')+'%0A----%0A'+itemLines+'%0A----%0A'+(parseFloat(tax)>0?'Sales Tax: $'+parseFloat(tax).toFixed(2)+'%0A':'')+(parseFloat(other)>0?'Other: $'+parseFloat(other).toFixed(2)+'%0A':'')+'TOTAL DUE: $'+total.toFixed(2)+'%0A%0APAY VIA ZELLE: '+(localStorage.getItem('sams_zelle')||'+1 (917) 663-6369')+'%0ACALL: +1 (917) 663-6369'+portalLine+'%0A%0AThank you,%0ASams Construction Services LTD';
+    // Save invoice to portal
+    if(r){
+      await sb.from('rentals').update({invoice_data:JSON.stringify({inv_no:invNo,inv_date:invDate,bill_to:billTo,addr1,addr2,phone,items:li,tax,other,method,notes,total})}).eq('id',r.id);
+    }
     const mailto='mailto:'+emailTo+'?subject=Invoice '+(invNo||'—')+' - Sams Construction Services LTD&body='+body;
     const a=document.createElement('a');
-    a.href=mailto;
-    a.target='_blank';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    showToast('Email opened ✓');
+    a.href=mailto;a.target='_blank';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    showToast(r?'Invoice saved to portal & email opened ✓':'Email opened ✓');
   };
   const Doc=()=>(
     <div style={{background:'#fff',border:'1px solid #ccc',padding:'28px 32px',fontFamily:'Arial,sans-serif',maxWidth:680,margin:'0 auto',fontSize:12,color:'#111'}}>
