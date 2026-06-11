@@ -397,50 +397,15 @@ function InvoiceTab({rentals}){
     XLSX.writeFile(wb,'Invoice_'+(invNo||'SAMS')+'_'+(billTo||'').replace(/\s+/g,'_')+'.xlsx');
   };
 
-  const saveAndSend=async()=>{
-    if(!prefill){showToast('Select a rental first to save invoice');return;}
-    const invoiceData={
-      inv_no:invNo,inv_date:invDate,bill_to:billTo,addr1,addr2,phone,
-      items:li,tax,other,method,notes,total
-    };
-    // Save invoice to rental record
-    await sb.from('rentals').update({invoice_data:JSON.stringify(invoiceData)}).eq('id',prefill);
-    // Open email with invoice in body
-    const r=rentals.find(x=>x.id===prefill);
-    if(r&&r.client_email){
-      const body=encodeURIComponent(
-        'Dear '+billTo+',\n\n'+
-        'Please find your invoice from Sams Construction Services LTD below.\n\n'+
-        '════════════════════════════════\n'+
-        'SAMS CONSTRUCTION SERVICES LTD\n'+
-        '188-16 Woodhull Ave, Hollis NY 11423\n'+
-        '+1 (917) 663-6369 | BIC#4376\n'+
-        '════════════════════════════════\n\n'+
-        'INVOICE NO: '+(invNo||prefill)+'\n'+
-        'DATE: '+fd(invDate)+'\n\n'+
-        'BILL TO: '+billTo+'\n'+
-        'ADDRESS: '+addr1+(addr2?' '+addr2:'')+'\n'+
-        'PHONE: '+phone+'\n\n'+
-        '────────────────────────────────\n'+
-        'DESCRIPTION                    AMOUNT\n'+
-        '────────────────────────────────\n'+
-        li.map(i=>i.desc.padEnd(30)+' $'+parseFloat(i.amount).toFixed(2)).join('\n')+'\n'+
-        '────────────────────────────────\n'+
-        (parseFloat(tax)>0?'Sales Tax:                      $'+parseFloat(tax).toFixed(2)+'\n':'')+
-        (parseFloat(other)>0?'Other:                          $'+parseFloat(other).toFixed(2)+'\n':'')+
-        'TOTAL DUE:                      $'+total.toFixed(2)+'\n\n'+
-        '════════════════════════════════\n\n'+
-        'PAYMENT OPTIONS:\n'+
-        '• Zelle: '+(localStorage.getItem('sams_zelle')||'+1 (917) 663-6369')+'\n'+
-        '• Call to arrange: +1 (917) 663-6369\n\n'+
-        'View your invoice online: '+APP+'/#/portal/'+r.portal_token+'\n\n'+
-        'Thank you,\n'+
-        'Sams Construction Services LTD\n'+
-        '+1 (917) 663-6369'
-      );
-      window.open('mailto:'+r.client_email+'?subject=Invoice '+(invNo||prefill)+' — Sams Construction Services LTD&body='+body);
-    }
-    showToast('Invoice saved to portal ✓');
+  const saveAndSend=()=>{
+    if(!billTo){showToast('Fill in the invoice first');return;}
+    const r=prefill?rentals.find(x=>x.id===prefill):null;
+    const emailTo=r&&r.client_email?r.client_email:'';
+    const portalLine=r?'%0A%0AView your portal: '+APP+'/#/portal/'+r.portal_token:'';
+    const itemLines=li.map(i=>((i.desc||'').substring(0,30)+'                              ').substring(0,30)+' $'+(parseFloat(i.amount)||0).toFixed(2)).join('%0A');
+    const body='Dear '+billTo+',%0A%0APlease find your invoice from Sams Construction Services LTD.%0A%0ASAMS CONSTRUCTION SERVICES LTD%0A188-16 Woodhull Ave, Hollis NY 11423%0A+1 (917) 663-6369 | BIC%234376%0A%0AINVOICE: '+(invNo||'—')+'%0ADATE: '+fd(invDate)+'%0A%0ABILL TO: '+billTo+'%0A'+(addr1?'ADDRESS: '+addr1+(addr2?' '+addr2:'')+'%0A':'')+(phone?'PHONE: '+phone+'%0A':'')+'%0A----%0A'+itemLines+'%0A----%0A'+(parseFloat(tax)>0?'Sales Tax: $'+parseFloat(tax).toFixed(2)+'%0A':'')+(parseFloat(other)>0?'Other: $'+parseFloat(other).toFixed(2)+'%0A':'')+'TOTAL DUE: $'+total.toFixed(2)+'%0A%0APAY VIA ZELLE: '+(localStorage.getItem('sams_zelle')||'+1 (917) 663-6369')+'%0ACALL: +1 (917) 663-6369'+portalLine+'%0A%0AThank you,%0ASams Construction Services LTD';
+    window.location.href='mailto:'+emailTo+'?subject=Invoice '+(invNo||'—')+' — Sams Construction Services LTD&body='+body;
+    showToast('Email opened ✓');
   };
   const Doc=()=>(
     <div style={{background:'#fff',border:'1px solid #ccc',padding:'28px 32px',fontFamily:'Arial,sans-serif',maxWidth:680,margin:'0 auto',fontSize:12,color:'#111'}}>
