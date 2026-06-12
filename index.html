@@ -2848,11 +2848,14 @@ function App() {
     setToast(m);
     setTimeout(() => setToast(''), 3000);
   };
-  const copyLink = t => {
+  const copyLink = (t, id) => {
     const url = APP + '/#/portal/' + t;
-    // Open with staff flag so confirmation screen is skipped
     window.open(url + '?staff=1', '_blank');
     navigator.clipboard.writeText(url);
+    // Log that portal was opened by staff
+    if (id) sb.from('rentals').update({
+      portal_opened_at: new Date().toISOString()
+    }).eq('id', id).catch(() => {});
     showToast('Portal opened ✓');
   };
   const markPaid = async id => {
@@ -3532,7 +3535,7 @@ function App() {
         flexWrap: 'wrap'
       }
     }, /*#__PURE__*/React.createElement("button", {
-      onClick: () => copyLink(r.portal_token),
+      onClick: () => copyLink(r.portal_token, r.id),
       style: {
         padding: '4px 7px',
         borderRadius: 5,
@@ -3865,7 +3868,7 @@ function App() {
         border: '1px solid #BFDBFE'
       }
     }, "\uD83D\uDCDE Call"), /*#__PURE__*/React.createElement("button", {
-      onClick: () => copyLink(r.portal_token),
+      onClick: () => copyLink(r.portal_token, r.id),
       style: {
         padding: '6px 12px',
         borderRadius: 6,
@@ -3905,7 +3908,169 @@ function App() {
     rentals: rentals
   }), !loading && tab === 'schedule' && /*#__PURE__*/React.createElement(ScheduleTab, {
     rentals: rentals
-  }), !loading && tab === 'settings' && /*#__PURE__*/React.createElement(SettingsTab, {
+  }), !loading && tab === 'confirmations' && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: '#fff',
+      borderRadius: 12,
+      border: '1px solid #F3F4F6',
+      overflow: 'hidden'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: '#111827',
+      padding: '14px 18px',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: 10
+    }
+  }, /*#__PURE__*/React.createElement("h3", {
+    style: {
+      fontSize: 14,
+      fontWeight: 700,
+      color: '#fff'
+    }
+  }, "\uD83D\uDCCB Portal Confirmations"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      gap: 12,
+      fontSize: 12
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: '#6EE7B7',
+      fontWeight: 600
+    }
+  }, "\u2705 ", rentals.filter(r => r.portal_confirmed).length, " Confirmed"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: '#FDE68A',
+      fontWeight: 600
+    }
+  }, "\u23F3 ", rentals.filter(r => !r.portal_confirmed).length, " Not Yet"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      overflowX: 'auto'
+    }
+  }, /*#__PURE__*/React.createElement("table", {
+    style: {
+      width: '100%',
+      borderCollapse: 'collapse',
+      fontSize: 13
+    }
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
+    style: {
+      background: '#F9FAFB'
+    }
+  }, ['Client', 'Equipment', 'Amount', 'Due Date', 'Status', 'Confirmed At'].map(h => /*#__PURE__*/React.createElement("th", {
+    key: h,
+    style: {
+      padding: '10px 14px',
+      textAlign: 'left',
+      fontSize: 11,
+      fontWeight: 700,
+      textTransform: 'uppercase',
+      color: '#9CA3AF',
+      borderBottom: '1px solid #F3F4F6',
+      whiteSpace: 'nowrap'
+    }
+  }, h)))), /*#__PURE__*/React.createElement("tbody", null, [...rentals].sort((a, b) => {
+    if (a.portal_confirmed && !b.portal_confirmed) return 1;
+    if (!a.portal_confirmed && b.portal_confirmed) return -1;
+    return 0;
+  }).map((r, i) => /*#__PURE__*/React.createElement("tr", {
+    key: r.id,
+    style: {
+      background: i % 2 === 0 ? '#fff' : '#FAFAFA',
+      borderBottom: '1px solid #F3F4F6'
+    }
+  }, /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '12px 14px'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700
+    }
+  }, r.client_name), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: '#9CA3AF'
+    }
+  }, r.client_phone), r.client_tag && /*#__PURE__*/React.createElement(TagBadge, {
+    tag: r.client_tag
+  })), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '12px 14px',
+      color: '#374151'
+    }
+  }, r.asset), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '12px 14px',
+      fontWeight: 600,
+      fontFamily: 'monospace'
+    }
+  }, money(r.price)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '12px 14px',
+      color: '#374151'
+    }
+  }, fmtD(r.due_date)), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '12px 14px'
+    }
+  }, r.portal_confirmed ? /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 4,
+      background: '#ECFDF5',
+      border: '1px solid #A7F3D0',
+      borderRadius: 20,
+      padding: '4px 10px',
+      fontSize: 11,
+      fontWeight: 700,
+      color: '#065F46'
+    }
+  }, "\u2705 Confirmed") : /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 4,
+      background: '#FFFBEB',
+      border: '1px solid #FDE68A',
+      borderRadius: 20,
+      padding: '4px 10px',
+      fontSize: 11,
+      fontWeight: 700,
+      color: '#92400E'
+    }
+  }, "\u23F3 Not Yet")), /*#__PURE__*/React.createElement("td", {
+    style: {
+      padding: '12px 14px',
+      fontSize: 12,
+      color: '#6B7280'
+    }
+  }, r.portal_confirmed_at ? /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 600,
+      color: '#065F46'
+    }
+  }, new Date(r.portal_confirmed_at).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  })), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11
+    }
+  }, new Date(r.portal_confirmed_at).toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }))) : /*#__PURE__*/React.createElement("span", {
+    style: {
+      color: '#D1D5DB'
+    }
+  }, "\u2014"))))))))), !loading && tab === 'settings' && /*#__PURE__*/React.createElement(SettingsTab, {
     showToast: showToast
   })));
 }
