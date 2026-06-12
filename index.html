@@ -5276,9 +5276,14 @@ function DriverApp({
     load();
   }, []);
   const setStatus = async (id, s) => {
-    await sb.from('rentals').update({
+    const update = {
       driver_status: s
-    }).eq('id', id);
+    };
+    // When delivered, mark rental as completed so it disappears from driver app
+    if (s === 'delivered') update.rental_status = 'completed';
+    // When undoing from delivered, restore to active
+    if (s !== 'delivered') update.rental_status = 'active';
+    await sb.from('rentals').update(update).eq('id', id);
     load();
   };
   const CHECKLIST = ['Inspeccionar el equipo por daños previos', 'Confirmar nombre del cliente y dirección', 'Fotografiar el equipo antes de descargar', 'Descargar el equipo de forma segura', 'Explicar al cliente el uso del equipo', 'Obtener recibo de entrega firmado', 'Anotar cualquier problema o comentario'];
@@ -5360,7 +5365,17 @@ function DriverApp({
     style: {
       fontSize: 48
     }
-  }, "\u2705"), "Sin trabajos activos") : jobs.map(r => {
+  }, "\u2705"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 18,
+      fontWeight: 700,
+      marginBottom: 8
+    }
+  }, "Sin trabajos activos"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 13
+    }
+  }, "Todos los trabajos completados")) : jobs.map(r => {
     const step = getStepEs(r.driver_status);
     const stepIdx = STEPS_ES.findIndex(x => x.key === r.driver_status);
     const next = STEPS_ES[stepIdx + 1];
