@@ -5286,7 +5286,6 @@ function DriverApp({
     await sb.from('rentals').update(update).eq('id', id);
     load();
   };
-  const CHECKLIST = ['Inspeccionar el equipo por daños previos', 'Confirmar nombre del cliente y dirección', 'Fotografiar el equipo antes de descargar', 'Descargar el equipo de forma segura', 'Explicar al cliente el uso del equipo', 'Obtener recibo de entrega firmado', 'Anotar cualquier problema o comentario'];
   const STEPS_ES = [{
     key: 'assigned',
     label: '📋 Asignado',
@@ -5482,20 +5481,6 @@ function DriverApp({
         color: '#6B7280'
       }
     }, "\u21A9 Deshacer \u2014 Regresar un Paso")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        padding: '12px 16px',
-        borderBottom: '1px solid #E5E7EB'
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 12,
-        fontWeight: 700,
-        marginBottom: 8
-      }
-    }, "\uD83D\uDCCB Lista de Verificaci\xF3n de Entrega"), CHECKLIST.map((item, i) => /*#__PURE__*/React.createElement(CheckItem, {
-      key: i,
-      label: item
-    }))), /*#__PURE__*/React.createElement("div", {
       style: {
         padding: '12px 16px',
         display: 'flex',
