@@ -2850,13 +2850,12 @@ function App() {
   };
   const copyLink = (t, id) => {
     const url = APP + '/#/portal/' + t;
-    window.open(url + '?staff=1', '_blank');
+    window.open(url, '_blank');
     navigator.clipboard.writeText(url);
-    // Log that portal was opened by staff
     if (id) sb.from('rentals').update({
       portal_opened_at: new Date().toISOString()
     }).eq('id', id).catch(() => {});
-    showToast('Portal opened ✓');
+    showToast('Portal link copied ✓');
   };
   const markPaid = async id => {
     await sb.from('rentals').update({
@@ -4207,7 +4206,7 @@ function ClientPortal({
   };
 
   // Confirmation screen
-  const isStaff = window.location.href.includes('staff=1');
+  const isStaff = false;
   if (!confirmed && !isPaid && !isStaff) return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: '100vh',
