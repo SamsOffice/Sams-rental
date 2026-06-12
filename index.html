@@ -1343,7 +1343,9 @@ function EditRental({
       payment_method: form.payment_method,
       rental_status: form.rental_status,
       driver_status: form.driver_status,
-      notes: form.notes
+      notes: form.notes,
+      delivery_date: form.delivery_date || null,
+      pickup_date: form.pickup_date || null
     }).eq('id', rental.id);
     setSaving(false);
     if (error) {
@@ -1522,6 +1524,20 @@ function EditRental({
     style: inp,
     value: form.due_date || '',
     onChange: e => set('due_date', e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: lbl
+  }, "\uD83D\uDCE6 Scheduled Delivery"), /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    style: inp,
+    value: form.delivery_date || '',
+    onChange: e => set('delivery_date', e.target.value)
+  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+    style: lbl
+  }, "\uD83D\uDD04 Scheduled Pickup"), /*#__PURE__*/React.createElement("input", {
+    type: "date",
+    style: inp,
+    value: form.pickup_date || '',
+    onChange: e => set('pickup_date', e.target.value)
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: lbl
   }, "Price ($)"), /*#__PURE__*/React.createElement("input", {
@@ -2834,9 +2850,10 @@ function App() {
   };
   const copyLink = t => {
     const url = APP + '/#/portal/' + t;
-    window.open(url, '_blank');
-    navigator.clipboard.writeText(url).catch(() => {});
-    showToast('Portal opened in new tab!');
+    // Open with staff flag so confirmation screen is skipped
+    window.open(url + '?staff=1', '_blank');
+    navigator.clipboard.writeText(url);
+    showToast('Portal opened ✓');
   };
   const markPaid = async id => {
     await sb.from('rentals').update({
@@ -3992,7 +4009,8 @@ function ClientPortal({
   };
 
   // Confirmation screen
-  if (!confirmed && !isPaid) return /*#__PURE__*/React.createElement("div", {
+  const isStaff = window.location.href.includes('staff=1');
+  if (!confirmed && !isPaid && !isStaff) return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: '100vh',
       background: '#ffffff',
@@ -4926,7 +4944,45 @@ function ClientPortal({
       color: '#6B7280',
       lineHeight: 2.2
     }
-  }, /*#__PURE__*/React.createElement("div", null, "\u2696\uFE0F ", /*#__PURE__*/React.createElement("strong", null, es ? 'Gravamen Mecanico' : 'Mechanic Lien'), " ", es ? 'sera presentado por saldo impago' : 'will be filed for any unpaid balance'), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDD27 ", /*#__PURE__*/React.createElement("strong", null, es ? 'Retiro del equipo' : 'Equipment repossession'), " ", es ? 'despues de 14 dias vencidos' : 'scheduled after 14 days overdue'), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDEAB ", /*#__PURE__*/React.createElement("strong", null, es ? 'Sin extensiones' : 'No extensions'), " ", es ? 'sin aprobacion previa' : 'without prior office approval'), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCB0 ", /*#__PURE__*/React.createElement("strong", null, es ? 'Todos los costos' : 'All collection costs'), " ", es ? 'anadidos al saldo' : 'added to outstanding balance'), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDD12 ", /*#__PURE__*/React.createElement("strong", null, es ? 'Cuenta suspendida' : 'Account suspended'), " ", es ? 'permanentemente por falta de pago' : 'permanently for non-payment'))), !isPaid && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", null, "\u2696\uFE0F ", /*#__PURE__*/React.createElement("strong", null, es ? 'Gravamen Mecanico' : 'Mechanic Lien'), " ", es ? 'sera presentado por saldo impago' : 'will be filed for any unpaid balance'), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDD27 ", /*#__PURE__*/React.createElement("strong", null, es ? 'Retiro del equipo' : 'Equipment repossession'), " ", es ? 'despues de 14 dias vencidos' : 'scheduled after 14 days overdue'), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDEAB ", /*#__PURE__*/React.createElement("strong", null, es ? 'Sin extensiones' : 'No extensions'), " ", es ? 'sin aprobacion previa' : 'without prior office approval'), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCB0 ", /*#__PURE__*/React.createElement("strong", null, es ? 'Todos los costos' : 'All collection costs'), " ", es ? 'anadidos al saldo' : 'added to outstanding balance'), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDD12 ", /*#__PURE__*/React.createElement("strong", null, es ? 'Cuenta suspendida' : 'Account suspended'), " ", es ? 'permanentemente por falta de pago' : 'permanently for non-payment'))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: '#fff',
+      borderRadius: 12,
+      border: '1px solid #F3F4F6',
+      padding: '16px 18px'
+    }
+  }, /*#__PURE__*/React.createElement("h3", {
+    style: {
+      fontSize: 14,
+      fontWeight: 700,
+      marginBottom: 8
+    }
+  }, "\uD83D\uDD04 ", es ? 'Devolucion del Equipo' : 'Equipment Return'), rental.pickup_date ? /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: '#374151',
+      marginBottom: 12
+    }
+  }, es ? 'Su recogida esta programada para:' : 'Your pickup is scheduled for:', " ", /*#__PURE__*/React.createElement("strong", null, fmtD(rental.pickup_date))) : /*#__PURE__*/React.createElement("p", {
+    style: {
+      fontSize: 13,
+      color: '#6B7280',
+      marginBottom: 12
+    }
+  }, es ? 'Para programar la recogida de su equipo, por favor llame a nuestra oficina.' : 'To schedule equipment pickup, please call our office.'), /*#__PURE__*/React.createElement("a", {
+    href: "tel:+19176636369",
+    style: {
+      display: 'block',
+      padding: '12px',
+      borderRadius: 9,
+      background: '#111827',
+      color: '#fff',
+      textDecoration: 'none',
+      fontSize: 14,
+      fontWeight: 700,
+      textAlign: 'center'
+    }
+  }, "\uD83D\uDCDE ", es ? 'Llamar para Coordinar Recogida' : 'Call to Schedule Pickup', " \u2014 +1 (917) 663-6369")), !isPaid && /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
       borderRadius: 12,
