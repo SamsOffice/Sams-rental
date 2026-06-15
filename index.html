@@ -2803,100 +2803,6 @@ function SettingsTab({
 
 // ── MAIN APP ──
 
-function ResponsesTab() {
-  const [responses, setResponses] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
-  const [selected, setSelected] = React.useState(null);
-
-  React.useEffect(() => {
-    sb.from('secretary_questionnaire').select('*').order('created_at', {ascending: false}).then(({data}) => {
-      if (data) setResponses(data.filter(r => r.name !== 'TEST'));
-      setLoading(false);
-    });
-  }, []);
-
-  const QUESTIONS = {
-    q1_pricing_by_material: 'Precios por material y tamano',
-    q2_mixed_material: 'Material mezclado — como se cobra',
-    q3_overweight_charge: 'Cargo por sobrepeso',
-    q4_ticket_numbering: 'Sistema de numeracion de tickets',
-    q5_ticket_storage: 'Donde guarda los tickets de papel',
-    q6_tickets_per_day: 'Cuantos tickets por dia',
-    q7_client_info_needed: 'Informacion que necesita del cliente',
-    q8_repeat_client_info: 'Clientes frecuentes — guarda su info',
-    q9_rental_plus_dump: 'Renta + dump job — como maneja las dos cuentas',
-    q10_zelle_number: 'Numero de Zelle para dump jobs',
-    q11_zelle_to_driver: 'Problema de Zelle al chofer',
-    q12_verify_payment: 'Como verifica si un cliente ya pago',
-    q13_total_debt: 'Deuda total de clientes en dump jobs',
-    q14_collections_process: 'Proceso de cobranza para dump jobs',
-    q15_permit_info_needed: 'Informacion necesaria para sacar permiso',
-    q16_permit_duration: 'Duracion del permiso de calle',
-    q17_permit_storage: 'Donde guarda los numeros de permiso',
-    q18_permit_problems: 'Problemas con permisos / multas',
-    q19_receipt_data: 'Datos del recibo de American Recycling',
-    q20_receipt_storage: 'Donde guarda las fotos de los recibos',
-    q21_recycling_cost: 'Cuanto cobra American Recycling a Sams',
-    q22_dump_location: 'Lugares donde van los choferes a dumpear',
-    q23_urgent_job: 'Que pasa con trabajos urgentes',
-    q24_container_count: 'Contenedores disponibles vs en uso',
-    q25_container_duration: 'Cuanto tiempo deja el cliente el contenedor',
-    q26_portal_info: 'Que info es mas importante en el portal del cliente',
-    q27_invoice_method: 'Como envia la factura al cliente',
-    q28_signature_photo: 'Firma del cliente — se toma foto',
-    q29_top_problems: 'Los 3 mayores problemas del proceso actual',
-    q30_one_tool: 'La herramienta mas importante que necesita',
-  };
-
-  if (loading) return React.createElement('div', {style:{textAlign:'center',padding:40}}, React.createElement('div', {className:'spinner'}));
-
-  if (selected) {
-    return React.createElement('div', null,
-      React.createElement('button', {onClick:()=>setSelected(null), style:{marginBottom:16,padding:'8px 16px',background:'#F3F4F6',border:'none',borderRadius:8,cursor:'pointer',fontSize:14,fontWeight:600}}, '← Back'),
-      React.createElement('div', {style:{background:'#111827',borderRadius:12,padding:'16px 20px',marginBottom:16}},
-        React.createElement('div', {style:{fontSize:16,fontWeight:700,color:'#fff'}}, selected.name || 'Secretaria'),
-        React.createElement('div', {style:{fontSize:12,color:'#9CA3AF'}}, 'Submitted: ' + selected.submitted_at)
-      ),
-      React.createElement('div', {style:{display:'flex',flexDirection:'column',gap:12}},
-        Object.entries(QUESTIONS).map(([key, label]) => {
-          const val = selected[key];
-          if (!val || val === 'Sin respuesta' || val.trim() === 'Sin respuesta Sin respuesta' || val.trim() === '') return null;
-          return React.createElement('div', {key, style:{background:'#fff',borderRadius:10,padding:'14px 16px',border:'1px solid #F3F4F6'}},
-            React.createElement('div', {style:{fontSize:11,fontWeight:700,color:'#2563EB',textTransform:'uppercase',marginBottom:4}}, label),
-            React.createElement('div', {style:{fontSize:14,color:'#111827',lineHeight:1.6,whiteSpace:'pre-wrap'}}, val)
-          );
-        })
-      )
-    );
-  }
-
-  if (responses.length === 0) return React.createElement('div', {style:{background:'#fff',borderRadius:12,padding:40,textAlign:'center',border:'1px solid #F3F4F6'}},
-    React.createElement('div', {style:{fontSize:48,marginBottom:12}}, '📝'),
-    React.createElement('h3', {style:{fontSize:18,fontWeight:700,marginBottom:8}}, 'No Responses Yet'),
-    React.createElement('p', {style:{fontSize:14,color:'#9CA3AF'}}, 'When the secretary submits, her answers will appear here.'),
-    React.createElement('a', {href:'https://samsoffice.github.io/Sams-rental/secretary-questions.html',target:'_blank',style:{display:'inline-block',marginTop:16,padding:'10px 20px',background:'#2563EB',color:'#fff',borderRadius:8,textDecoration:'none',fontSize:14,fontWeight:700}}, 'Open Questionnaire')
-  );
-
-  return React.createElement('div', null,
-    React.createElement('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}},
-      React.createElement('h2', {style:{fontSize:18,fontWeight:700}}, 'Secretary Responses (' + responses.length + ')'),
-      React.createElement('a', {href:'https://samsoffice.github.io/Sams-rental/secretary-questions.html',target:'_blank',style:{padding:'8px 14px',background:'#2563EB',color:'#fff',borderRadius:8,textDecoration:'none',fontSize:13,fontWeight:700}}, 'Open Form')
-    ),
-    React.createElement('div', {style:{display:'flex',flexDirection:'column',gap:10}},
-      responses.map(r => React.createElement('div', {key:r.id, onClick:()=>setSelected(r), style:{background:'#fff',borderRadius:12,padding:'16px 18px',border:'1px solid #F3F4F6',cursor:'pointer',display:'flex',justifyContent:'space-between',alignItems:'center'}},
-        React.createElement('div', null,
-          React.createElement('div', {style:{fontWeight:700,fontSize:15}}, r.name || 'Secretaria'),
-          React.createElement('div', {style:{fontSize:12,color:'#9CA3AF',marginTop:2}}, r.submitted_at),
-          React.createElement('div', {style:{fontSize:12,color:'#6B7280',marginTop:4}},
-            Object.keys(QUESTIONS).filter(k => r[k] && r[k] !== 'Sin respuesta' && r[k].trim() !== 'Sin respuesta Sin respuesta' && r[k].trim() !== '').length + ' of ' + Object.keys(QUESTIONS).length + ' questions answered'
-          )
-        ),
-        React.createElement('div', {style:{fontSize:20,color:'#9CA3AF'}}, '→')
-      ))
-    )
-  );
-}
-
 function App() {
   const hash = window.location.hash.slice(1);
   const portalMatch = hash.match(/^\/portal\/(.+)$/);
@@ -3137,9 +3043,6 @@ function App() {
   }, {
     id: 'confirmations',
     l: '📋 Confirmations'
-  }, {
-    id: 'responses',
-    l: '📝 Responses'
   }, {
     id: 'invoice',
     l: '📄 Invoice'
@@ -4008,8 +3911,7 @@ function App() {
     rentals: rentals
   }), !loading && tab === 'schedule' && /*#__PURE__*/React.createElement(ScheduleTab, {
     rentals: rentals
-  }), !loading && tab === 'responses' && React.createElement(ResponsesTab, null),
-        !loading && tab === 'confirmations' && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }), !loading && tab === 'confirmations' && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
       borderRadius: 12,
