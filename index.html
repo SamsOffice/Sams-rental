@@ -2804,6 +2804,298 @@ function SettingsTab({
 // ── MAIN APP ──
 
 
+
+var MATERIAL_PRICES = {
+  'Construction Debris': 1300,
+  'Clean Concrete': 900,
+  'Brick/Soil/Rock': 1300,
+  'Asphalt & Brick': 1300,
+  'Household Debris': 1300,
+  'Metal': 1300,
+  'Trees': 1300,
+  'Dirt': 1300,
+  'Mix': 1300,
+  'Garbage': 0,
+};
+
+var MATERIALS = Object.keys(MATERIAL_PRICES);
+var CONTAINER_SIZES = ['10yd','15yd','20yd','30yd'];
+var JOB_TYPES = ['PULL','SWITCH','DROP'];
+var DRIVERS = ['Sams','Gustavo','Jose Luis'];
+
+function DumpingTab(_ref) {
+  var showToast = _ref.showToast;
+  var _React$useState = React.useState([]), jobs = _React$useState[0], setJobs = _React$useState[1];
+  var _React$useState2 = React.useState(true), loading = _React$useState2[0], setLoading = _React$useState2[1];
+  var _React$useState3 = React.useState(false), showForm = _React$useState3[0], setShowForm = _React$useState3[1];
+  var _React$useState4 = React.useState(null), editJob = _React$useState4[0], setEditJob = _React$useState4[1];
+  var _React$useState5 = React.useState('active'), view = _React$useState5[0], setView = _React$useState5[1];
+
+  var emptyForm = {
+    client_name:'', client_phone:'', client_address:'',
+    job_type:'PULL', container_size:'20yd', material_type:'Construction Debris',
+    num_loads:1, weight_tons:'', price:1300, overweight_charge:0,
+    assigned_driver:'Sams', payment_type:'ON ACCOUNT',
+    payment_status:'unpaid', payment_method:'', payment_recipient:'Company',
+    permit_no:'', notes:'', rental_id:'', date: new Date().toISOString().split('T')[0]
+  };
+
+  var _React$useState6 = React.useState(emptyForm), form = _React$useState6[0], setForm = _React$useState6[1];
+
+  var loadJobs = function() {
+    sb.from('dump_jobs').select('*').eq('deleted', false).order('created_at', {ascending: false}).then(function(res) {
+      if (res.data) setJobs(res.data);
+      setLoading(false);
+    });
+  };
+
+  React.useEffect(function() { loadJobs(); }, []);
+
+  var set = function(k, v) {
+    setForm(function(f) {
+      var updated = Object.assign({}, f, {[k]: v});
+      // Auto-calculate price based on material
+      if (k === 'material_type') {
+        updated.price = MATERIAL_PRICES[v] || 0;
+      }
+      // Auto-calculate overweight
+      if (k === 'weight_tons' || k === 'material_type') {
+        var tons = parseFloat(updated.weight_tons) || 0;
+        // Garbage charged at $146/ton
+        if (updated.material_type === 'Garbage' && tons > 0) {
+          updated.price = tons * 146;
+        }
+        // Overweight = anything over 6 tons charged $146/ton extra
+        var overTons = Math.max(0, tons - 6);
+        updated.overweight_charge = overTons > 0 ? overTons * 146 : 0;
+      }
+      return updated;
+    });
+  };
+
+  var calcTotal = function(f) {
+    var base = parseFloat(f.price) || 0;
+    var ow = parseFloat(f.overweight_charge) || 0;
+    return base + ow;
+  };
+
+  var saveJob = async function() {
+    var total = calcTotal(form);
+    var payload = Object.assign({}, form, {total_price: total});
+    if (editJob) {
+      await sb.from('dump_jobs').update(payload).eq('id', editJob.id);
+      showToast('Dump job updated ✓');
+    } else {
+      await sb.from('dump_jobs').insert([payload]);
+      showToast('Dump job created ✓');
+    }
+    setShowForm(false);
+    setEditJob(null);
+    setForm(emptyForm);
+    loadJobs();
+  };
+
+  var markComplete = async function(id) {
+    await sb.from('dump_jobs').update({driver_status:'completed', completed_at: new Date().toISOString()}).eq('id', id);
+    showToast('Job marked complete ✓');
+    loadJobs();
+  };
+
+  var markPaid = async function(id) {
+    await sb.from('dump_jobs').update({payment_status:'paid'}).eq('id', id);
+    showToast('Marked as paid ✓');
+    loadJobs();
+  };
+
+  var deleteJob = async function(id) {
+    await sb.from('dump_jobs').update({deleted: true}).eq('id', id);
+    showToast('Job deleted');
+    loadJobs();
+  };
+
+  var copyPortal = function(token, name) {
+    var url = 'https://samsoffice.github.io/Sams-rental/#/dump/' + token;
+    navigator.clipboard.writeText(url).catch(function(){});
+    window.open(url, '_blank');
+    showToast('Portal opened for ' + name + ' ✓');
+  };
+
+  var openEdit = function(j) {
+    setForm({
+      client_name: j.client_name||'', client_phone: j.client_phone||'',
+      client_address: j.client_address||'', job_type: j.job_type||'PULL',
+      container_size: j.container_size||'20yd', material_type: j.material_type||'Construction Debris',
+      num_loads: j.num_loads||1, weight_tons: j.weight_tons||'',
+      price: j.price||0, overweight_charge: j.overweight_charge||0,
+      assigned_driver: j.assigned_driver||'Sams', payment_type: j.payment_type||'ON ACCOUNT',
+      payment_status: j.payment_status||'unpaid', payment_method: j.payment_method||'',
+      payment_recipient: j.payment_recipient||'Company', permit_no: j.permit_no||'',
+      notes: j.notes||'', rental_id: j.rental_id||'', date: j.date||new Date().toISOString().split('T')[0]
+    });
+    setEditJob(j);
+    setShowForm(true);
+  };
+
+  var activeJobs = jobs.filter(function(j){return j.driver_status!=='completed' && j.payment_status!=='paid';});
+  var overdueJobs = jobs.filter(function(j){return j.payment_status==='unpaid' && j.driver_status==='completed';});
+  var paidJobs = jobs.filter(function(j){return j.payment_status==='paid';});
+  var displayJobs = view==='active'?activeJobs:view==='overdue'?overdueJobs:paidJobs;
+
+  var inp = {width:'100%',padding:'8px 10px',border:'1px solid #E5E7EB',borderRadius:7,fontSize:13,fontFamily:'inherit',outline:'none'};
+  var lbl = {fontSize:11,fontWeight:700,color:'#6B7280',textTransform:'uppercase',marginBottom:3,display:'block'};
+
+  if (showForm) return React.createElement('div', {style:{maxWidth:700,margin:'0 auto'}},
+    React.createElement('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}},
+      React.createElement('h2', {style:{fontSize:18,fontWeight:700}}, editJob?'Edit Dump Job':'New Dump Job'),
+      React.createElement('button', {onClick:function(){setShowForm(false);setEditJob(null);setForm(emptyForm);}, style:{padding:'6px 14px',background:'#F3F4F6',border:'none',borderRadius:7,cursor:'pointer',fontSize:13}}, '✕ Cancel')
+    ),
+    React.createElement('div', {style:{background:'#fff',borderRadius:12,padding:24,border:'1px solid #E5E7EB',display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}},
+
+      // Client Info
+      React.createElement('div', {style:{gridColumn:'1/-1',fontWeight:700,fontSize:13,color:'#374151',borderBottom:'1px solid #F3F4F6',paddingBottom:8,marginBottom:4}}, '👤 Client Information'),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Client Name'), React.createElement('input', {style:inp, value:form.client_name, onChange:function(e){set('client_name',e.target.value);}, placeholder:'Client name'})),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Phone'), React.createElement('input', {style:inp, value:form.client_phone, onChange:function(e){set('client_phone',e.target.value);}, placeholder:'Phone'})),
+      React.createElement('div', {style:{gridColumn:'1/-1'}}, React.createElement('label', {style:lbl}, 'Address / Job Site'), React.createElement('input', {style:inp, value:form.client_address, onChange:function(e){set('client_address',e.target.value);}, placeholder:'Job site address'})),
+
+      // Job Details
+      React.createElement('div', {style:{gridColumn:'1/-1',fontWeight:700,fontSize:13,color:'#374151',borderBottom:'1px solid #F3F4F6',paddingBottom:8,marginTop:8,marginBottom:4}}, '🚛 Job Details'),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Date'), React.createElement('input', {type:'date',style:inp, value:form.date, onChange:function(e){set('date',e.target.value);}})),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Job Type'),
+        React.createElement('select', {style:inp, value:form.job_type, onChange:function(e){set('job_type',e.target.value);}},
+          JOB_TYPES.map(function(t){return React.createElement('option',{key:t,value:t},t);})
+        )
+      ),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Container Size'),
+        React.createElement('select', {style:inp, value:form.container_size, onChange:function(e){set('container_size',e.target.value);}},
+          CONTAINER_SIZES.map(function(s){return React.createElement('option',{key:s,value:s},s);})
+        )
+      ),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Material Type'),
+        React.createElement('select', {style:inp, value:form.material_type, onChange:function(e){set('material_type',e.target.value);}},
+          MATERIALS.map(function(m){return React.createElement('option',{key:m,value:m},m);})
+        )
+      ),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Number of Loads'), React.createElement('input', {type:'number',style:inp, value:form.num_loads, onChange:function(e){set('num_loads',parseInt(e.target.value)||1);}, min:1})),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Weight (tons)'), React.createElement('input', {type:'number',style:inp, value:form.weight_tons, onChange:function(e){set('weight_tons',e.target.value);}, placeholder:'From American Recycling receipt',step:'0.01'})),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Assigned Driver'),
+        React.createElement('select', {style:inp, value:form.assigned_driver, onChange:function(e){set('assigned_driver',e.target.value);}},
+          DRIVERS.map(function(d){return React.createElement('option',{key:d,value:d},d);})
+        )
+      ),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Permit #'), React.createElement('input', {style:inp, value:form.permit_no, onChange:function(e){set('permit_no',e.target.value);}, placeholder:'NYC Street Permit #'})),
+
+      // Pricing
+      React.createElement('div', {style:{gridColumn:'1/-1',fontWeight:700,fontSize:13,color:'#374151',borderBottom:'1px solid #F3F4F6',paddingBottom:8,marginTop:8,marginBottom:4}}, '💰 Pricing'),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Price ($)'), React.createElement('input', {type:'number',style:inp, value:form.price, onChange:function(e){set('price',parseFloat(e.target.value)||0);}})),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Overweight Charge ($)'), React.createElement('input', {type:'number',style:inp, value:form.overweight_charge, onChange:function(e){set('overweight_charge',parseFloat(e.target.value)||0);}})),
+      React.createElement('div', {style:{gridColumn:'1/-1',background:'#EFF6FF',borderRadius:8,padding:'12px 14px',border:'1px solid #BFDBFE'}},
+        React.createElement('div', {style:{fontSize:13,color:'#6B7280'}}, 'Total Amount Due:'),
+        React.createElement('div', {style:{fontSize:22,fontWeight:800,color:'#1D4ED8'}}, '$' + calcTotal(form).toFixed(2))
+      ),
+
+      // Payment
+      React.createElement('div', {style:{gridColumn:'1/-1',fontWeight:700,fontSize:13,color:'#374151',borderBottom:'1px solid #F3F4F6',paddingBottom:8,marginTop:8,marginBottom:4}}, '💳 Payment'),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Payment Type'),
+        React.createElement('select', {style:inp, value:form.payment_type, onChange:function(e){set('payment_type',e.target.value);}},
+          ['ON ACCOUNT','COD','CHECK'].map(function(t){return React.createElement('option',{key:t,value:t},t);})
+        )
+      ),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Payment Recipient (Zelle)'),
+        React.createElement('select', {style:inp, value:form.payment_recipient, onChange:function(e){set('payment_recipient',e.target.value);}},
+          ['Company','Sams','Gustavo','Jose Luis'].map(function(t){return React.createElement('option',{key:t,value:t},t);})
+        )
+      ),
+      React.createElement('div', {style:{gridColumn:'1/-1'}}, React.createElement('label', {style:lbl}, 'Linked Rental ID (optional)'), React.createElement('input', {style:inp, value:form.rental_id, onChange:function(e){set('rental_id',e.target.value);}, placeholder:'R-012 if client also has a machine rental'})),
+      React.createElement('div', {style:{gridColumn:'1/-1'}}, React.createElement('label', {style:lbl}, 'Notes'), React.createElement('textarea', {style:Object.assign({},inp,{minHeight:60,resize:'vertical'}), value:form.notes, onChange:function(e){set('notes',e.target.value);}, placeholder:'Any additional notes...'})),
+
+      React.createElement('div', {style:{gridColumn:'1/-1'}},
+        React.createElement('button', {onClick:saveJob, style:{width:'100%',padding:'14px',background:'#1D4ED8',color:'#fff',border:'none',borderRadius:9,fontSize:15,fontWeight:800,cursor:'pointer'}},
+          editJob ? '💾 Update Job' : '✅ Create Dump Job'
+        )
+      )
+    )
+  );
+
+  // Stats
+  var totalUnpaid = jobs.filter(function(j){return j.payment_status==='unpaid';}).reduce(function(s,j){return s+(parseFloat(j.total_price)||0);},0);
+
+  return React.createElement('div', null,
+    // Header
+    React.createElement('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20,flexWrap:'wrap',gap:10}},
+      React.createElement('div', null,
+        React.createElement('h2', {style:{fontSize:20,fontWeight:800}}, '🚛 Dumping Jobs'),
+        React.createElement('div', {style:{fontSize:13,color:'#9CA3AF'}}, jobs.length + ' total jobs')
+      ),
+      React.createElement('button', {onClick:function(){setShowForm(true);}, style:{padding:'10px 20px',background:'#1D4ED8',color:'#fff',border:'none',borderRadius:9,fontSize:14,fontWeight:700,cursor:'pointer'}}, '+ New Dump Job')
+    ),
+
+    // Stats
+    React.createElement('div', {style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:20}},
+      React.createElement('div', {style:{background:'#fff',borderRadius:10,padding:'14px 16px',border:'1px solid #F3F4F6'}},
+        React.createElement('div', {style:{fontSize:11,color:'#9CA3AF',fontWeight:600,textTransform:'uppercase'}}, 'Active'),
+        React.createElement('div', {style:{fontSize:24,fontWeight:800,color:'#1D4ED8'}}, activeJobs.length)
+      ),
+      React.createElement('div', {style:{background:'#fff',borderRadius:10,padding:'14px 16px',border:'1px solid #F3F4F6'}},
+        React.createElement('div', {style:{fontSize:11,color:'#9CA3AF',fontWeight:600,textTransform:'uppercase'}}, 'Unpaid Total'),
+        React.createElement('div', {style:{fontSize:22,fontWeight:800,color:'#DC2626'}}, '$' + totalUnpaid.toLocaleString())
+      ),
+      React.createElement('div', {style:{background:'#fff',borderRadius:10,padding:'14px 16px',border:'1px solid #F3F4F6'}},
+        React.createElement('div', {style:{fontSize:11,color:'#9CA3AF',fontWeight:600,textTransform:'uppercase'}}, 'Completed Unpaid'),
+        React.createElement('div', {style:{fontSize:24,fontWeight:800,color:'#F59E0B'}}, overdueJobs.length)
+      )
+    ),
+
+    // Filter tabs
+    React.createElement('div', {style:{display:'flex',gap:8,marginBottom:16}},
+      ['active','overdue','paid'].map(function(v){
+        var labels = {active:'🔵 Active ('+activeJobs.length+')', overdue:'🔴 Completed Unpaid ('+overdueJobs.length+')', paid:'✅ Paid ('+paidJobs.length+')'};
+        return React.createElement('button', {key:v, onClick:function(){setView(v);}, style:{padding:'8px 14px',borderRadius:8,border:'none',cursor:'pointer',fontSize:13,fontWeight:600,background:view===v?'#1D4ED8':'#F3F4F6',color:view===v?'#fff':'#374151'}}, labels[v]);
+      })
+    ),
+
+    // Jobs list
+    loading ? React.createElement('div', {style:{textAlign:'center',padding:40}}, React.createElement('div', {className:'spinner'})) :
+    displayJobs.length === 0 ? React.createElement('div', {style:{background:'#fff',borderRadius:12,padding:40,textAlign:'center',border:'1px solid #F3F4F6',color:'#9CA3AF',fontSize:14}}, 'No jobs in this category') :
+    React.createElement('div', {style:{display:'flex',flexDirection:'column',gap:10}},
+      displayJobs.map(function(j) {
+        var isOverweight = parseFloat(j.overweight_charge) > 0;
+        return React.createElement('div', {key:j.id, style:{background:'#fff',borderRadius:12,padding:'16px 18px',border:'1px solid '+(j.payment_status==='paid'?'#A7F3D0':isOverweight?'#FDE68A':'#F3F4F6')}},
+          React.createElement('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:8}},
+            React.createElement('div', null,
+              React.createElement('div', {style:{display:'flex',alignItems:'center',gap:8,marginBottom:4}},
+                React.createElement('span', {style:{fontSize:13,fontWeight:700,color:'#9CA3AF'}}, '#' + j.ticket_no),
+                React.createElement('span', {style:{fontSize:12,fontWeight:700,padding:'2px 8px',borderRadius:20,background:j.job_type==='PULL'?'#EFF6FF':j.job_type==='SWITCH'?'#FFF7ED':'#F0FDF4',color:j.job_type==='PULL'?'#1D4ED8':j.job_type==='SWITCH'?'#C2410C':'#065F46'}}, j.job_type),
+                React.createElement('span', {style:{fontSize:12,color:'#6B7280'}}, j.container_size),
+                j.payment_status==='paid' && React.createElement('span', {style:{fontSize:11,fontWeight:700,background:'#ECFDF5',color:'#065F46',padding:'2px 8px',borderRadius:20}}, '✅ PAID'),
+                j.payment_status==='unpaid' && j.driver_status==='completed' && React.createElement('span', {style:{fontSize:11,fontWeight:700,background:'#FEF2F2',color:'#991B1B',padding:'2px 8px',borderRadius:20}}, '🔴 UNPAID'),
+                isOverweight && React.createElement('span', {style:{fontSize:11,fontWeight:700,background:'#FFFBEB',color:'#92400E',padding:'2px 8px',borderRadius:20}}, '⚠️ OVERWEIGHT')
+              ),
+              React.createElement('div', {style:{fontSize:15,fontWeight:700}}, j.client_name),
+              React.createElement('div', {style:{fontSize:12,color:'#6B7280'}}, j.material_type + ' • ' + j.assigned_driver + (j.weight_tons?' • '+j.weight_tons+'T':'')),
+              React.createElement('div', {style:{fontSize:12,color:'#9CA3AF'}}, j.client_address),
+              j.permit_no && React.createElement('div', {style:{fontSize:11,color:'#6B7280',marginTop:2}}, '📋 Permit: ' + j.permit_no)
+            ),
+            React.createElement('div', {style:{textAlign:'right'}},
+              React.createElement('div', {style:{fontSize:18,fontWeight:800,color:'#111827'}}, '$' + (parseFloat(j.total_price)||0).toLocaleString()),
+              React.createElement('div', {style:{fontSize:11,color:'#9CA3AF'}}, j.payment_type),
+              React.createElement('div', {style:{fontSize:11,color:'#9CA3AF'}}, j.date)
+            )
+          ),
+          // Action buttons
+          React.createElement('div', {style:{display:'flex',gap:6,marginTop:12,flexWrap:'wrap'}},
+            React.createElement('button', {onClick:function(){copyPortal(j.portal_token,j.client_name);}, style:{padding:'5px 10px',fontSize:11,fontWeight:700,borderRadius:6,border:'none',cursor:'pointer',background:'#EFF6FF',color:'#1D4ED8'}}, '🔗 Portal'),
+            j.payment_status!=='paid' && React.createElement('button', {onClick:function(){markPaid(j.id);}, style:{padding:'5px 10px',fontSize:11,fontWeight:700,borderRadius:6,border:'none',cursor:'pointer',background:'#ECFDF5',color:'#065F46'}}, '✓ Paid'),
+            j.driver_status!=='completed' && React.createElement('button', {onClick:function(){markComplete(j.id);}, style:{padding:'5px 10px',fontSize:11,fontWeight:700,borderRadius:6,border:'none',cursor:'pointer',background:'#FFF7ED',color:'#C2410C'}}, '✅ Complete'),
+            React.createElement('button', {onClick:function(){openEdit(j);}, style:{padding:'5px 10px',fontSize:11,fontWeight:700,borderRadius:6,border:'none',cursor:'pointer',background:'#F9FAFB',color:'#374151',border:'1px solid #E5E7EB'}}, '✏ Edit'),
+            j.client_phone && React.createElement('a', {href:'tel:'+j.client_phone, style:{padding:'5px 10px',fontSize:11,fontWeight:700,borderRadius:6,textDecoration:'none',background:'#F9FAFB',color:'#374151',border:'1px solid #E5E7EB'}}, '📞'),
+            React.createElement('button', {onClick:function(){if(confirm('Delete this dump job?'))deleteJob(j.id);}, style:{padding:'5px 10px',fontSize:11,fontWeight:700,borderRadius:6,border:'1px solid #E5E7EB',cursor:'pointer',background:'#FEF2F2',color:'#DC2626'}}, '🗑')
+          )
+        );
+      })
+    )
+  );
+}
+
 function App() {
   const hash = window.location.hash.slice(1);
   const portalMatch = hash.match(/^\/portal\/(.+)$/);
@@ -3044,6 +3336,9 @@ function App() {
   }, {
     id: 'confirmations',
     l: '📋 Confirmations'
+  }, {
+    id: 'dumping',
+    l: '🚛 Dumping'
   }, {
     id: 'invoice',
     l: '📄 Invoice'
@@ -3912,7 +4207,8 @@ function App() {
     rentals: rentals
   }), !loading && tab === 'schedule' && /*#__PURE__*/React.createElement(ScheduleTab, {
     rentals: rentals
-  }), !loading && tab === 'confirmations' && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }), !loading && tab === 'dumping' && React.createElement(DumpingTab, {showToast: showToast}),
+        !loading && tab === 'confirmations' && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
       borderRadius: 12,
