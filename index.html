@@ -4846,7 +4846,7 @@ function ClientPortal({
       cursor: 'pointer',
       marginBottom: 10
     }
-  }, es ? `CONFIRMO QUE DEBO ${money(rental.price)}` : `I CONFIRM I OWE ${money(rental.price)}`), /*#__PURE__*/React.createElement("div", {
+  }, es ? ('CONFIRMO QUE DEBO ' + money(rental.price)) : ('I CONFIRM I OWE ' + money(rental.price))), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: '#9CA3AF',
@@ -4946,7 +4946,7 @@ function ClientPortal({
       lineHeight: 1.7,
       marginBottom: 10
     }
-  }, es ? `${rental.client_name}, su factura lleva ${od} dia(s) vencida. Pague ${money(rental.price)} AHORA.` : `${rental.client_name}, your invoice is ${od} day(s) overdue. Pay ${money(rental.price)} NOW.`), /*#__PURE__*/React.createElement("a", {
+  }, es ? (rental.client_name + ', su factura lleva ' + od + ' dia(s) vencida. Pague ' + money(rental.price) + ' AHORA.') : (rental.client_name + ', your invoice is ' + od + ' day(s) overdue. Pay ' + money(rental.price) + ' NOW.')), /*#__PURE__*/React.createElement("a", {
     href: "tel:+19176636369",
     style: {
       display: 'block',
@@ -4980,7 +4980,7 @@ function ClientPortal({
       lineHeight: 1.7,
       marginBottom: 10
     }
-  }, es ? `${rental.client_name}, tiene 72 horas para pagar ${money(rental.price)} o el equipo sera RETIRADO. No hay extensiones.` : `${rental.client_name}, you have 72 hours to pay ${money(rental.price)} or equipment will be REMOVED. No extensions. No negotiation.`), /*#__PURE__*/React.createElement("div", {
+  }, es ? (rental.client_name + ', tiene 72 horas para pagar ' + money(rental.price) + ' o el equipo sera RETIRADO. No hay extensiones.') : (rental.client_name + ', you have 72 hours to pay ' + money(rental.price) + ' or equipment will be REMOVED. No extensions. No negotiation.')), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: '#991B1B',
@@ -5022,7 +5022,7 @@ function ClientPortal({
       lineHeight: 1.8,
       marginBottom: 10
     }
-  }, es ? `${rental.client_name}, su propiedad en ` : `${rental.client_name}, your property at `, /*#__PURE__*/React.createElement("strong", null, rental.client_address), es ? ' ha sido marcada para presentacion de GRAVAMEN MECANICO. El equipo sera retirado sin previo aviso.' : " has been flagged for MECHANIC LIEN filing. Equipment will be removed without further notice."), /*#__PURE__*/React.createElement("div", {
+  }, es ? (rental.client_name + ', su propiedad en ') : (rental.client_name + ', your property at '), /*#__PURE__*/React.createElement("strong", null, rental.client_address), es ? ' ha sido marcada para presentacion de GRAVAMEN MECANICO. El equipo sera retirado sin previo aviso.' : " has been flagged for MECHANIC LIEN filing. Equipment will be removed without further notice."), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       lineHeight: 2,
@@ -5066,7 +5066,7 @@ function ClientPortal({
       marginBottom: 12,
       color: '#9CA3AF'
     }
-  }, es ? `${rental.client_name}, su cuenta ha sido PERMANENTEMENTE cerrada. Gravamen mecanico presentado. Equipo retirado. Usted esta en lista negra de Sams Construction.` : `${rental.client_name}, your account is PERMANENTLY closed. Mechanic Lien filed. Equipment removed. You are blacklisted from Sams Construction.`), /*#__PURE__*/React.createElement("a", {
+  }, es ? (rental.client_name + ', su cuenta ha sido PERMANENTEMENTE cerrada. Gravamen mecanico presentado. Equipo retirado. Usted esta en lista negra de Sams Construction.') : (rental.client_name + ', your account is PERMANENTLY closed. Mechanic Lien filed. Equipment removed. You are blacklisted from Sams Construction.')), /*#__PURE__*/React.createElement("a", {
     href: "tel:+19176636369",
     style: {
       display: 'block',
@@ -5239,7 +5239,7 @@ function ClientPortal({
       fontWeight: 700,
       color: isPaid ? '#065F46' : od > 0 ? '#991B1B' : d <= 2 ? '#92400E' : '#1D4ED8'
     }
-  }, isPaid ? es ? 'PAGADO EN SU TOTALIDAD' : 'PAID IN FULL' : od > 0 ? es ? `${od} DIAS VENCIDO` : `${od} DAYS OVERDUE` : d === 0 ? es ? 'VENCE HOY' : 'DUE TODAY' : es ? `${d} DIAS RESTANTES` : `${d} DAYS REMAINING`), !isPaid && /*#__PURE__*/React.createElement("div", {
+  }, isPaid ? es ? 'PAGADO EN SU TOTALIDAD' : 'PAID IN FULL' : od > 0 ? es ? (od + ' DIAS VENCIDO') : (od + ' DAYS OVERDUE') : d === 0 ? es ? 'VENCE HOY' : 'DUE TODAY' : es ? (d + ' DIAS RESTANTES') : (d + ' DAYS REMAINING')), !isPaid && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: '#6B7280',
