@@ -3044,7 +3044,33 @@ function DumpingTab(_ref) {
   // Stats
   var totalUnpaid = jobs.filter(function(j){return j.payment_status==='unpaid';}).reduce(function(s,j){return s+(parseFloat(j.total_price)||0);},0);
 
+  var [dumpTab, setDumpTab] = React.useState('jobs');
+  var dumpJobs2 = jobs; // local state
+
+  if(dumpTab==='invoice') return React.createElement('div', null,
+    React.createElement('div', {style:{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}},
+      ['jobs','invoice','collections','schedule'].map(function(t){var labels={'jobs':'🚛 Jobs','invoice':'📄 Invoice','collections':'⚖️ Collections','schedule':'📅 Schedule'};return React.createElement('button',{key:t,onClick:function(){setDumpTab(t);},style:{padding:'7px 14px',borderRadius:8,border:'none',cursor:'pointer',fontSize:13,fontWeight:600,background:dumpTab===t?'#F59E0B':'#F3F4F6',color:dumpTab===t?'#fff':'#374151'}},labels[t]);}),
+    ),
+    React.createElement(DumpInvoiceTab, {showToast:showToast, dumpJobs:jobs, rentals:[]})
+  );
+  if(dumpTab==='collections') return React.createElement('div', null,
+    React.createElement('div', {style:{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}},
+      ['jobs','invoice','collections','schedule'].map(function(t){var labels={'jobs':'🚛 Jobs','invoice':'📄 Invoice','collections':'⚖️ Collections','schedule':'📅 Schedule'};return React.createElement('button',{key:t,onClick:function(){setDumpTab(t);},style:{padding:'7px 14px',borderRadius:8,border:'none',cursor:'pointer',fontSize:13,fontWeight:600,background:dumpTab===t?'#F59E0B':'#F3F4F6',color:dumpTab===t?'#fff':'#374151'}},labels[t]);}),
+    ),
+    React.createElement(DumpCollectionsTab, {showToast:showToast, dumpJobs:jobs, reloadData:reloadData})
+  );
+  if(dumpTab==='schedule') return React.createElement('div', null,
+    React.createElement('div', {style:{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}},
+      ['jobs','invoice','collections','schedule'].map(function(t){var labels={'jobs':'🚛 Jobs','invoice':'📄 Invoice','collections':'⚖️ Collections','schedule':'📅 Schedule'};return React.createElement('button',{key:t,onClick:function(){setDumpTab(t);},style:{padding:'7px 14px',borderRadius:8,border:'none',cursor:'pointer',fontSize:13,fontWeight:600,background:dumpTab===t?'#F59E0B':'#F3F4F6',color:dumpTab===t?'#fff':'#374151'}},labels[t]);}),
+    ),
+    React.createElement(DumpScheduleTab, {dumpJobs:jobs})
+  );
+
   return React.createElement('div', null,
+    // Sub-tabs
+    React.createElement('div', {style:{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}},
+      ['jobs','invoice','collections','schedule'].map(function(t){var labels={'jobs':'🚛 Jobs','invoice':'📄 Invoice','collections':'⚖️ Collections','schedule':'📅 Schedule'};return React.createElement('button',{key:t,onClick:function(){setDumpTab(t);},style:{padding:'7px 14px',borderRadius:8,border:'none',cursor:'pointer',fontSize:13,fontWeight:600,background:dumpTab===t?'#F59E0B':'#F3F4F6',color:dumpTab===t?'#fff':'#374151'}},labels[t]);}),
+    ),
     // Header
     React.createElement('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20,flexWrap:'wrap',gap:10}},
       React.createElement('div', null,
@@ -3246,7 +3272,14 @@ function DumpClientPortal(_ref) {
         React.createElement('div', {style:{display:'flex',justifyContent:'space-between',paddingTop:10,fontSize:16,fontWeight:700}},
           React.createElement('span', null, es?'Total a Pagar':'Total Due'),
           React.createElement('span', null, '$' + total.toFixed(2))
-        )
+        ),
+        job.invoice_data && React.createElement('button', {onClick:function(){
+          try{
+            var inv=JSON.parse(job.invoice_data);
+            var b=new Blob(['<html><head><title>Invoice</title><style>body{font-family:Arial;padding:24px;max-width:680px;margin:0 auto}h2{color:#1D4ED8}hr{border:3px solid #1D4ED8}table{width:100%;border-collapse:collapse}th{background:#1D4ED8;color:#fff;padding:8px;text-align:left}td{padding:6px 8px;border-bottom:1px solid #BDD6E8}.tot{background:#D6E8F7;font-weight:700;text-align:right;padding:10px}</style></head><body><h2>SAMS CONSTRUCTION SERVICES LTD</h2><hr><p>Invoice: '+inv.invNo+'<br>Date: '+inv.invDate+'<br>Bill To: '+inv.billTo+'</p><table><thead><tr><th>Description</th><th>Amount</th></tr></thead><tbody><tr><td>Dump Job</td><td>$'+parseFloat(inv.basePrice).toFixed(2)+'</td></tr>'+(inv.owCharge>0?'<tr><td>Overweight</td><td>$'+parseFloat(inv.owCharge).toFixed(2)+'</td></tr>':'')+'</tbody></table><p class=tot>TOTAL: $'+parseFloat(inv.total).toFixed(2)+'</p></body></html>'],{type:'text/html'});
+            window.open(URL.createObjectURL(b),'_blank');
+          }catch(e){alert('Error opening invoice');}
+        }, style:{width:'100%',padding:'14px',borderRadius:10,fontSize:17,fontWeight:800,cursor:'pointer',border:'none',background:'#1D4ED8',color:'#fff',marginTop:14}}, es?'📄 VER MI FACTURA':'📄 VIEW MY INVOICE')
       ),
 
       // Payment options
@@ -3298,6 +3331,226 @@ function TermsPopup({onClose, es}) {
         React.createElement('p', {style:{marginBottom:12}}, es?'6. SUSPENSIÓN PERMANENTE DE CUENTA Y LISTA DE EXCLUSIÓN: El incumplimiento reiterado de pago o la violación de cualquiera de los términos del presente acuerdo resultará en la suspensión permanente de la cuenta del cliente y su inclusión en la lista de exclusión de Sams Construction Services LTD. Esta determinación es final e inapelable. Sams Construction Services LTD se reserva el derecho de compartir esta información con otras empresas del sector para la protección mutua del gremio. TODOS LOS CARGOS SON FINALES. NO SE ACEPTAN DEVOLUCIONES NI AJUSTES UNA VEZ PRESTADO EL SERVICIO.':'6. PERMANENT ACCOUNT SUSPENSION & EXCLUSION LIST: Repeated non-payment or violation of any terms of this agreement shall result in permanent suspension of client\'s account and inclusion in Sams Construction Services LTD\'s exclusion list. This determination is final and non-appealable. Sams Construction Services LTD reserves the right to share this information with other companies in the industry for mutual protection. ALL CHARGES ARE FINAL. NO REFUNDS OR ADJUSTMENTS ONCE SERVICE HAS BEEN RENDERED.')
       ),
       React.createElement('button', {onClick:onClose, style:{width:'100%',padding:'12px',borderRadius:9,background:'#111827',color:'#fff',border:'none',fontSize:14,fontWeight:700,cursor:'pointer',marginTop:16}}, es?'Entendido, Cerrar':'Understood, Close')
+    )
+  );
+}
+
+function DumpInvoiceTab({showToast, dumpJobs, rentals}) {
+  var [selId, setSelId] = React.useState('');
+  var [preview, setPreview] = React.useState(false);
+  var job = dumpJobs.find(function(j){return j.id===selId;}) || null;
+  var rental = job && job.rental_id ? rentals.find(function(r){return r.id===job.rental_id;}) : null;
+
+  var invNo = job ? ('D-' + (job.ticket_no||'')) : '';
+  var invDate = new Date().toLocaleDateString('en-US');
+  var billTo = job ? job.client_name : '';
+  var addr = job ? (job.client_address||'') : '';
+  var phone = job ? (job.client_phone||'') : '';
+  var basePrice = job ? (parseFloat(job.price)||0) : 0;
+  var owCharge = job ? (parseFloat(job.overweight_charge)||0) : 0;
+  var rentalPrice = rental ? (parseFloat(rental.price)||0) : 0;
+  var total = basePrice + owCharge + rentalPrice;
+
+  var openPreview = function() {
+    if(!job) return;
+    var w = window.open('','_blank');
+    var rows = '<tr style="background:#EAF4FB"><td style="padding:6px 10px;font-style:italic">' + job.job_type + ' — ' + job.material_type + ' (' + job.container_size + ')</td><td style="text-align:center;padding:6px">' + (job.date||'') + '</td><td style="text-align:right;padding:6px">$ ' + basePrice.toFixed(2) + '</td></tr>';
+    if(owCharge>0) rows += '<tr style="background:#FEF9C3"><td style="padding:6px 10px;font-style:italic">⚠️ Overweight Charge</td><td style="text-align:center;padding:6px"></td><td style="text-align:right;padding:6px">$ '+owCharge.toFixed(2)+'</td></tr>';
+    if(rental) rows += '<tr style="background:#EAF4FB"><td style="padding:6px 10px;font-style:italic">'+rental.asset+' Rental</td><td style="text-align:center;padding:6px">'+rental.start_date+' – '+rental.due_date+'</td><td style="text-align:right;padding:6px">$ '+rentalPrice.toFixed(2)+'</td></tr>';
+    var html = '<!DOCTYPE html><html><head><title>Invoice '+invNo+'</title><style>body{font-family:Arial,sans-serif;padding:32px;max-width:680px;margin:0 auto;font-size:12px;}h2{color:#1D4ED8;font-size:17px;}hr{border:3px solid #1D4ED8;margin:4px 0 14px;}.grid{display:flex;justify-content:space-between;margin-bottom:14px;}.bill{border:1px solid #90BEE0;font-size:11px;}table{width:100%;border-collapse:collapse;border:1px solid #90BEE0;}th{background:#1D4ED8;color:#fff;padding:7px 10px;text-align:left;font-size:12px;}td{border-bottom:1px solid #BDD6E8;}.tot{background:#D6E8F7;font-weight:700;}</style></head><body>';
+    html += '<h2>SAMS CONSTRUCTION SERVICES LTD</h2><hr>';
+    html += '<div class=grid><div style="font-size:11px;line-height:2">188-16 WOODHULL AVE<br>Hollis NY 11423<br>+1 (917) 663-6369<br>BIC#4376</div>';
+    html += '<div><table style="border-collapse:collapse;font-size:11px;margin-bottom:8px"><tr><td style="padding:3px 6px;color:#555">Invoice No.</td><td style="font-weight:700">'+invNo+'</td></tr><tr><td style="padding:3px 6px;color:#555">Date:</td><td style="font-weight:700">'+invDate+'</td></tr></table>';
+    html += '<table class=bill style="width:200px"><tr style="background:#D6E8F7"><td style="padding:4px 8px;font-weight:700">Bill to:</td><td style="padding:4px 8px;font-weight:700">'+billTo+'</td></tr><tr style="background:#EAF4FB"><td style="padding:4px 8px">Address:</td><td style="padding:4px 8px">'+addr+'</td></tr><tr style="background:#D6E8F7"><td style="padding:4px 8px">Phone</td><td style="padding:4px 8px">'+phone+'</td></tr></table></div></div>';
+    html += '<table><thead><tr><th style="width:55%">Description</th><th style="text-align:center;width:22%">Date</th><th style="text-align:right;width:23%">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>';
+    html += '<table style="margin-top:0"><tr class=tot><td style="padding:8px 10px;text-align:right;width:77%;font-size:12px">TOTAL DUE</td><td style="padding:8px 14px;text-align:right;border-left:2px solid #1D4ED8;font-size:14px">$ '+total.toFixed(2)+'</td></tr></table>';
+    html += '</body></html>';
+    w.document.write(html); w.document.close();
+  };
+
+  var saveAndSend = function() {
+    if(!job) { showToast('Select a dump job first'); return; }
+    var emailTo = job.client_email||'';
+    var portalLink = '%0A%0AView portal: https://samsoffice.github.io/Sams-rental/#/dump/'+job.portal_token;
+    var body = 'Dear '+billTo+',%0A%0APlease find your invoice from Sams Construction Services LTD.%0A%0ASAMS CONSTRUCTION SERVICES LTD%0A188-16 Woodhull Ave, Hollis NY 11423%0A+1 (917) 663-6369%0A%0AINVOICE: '+invNo+'%0ADATE: '+invDate+'%0A%0ABILL TO: '+billTo+'%0A'+(addr?'ADDRESS: '+addr+'%0A':'')+(phone?'PHONE: '+phone+'%0A':'')+'%0A----%0A'+job.job_type+' — '+job.material_type+' ('+job.container_size+'): $'+basePrice.toFixed(2)+(owCharge>0?'%0AOverweight Charge: $'+owCharge.toFixed(2):'')+(rental?'%0A'+rental.asset+' Rental: $'+rentalPrice.toFixed(2):'')+'%0A----%0ATOTAL DUE: $'+total.toFixed(2)+'%0A%0APAY VIA ZELLE: +1 (917) 663-6369'+portalLink+'%0A%0AThank you,%0ASams Construction Services LTD';
+    // Save invoice to dump job
+    sb.from('dump_jobs').update({invoice_data: JSON.stringify({invNo,invDate,billTo,addr,phone,basePrice,owCharge,rentalPrice,total,rental_id:job.rental_id||null})}).eq('id',job.id).catch(function(){});
+    var a=document.createElement('a'); a.href='mailto:'+emailTo+'?subject=Invoice '+invNo+' — Sams Construction Services LTD&body='+body; a.target='_blank'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    showToast('Email opened & invoice saved to portal ✓');
+  };
+
+  var inp = {width:'100%',padding:'9px 11px',border:'1.5px solid #E5E7EB',borderRadius:8,fontSize:14,fontFamily:'inherit',outline:'none'};
+  var lbl = {fontSize:11,fontWeight:700,color:'#6B7280',textTransform:'uppercase',marginBottom:3,display:'block'};
+
+  return React.createElement('div', {style:{maxWidth:800,margin:'0 auto'}},
+    React.createElement('h2', {style:{fontSize:18,fontWeight:800,marginBottom:16}}, '📄 Dump Job Invoice'),
+    React.createElement('div', {style:{background:'#fff',borderRadius:12,padding:24,border:'1px solid #E5E7EB',marginBottom:16}},
+      React.createElement('label', {style:lbl}, 'Select Dump Job'),
+      React.createElement('select', {style:inp, value:selId, onChange:function(e){setSelId(e.target.value);}},
+        React.createElement('option', {value:''}, '— Select dump job —'),
+        dumpJobs.filter(function(j){return !j.deleted;}).map(function(j){
+          return React.createElement('option', {key:j.id, value:j.id}, '#'+(j.ticket_no||'')+ ' — '+(j.client_name||'')+ ' — '+(j.job_type||'')+ ' ('+(j.material_type||'')+') — $'+(parseFloat(j.total_price)||0).toFixed(2));
+        })
+      )
+    ),
+    job && React.createElement('div', {style:{background:'#fff',borderRadius:12,border:'1px solid #E5E7EB',overflow:'hidden',marginBottom:16}},
+      React.createElement('div', {style:{background:'#1D4ED8',padding:'12px 18px'}},
+        React.createElement('div', {style:{fontSize:16,fontWeight:800,color:'#fff'}}, 'SAMS CONSTRUCTION SERVICES LTD'),
+        React.createElement('div', {style:{fontSize:11,color:'rgba(255,255,255,0.7)'}}, '188-16 Woodhull Ave, Hollis NY 11423 | BIC#4376')
+      ),
+      React.createElement('div', {style:{padding:'18px 20px'}},
+        React.createElement('div', {style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:16}},
+          React.createElement('div', null,
+            React.createElement('div', {style:{fontSize:11,color:'#9CA3AF'}}, 'Invoice No.'), React.createElement('div', {style:{fontWeight:700,fontSize:15}}, invNo),
+            React.createElement('div', {style:{fontSize:11,color:'#9CA3AF',marginTop:6}}, 'Date'), React.createElement('div', {style:{fontWeight:600}}, invDate)
+          ),
+          React.createElement('div', {style:{background:'#EFF6FF',borderRadius:8,padding:'10px 12px'}},
+            React.createElement('div', {style:{fontSize:11,color:'#9CA3AF'}}, 'Bill To'), React.createElement('div', {style:{fontWeight:700}}, billTo),
+            React.createElement('div', {style:{fontSize:12,color:'#6B7280'}}, addr),
+            React.createElement('div', {style:{fontSize:12,color:'#6B7280'}}, phone)
+          )
+        ),
+        React.createElement('table', {style:{width:'100%',borderCollapse:'collapse',marginBottom:12}},
+          React.createElement('thead', null,
+            React.createElement('tr', {style:{background:'#1D4ED8'}},
+              React.createElement('th', {style:{padding:'7px 10px',textAlign:'left',color:'#fff',fontSize:12}}, 'Description'),
+              React.createElement('th', {style:{padding:'7px 10px',textAlign:'center',color:'#fff',fontSize:12}}, 'Date'),
+              React.createElement('th', {style:{padding:'7px 10px',textAlign:'right',color:'#fff',fontSize:12}}, 'Amount')
+            )
+          ),
+          React.createElement('tbody', null,
+            React.createElement('tr', {style:{background:'#EAF4FB'}},
+              React.createElement('td', {style:{padding:'7px 10px',fontStyle:'italic',fontSize:13}}, job.job_type+' — '+job.material_type+' ('+job.container_size+')'),
+              React.createElement('td', {style:{padding:'7px 10px',textAlign:'center',fontSize:13}}, job.date||''),
+              React.createElement('td', {style:{padding:'7px 10px',textAlign:'right',fontSize:13}}, '$ '+basePrice.toFixed(2))
+            ),
+            owCharge>0 && React.createElement('tr', {style:{background:'#FEF9C3'}},
+              React.createElement('td', {style:{padding:'7px 10px',fontStyle:'italic',fontSize:13}}, '⚠️ Overweight Charge'),
+              React.createElement('td', {style:{padding:'7px 10px',textAlign:'center'}}),
+              React.createElement('td', {style:{padding:'7px 10px',textAlign:'right',fontSize:13}}, '$ '+owCharge.toFixed(2))
+            ),
+            rental && React.createElement('tr', {style:{background:'#EAF4FB'}},
+              React.createElement('td', {style:{padding:'7px 10px',fontStyle:'italic',fontSize:13}}, rental.asset+' Rental'),
+              React.createElement('td', {style:{padding:'7px 10px',textAlign:'center',fontSize:12}}, (rental.start_date||'')+' – '+(rental.due_date||'')),
+              React.createElement('td', {style:{padding:'7px 10px',textAlign:'right',fontSize:13}}, '$ '+rentalPrice.toFixed(2))
+            )
+          )
+        ),
+        React.createElement('div', {style:{textAlign:'right',background:'#D6E8F7',padding:'10px 14px',borderRadius:6,marginBottom:16}},
+          React.createElement('span', {style:{fontWeight:800,fontSize:16}}, 'TOTAL DUE: '),
+          React.createElement('span', {style:{fontWeight:900,fontSize:20,color:'#1D4ED8'}}, '$ '+total.toFixed(2))
+        ),
+        React.createElement('div', {style:{display:'flex',gap:10,flexWrap:'wrap'}},
+          React.createElement('button', {onClick:openPreview, style:{flex:1,minWidth:140,padding:'12px',background:'#1D4ED8',color:'#fff',border:'none',borderRadius:9,fontSize:14,fontWeight:700,cursor:'pointer'}}, '👁 Preview'),
+          React.createElement('button', {onClick:saveAndSend, style:{flex:1,minWidth:140,padding:'12px',background:'#7C3AED',color:'#fff',border:'none',borderRadius:9,fontSize:14,fontWeight:700,cursor:'pointer'}}, '📧 Save & Send')
+        )
+      )
+    ),
+    !job && React.createElement('div', {style:{background:'#fff',borderRadius:12,padding:40,textAlign:'center',border:'1px solid #F3F4F6',color:'#9CA3AF'}}, 'Select a dump job above to create invoice')
+  );
+}
+
+function DumpCollectionsTab({showToast, dumpJobs, reloadData}) {
+  var unpaid = dumpJobs.filter(function(j){return j.payment_status==='unpaid' && j.driver_status==='completed';});
+  var totalOwed = unpaid.reduce(function(s,j){return s+(parseFloat(j.total_price)||0);},0);
+
+  var sendEmail = function(j) {
+    var od = Math.floor((new Date()-new Date(j.created_at))/86400000);
+    var body = 'Dear '+j.client_name+',%0A%0AThis is a FINAL NOTICE regarding your outstanding balance of $'+(parseFloat(j.total_price)||0).toFixed(2)+' for dump job #'+j.ticket_no+'.%0A%0AYour account is '+od+' days past due. Immediate payment is required to avoid permanent account suspension and Mechanic\'s Lien filing on your property.%0A%0APay via Zelle: +1 (917) 663-6369%0ACall: +1 (917) 663-6369%0APortal: https://samsoffice.github.io/Sams-rental/#/dump/'+j.portal_token+'%0A%0AAll Sales Final. No exceptions.%0A%0ASams Construction Services LTD';
+    var a=document.createElement('a'); a.href='mailto:'+(j.client_email||'')+'?subject=FINAL NOTICE — Outstanding Balance $'+(parseFloat(j.total_price)||0).toFixed(2)+'&body='+body; a.target='_blank'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    showToast('Collection email opened ✓');
+  };
+
+  return React.createElement('div', null,
+    React.createElement('div', {style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:20}},
+      React.createElement('div', {style:{background:'#FEF2F2',borderRadius:10,padding:'14px 16px',border:'1px solid #FCA5A5'}},
+        React.createElement('div', {style:{fontSize:11,color:'#991B1B',fontWeight:600,textTransform:'uppercase'}}, 'Unpaid Dump Jobs'),
+        React.createElement('div', {style:{fontSize:28,fontWeight:800,color:'#DC2626'}}, unpaid.length)
+      ),
+      React.createElement('div', {style:{background:'#FEF2F2',borderRadius:10,padding:'14px 16px',border:'1px solid #FCA5A5'}},
+        React.createElement('div', {style:{fontSize:11,color:'#991B1B',fontWeight:600,textTransform:'uppercase'}}, 'Total Owed'),
+        React.createElement('div', {style:{fontSize:22,fontWeight:800,color:'#DC2626'}}, '$'+totalOwed.toLocaleString())
+      ),
+      React.createElement('div', {style:{background:'#ECFDF5',borderRadius:10,padding:'14px 16px',border:'1px solid #A7F3D0'}},
+        React.createElement('div', {style:{fontSize:11,color:'#065F46',fontWeight:600,textTransform:'uppercase'}}, 'Paid Jobs'),
+        React.createElement('div', {style:{fontSize:28,fontWeight:800,color:'#065F46'}}, dumpJobs.filter(function(j){return j.payment_status==='paid';}).length)
+      )
+    ),
+    unpaid.length===0 ? React.createElement('div', {style:{background:'#fff',borderRadius:12,padding:40,textAlign:'center',color:'#9CA3AF',fontSize:14}}, '✅ No outstanding dump job balances') :
+    React.createElement('div', {style:{display:'flex',flexDirection:'column',gap:10}},
+      unpaid.map(function(j) {
+        var od = Math.floor((new Date()-new Date(j.created_at))/86400000);
+        var urgency = od<7?'#F59E0B':od<14?'#DC2626':'#111827';
+        return React.createElement('div', {key:j.id, style:{background:'#fff',borderRadius:12,padding:'16px 18px',border:'2px solid '+urgency}},
+          React.createElement('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:8}},
+            React.createElement('div', null,
+              React.createElement('div', {style:{fontWeight:700,fontSize:15}}, j.client_name),
+              React.createElement('div', {style:{fontSize:12,color:'#6B7280'}}, '#'+j.ticket_no+' — '+j.job_type+' — '+j.material_type),
+              React.createElement('div', {style:{fontSize:12,color:'#9CA3AF'}}, j.date),
+              React.createElement('div', {style:{fontSize:12,fontWeight:700,color:urgency}}, od+' days overdue')
+            ),
+            React.createElement('div', {style:{textAlign:'right'}},
+              React.createElement('div', {style:{fontSize:20,fontWeight:800,color:'#DC2626'}}, '$'+(parseFloat(j.total_price)||0).toFixed(2))
+            )
+          ),
+          React.createElement('div', {style:{display:'flex',gap:8,marginTop:10,flexWrap:'wrap'}},
+            React.createElement('button', {onClick:function(){sendEmail(j);}, style:{padding:'6px 12px',fontSize:12,fontWeight:700,borderRadius:6,border:'none',cursor:'pointer',background:'#FEF2F2',color:'#DC2626'}}, '✉ Collection Email'),
+            React.createElement('a', {href:'tel:'+j.client_phone, style:{padding:'6px 12px',fontSize:12,fontWeight:700,borderRadius:6,background:'#F9FAFB',color:'#374151',textDecoration:'none',border:'1px solid #E5E7EB'}}, '📞 Call'),
+            React.createElement('button', {onClick:function(){window.open('https://samsoffice.github.io/Sams-rental/#/dump/'+j.portal_token,'_blank');}, style:{padding:'6px 12px',fontSize:12,fontWeight:700,borderRadius:6,border:'none',cursor:'pointer',background:'#EFF6FF',color:'#1D4ED8'}}, '🔗 Portal')
+          )
+        );
+      })
+    )
+  );
+}
+
+function DumpScheduleTab({dumpJobs}) {
+  var today = new Date().toISOString().split('T')[0];
+  var upcoming = dumpJobs.filter(function(j){return j.scheduled_dropoff && j.scheduled_dropoff >= today && j.driver_status!=='completed';}).sort(function(a,b){return a.scheduled_dropoff>b.scheduled_dropoff?1:-1;});
+  var pickups = dumpJobs.filter(function(j){return j.scheduled_pickup && j.scheduled_pickup >= today && j.driver_status!=='completed';}).sort(function(a,b){return a.scheduled_pickup>b.scheduled_pickup?1:-1;});
+  var containersOut = dumpJobs.filter(function(j){return j.driver_status!=='completed' && j.driver_status!=='pending';});
+  var permitExpiring = dumpJobs.filter(function(j){return j.permit_expiry && j.permit_expiry >= today && j.permit_expiry <= new Date(Date.now()+7*86400000).toISOString().split('T')[0];});
+
+  return React.createElement('div', null,
+    React.createElement('h2', {style:{fontSize:18,fontWeight:800,marginBottom:16}}, '📅 Dump Schedule'),
+    React.createElement('div', {style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))',gap:16}},
+
+      React.createElement('div', {style:{background:'#fff',borderRadius:12,padding:'16px 18px',border:'1px solid #E5E7EB'}},
+        React.createElement('h3', {style:{fontSize:14,fontWeight:700,marginBottom:12,color:'#1D4ED8'}}, '📦 Upcoming Drop-offs ('+upcoming.length+')'),
+        upcoming.length===0 ? React.createElement('p', {style:{color:'#9CA3AF',fontSize:13}}, 'No scheduled drop-offs') :
+        upcoming.map(function(j){return React.createElement('div', {key:j.id, style:{padding:'8px 0',borderBottom:'1px solid #F3F4F6'}},
+          React.createElement('div', {style:{fontWeight:600,fontSize:13}}, j.client_name),
+          React.createElement('div', {style:{fontSize:12,color:'#6B7280'}}, j.container_size+' — '+j.material_type),
+          React.createElement('div', {style:{fontSize:12,fontWeight:700,color:'#1D4ED8'}}, '📅 '+j.scheduled_dropoff)
+        );})
+      ),
+
+      React.createElement('div', {style:{background:'#fff',borderRadius:12,padding:'16px 18px',border:'1px solid #E5E7EB'}},
+        React.createElement('h3', {style:{fontSize:14,fontWeight:700,marginBottom:12,color:'#7C3AED'}}, '🔄 Upcoming Pickups ('+pickups.length+')'),
+        pickups.length===0 ? React.createElement('p', {style:{color:'#9CA3AF',fontSize:13}}, 'No scheduled pickups') :
+        pickups.map(function(j){return React.createElement('div', {key:j.id, style:{padding:'8px 0',borderBottom:'1px solid #F3F4F6'}},
+          React.createElement('div', {style:{fontWeight:600,fontSize:13}}, j.client_name),
+          React.createElement('div', {style:{fontSize:12,color:'#6B7280'}}, j.container_size+' — '+j.material_type),
+          React.createElement('div', {style:{fontSize:12,fontWeight:700,color:'#7C3AED'}}, '📅 '+j.scheduled_pickup)
+        );})
+      ),
+
+      React.createElement('div', {style:{background:'#fff',borderRadius:12,padding:'16px 18px',border:'1px solid #E5E7EB'}},
+        React.createElement('h3', {style:{fontSize:14,fontWeight:700,marginBottom:12,color:'#F59E0B'}}, '🏗️ Containers Currently Out ('+containersOut.length+'/40)'),
+        containersOut.length===0 ? React.createElement('p', {style:{color:'#9CA3AF',fontSize:13}}, 'No containers out') :
+        containersOut.map(function(j){return React.createElement('div', {key:j.id, style:{padding:'6px 0',borderBottom:'1px solid #F3F4F6'}},
+          React.createElement('div', {style:{fontWeight:600,fontSize:13}}, j.client_name),
+          React.createElement('div', {style:{fontSize:11,color:'#6B7280'}}, j.container_size+' • '+j.client_address)
+        );})
+      ),
+
+      permitExpiring.length>0 && React.createElement('div', {style:{background:'#FFFBEB',borderRadius:12,padding:'16px 18px',border:'2px solid #F59E0B'}},
+        React.createElement('h3', {style:{fontSize:14,fontWeight:700,marginBottom:12,color:'#92400E'}}, '⚠️ Permits Expiring Soon ('+permitExpiring.length+')'),
+        permitExpiring.map(function(j){return React.createElement('div', {key:j.id, style:{padding:'6px 0',borderBottom:'1px solid #FDE68A'}},
+          React.createElement('div', {style:{fontWeight:600,fontSize:13}}, j.client_name),
+          React.createElement('div', {style:{fontSize:11,color:'#92400E'}}, 'Permit: '+j.permit_no+' — Expires: '+j.permit_expiry)
+        );})
+      )
     )
   );
 }
@@ -3644,7 +3897,40 @@ function App() {
       maxWidth: 1400,
       margin: '0 auto'
     }
-  }, deleted.length > 0 && /*#__PURE__*/React.createElement("div", {
+  }, dumpJobs.length > 0 && /*#__PURE__*/React.createElement("div", {style:{marginBottom:20}},
+    /*#__PURE__*/React.createElement("div", {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
+      /*#__PURE__*/React.createElement("h2", {style:{fontSize:18,fontWeight:700}}, "🚛 Active Dump Jobs (" + dumpJobs.filter(function(j){return j.driver_status!=='completed';}).length + ")"),
+      /*#__PURE__*/React.createElement("button", {onClick:function(){setTab('dumping');}, style:{padding:"6px 14px",background:"#F59E0B",color:"#fff",border:"none",borderRadius:7,cursor:"pointer",fontSize:13,fontWeight:700}}, "View All →")
+    ),
+    /*#__PURE__*/React.createElement("div", {style:{background:"#fff",borderRadius:12,border:"1px solid #FDE68A",overflow:"hidden"}},
+      /*#__PURE__*/React.createElement("table", {style:{width:"100%",borderCollapse:"collapse",fontSize:13}},
+        /*#__PURE__*/React.createElement("thead", null,
+          /*#__PURE__*/React.createElement("tr", {style:{background:"#FFFBEB"}},
+            ["Client","Job Type","Container","Material","Driver","Amount","Status"].map(function(h){return /*#__PURE__*/React.createElement("th",{key:h,style:{padding:"8px 12px",textAlign:"left",fontSize:11,fontWeight:700,color:"#92400E",textTransform:"uppercase",borderBottom:"1px solid #FDE68A"}},h);})
+          )
+        ),
+        /*#__PURE__*/React.createElement("tbody", null,
+          dumpJobs.filter(function(j){return j.driver_status!=='completed';}).slice(0,5).map(function(j,i){
+            return /*#__PURE__*/React.createElement("tr", {key:j.id, style:{background:i%2===0?"#fff":"#FFFBEB",borderBottom:"1px solid #FEF9C3"}},
+              /*#__PURE__*/React.createElement("td", {style:{padding:"10px 12px"}},
+                /*#__PURE__*/React.createElement("div", {style:{fontWeight:700}}, j.client_name),
+                /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:"#9CA3AF"}}, j.client_phone)
+              ),
+              /*#__PURE__*/React.createElement("td", {style:{padding:"10px 12px"}}, /*#__PURE__*/React.createElement("span", {style:{background:j.job_type==="PULL"?"#EFF6FF":j.job_type==="SWITCH"?"#FFF7ED":"#F0FDF4",color:j.job_type==="PULL"?"#1D4ED8":j.job_type==="SWITCH"?"#C2410C":"#065F46",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700}}, j.job_type)),
+              /*#__PURE__*/React.createElement("td", {style:{padding:"10px 12px",color:"#6B7280"}}, j.container_size),
+              /*#__PURE__*/React.createElement("td", {style:{padding:"10px 12px",color:"#6B7280"}}, j.material_type),
+              /*#__PURE__*/React.createElement("td", {style:{padding:"10px 12px",color:"#6B7280"}}, j.assigned_driver),
+              /*#__PURE__*/React.createElement("td", {style:{padding:"10px 12px",fontWeight:700}}, "$"+(parseFloat(j.total_price)||0).toLocaleString()),
+              /*#__PURE__*/React.createElement("td", {style:{padding:"10px 12px"}},
+                /*#__PURE__*/React.createElement("span", {style:{background:j.payment_status==="paid"?"#ECFDF5":"#FEF2F2",color:j.payment_status==="paid"?"#065F46":"#991B1B",padding:"3px 8px",borderRadius:20,fontSize:11,fontWeight:700}}, j.payment_status==="paid"?"✅ Paid":"⏳ Unpaid")
+              )
+            );
+          })
+        )
+      )
+    )
+  ),
+  deleted.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 16
     }
@@ -3874,7 +4160,7 @@ function App() {
       fontSize: 14,
       fontWeight: 700
     }
-  }, "All Rentals (", filtered.length, ")")), filtered.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  }, "All Rentals (" + rentals.length + ")"}, /*#__PURE__*/React.createElement("span",{style:{fontSize:12,color:"#9CA3AF",marginLeft:8}},dumpJobs.length+" dump jobs", filtered.length, ")")), filtered.length === 0 ? /*#__PURE__*/React.createElement("div", {
     style: {
       padding: 40,
       textAlign: 'center',
@@ -6018,7 +6304,7 @@ function DriverApp({
         color: '#2563EB'
       }
     }, step.label)), next && /*#__PURE__*/React.createElement("button", {
-      onClick: () => setStatus(r.id, next.key),
+      onClick: () => setStatus(r.id, next.key, r._isDump),
       style: {
         width: '100%',
         padding: 14,
