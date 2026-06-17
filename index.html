@@ -2968,7 +2968,20 @@ function DumpingTab(_ref) {
 
       // Client Info
       React.createElement('div', {style:{gridColumn:'1/-1',fontWeight:700,fontSize:13,color:'#374151',borderBottom:'1px solid #F3F4F6',paddingBottom:8,marginBottom:4}}, '👤 Client Information'),
-      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Client Name'), React.createElement('input', {style:inp, value:form.client_name, onChange:function(e){set('client_name',e.target.value);}, placeholder:'Client name'})),
+      React.createElement('div', {style:{position:'relative'}},
+        React.createElement('label', {style:lbl}, 'Client Name'),
+        React.createElement('input', {style:inp, value:form.client_name, onChange:function(e){set('client_name',e.target.value);}, placeholder:'Type to search existing clients...'}),
+        form.client_name && form.client_name.length>1 && React.createElement('div', {style:{position:'absolute',top:'100%',left:0,right:0,background:'#fff',border:'1px solid #E5E7EB',borderRadius:8,zIndex:200,maxHeight:150,overflowY:'auto',boxShadow:'0 4px 12px rgba(0,0,0,0.1)'}},
+          rentals.filter(function(r){return r.client_name&&r.client_name.toLowerCase().includes(form.client_name.toLowerCase())&&r.client_name!==form.client_name;}).filter(function(r,i,arr){return arr.findIndex(function(x){return x.client_name===r.client_name;})==i;}).slice(0,5).concat(
+            jobs.filter(function(j){return j.client_name&&j.client_name.toLowerCase().includes(form.client_name.toLowerCase())&&j.client_name!==form.client_name;}).filter(function(j,i,arr){return arr.findIndex(function(x){return x.client_name===j.client_name;})==i;}).slice(0,3)
+          ).filter(function(r,i,arr){return arr.findIndex(function(x){return x.client_name===r.client_name;})==i;}).map(function(r){
+            return React.createElement('div',{key:r.id,onClick:function(){set('client_name',r.client_name);set('client_phone',r.client_phone||'');set('client_address',r.client_address||'');},style:{padding:'8px 12px',cursor:'pointer',fontSize:13,borderBottom:'1px solid #F3F4F6',display:'flex',justifyContent:'space-between'}},
+              React.createElement('span',{style:{fontWeight:600}},r.client_name),
+              React.createElement('span',{style:{color:'#9CA3AF',fontSize:11}},r.client_phone||'')
+            );
+          })
+        )
+      ),
       React.createElement('div', null, React.createElement('label', {style:lbl}, 'Phone'), React.createElement('input', {style:inp, value:form.client_phone, onChange:function(e){set('client_phone',e.target.value);}, placeholder:'Phone'})),
       React.createElement('div', {style:{gridColumn:'1/-1'}}, React.createElement('label', {style:lbl}, 'Address / Job Site'), React.createElement('input', {style:inp, value:form.client_address, onChange:function(e){set('client_address',e.target.value);}, placeholder:'Job site address'})),
 
@@ -3096,7 +3109,10 @@ function DumpingTab(_ref) {
                 j.payment_status==='unpaid' && j.driver_status==='completed' && React.createElement('span', {style:{fontSize:11,fontWeight:700,background:'#FEF2F2',color:'#991B1B',padding:'2px 8px',borderRadius:20}}, '🔴 UNPAID'),
                 isOverweight && React.createElement('span', {style:{fontSize:11,fontWeight:700,background:'#FFFBEB',color:'#92400E',padding:'2px 8px',borderRadius:20}}, '⚠️ OVERWEIGHT')
               ),
-              React.createElement('div', {style:{fontSize:15,fontWeight:700}}, j.client_name),
+              React.createElement('div', {style:{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}},
+              React.createElement('button', {onClick:function(){setClientPanel(j.client_name);}, style:{fontSize:15,fontWeight:700,background:'none',border:'none',cursor:'pointer',color:'#111827',padding:0,textAlign:'left'}}, j.client_name),
+              j.client_tag && React.createElement('span', {style:{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:20,background:j.client_tag==='Blacklisted'?'#111827':j.client_tag==='Chronically Delinquent'?'#FEF2F2':j.client_tag==='VIP Client'?'#EFF6FF':'#F3F4F6',color:j.client_tag==='Blacklisted'?'#fff':j.client_tag==='Chronically Delinquent'?'#991B1B':j.client_tag==='VIP Client'?'#1D4ED8':'#374151'}}, j.client_tag)
+            ),
               React.createElement('div', {style:{fontSize:12,color:'#6B7280'}}, j.material_type + ' • ' + j.assigned_driver + (j.weight_tons?' • '+j.weight_tons+'T':'')),
               React.createElement('div', {style:{fontSize:12,color:'#9CA3AF'}}, j.client_address),
               j.permit_no && React.createElement('div', {style:{fontSize:11,color:'#6B7280',marginTop:2}}, '📋 Permit: ' + j.permit_no)
@@ -3104,12 +3120,14 @@ function DumpingTab(_ref) {
             React.createElement('div', {style:{textAlign:'right'}},
               React.createElement('div', {style:{fontSize:18,fontWeight:800,color:'#111827'}}, '$' + (parseFloat(j.total_price)||0).toLocaleString()),
               React.createElement('div', {style:{fontSize:11,color:'#9CA3AF'}}, j.payment_type),
+              j.payment_type==='Zelle' && j.payment_recipient && j.payment_recipient!=='Company' && React.createElement('div', {style:{fontSize:11,fontWeight:700,color:'#DC2626',background:'#FEF2F2',padding:'2px 6px',borderRadius:4,marginTop:2}}, 'ZELLE TO DRIVER: ' + j.payment_recipient),
               React.createElement('div', {style:{fontSize:11,color:'#9CA3AF'}}, j.date)
             )
           ),
           // Action buttons
           React.createElement('div', {style:{display:'flex',gap:6,marginTop:12,flexWrap:'wrap'}},
             React.createElement('button', {onClick:function(){copyPortal(j.portal_token,j.client_name);}, style:{padding:'5px 10px',fontSize:11,fontWeight:700,borderRadius:6,border:'none',cursor:'pointer',background:'#EFF6FF',color:'#1D4ED8'}}, '🔗 Portal'),
+            j.rental_id && React.createElement('button', {onClick:function(){var lr=rentals.find(function(r){return r.id===j.rental_id;});if(lr){var url='https://samsoffice.github.io/Sams-rental/#/combined/'+lr.portal_token+'/'+j.portal_token;navigator.clipboard.writeText(url).catch(function(){});window.open(url,'_blank');showToast('Combined portal opened');}else{showToast('Linked rental not found');}}, style:{padding:'5px 10px',fontSize:11,fontWeight:700,borderRadius:6,border:'none',cursor:'pointer',background:'#FFF7ED',color:'#C2410C'}}, 'Combined'),
             j.payment_status!=='paid' && React.createElement('button', {onClick:function(){markPaid(j.id);}, style:{padding:'5px 10px',fontSize:11,fontWeight:700,borderRadius:6,border:'none',cursor:'pointer',background:'#ECFDF5',color:'#065F46'}}, '✓ Paid'),
             j.driver_status!=='completed' && React.createElement('button', {onClick:function(){markComplete(j.id);}, style:{padding:'5px 10px',fontSize:11,fontWeight:700,borderRadius:6,border:'none',cursor:'pointer',background:'#FFF7ED',color:'#C2410C'}}, '✅ Complete'),
             React.createElement('button', {onClick:function(){openEdit(j);}, style:{padding:'5px 10px',fontSize:11,fontWeight:700,borderRadius:6,border:'none',cursor:'pointer',background:'#F9FAFB',color:'#374151',border:'1px solid #E5E7EB'}}, '✏ Edit'),
@@ -3209,7 +3227,13 @@ function DumpClientPortal(_ref) {
     React.createElement('div', {style:{maxWidth:500,margin:'0 auto',padding:'20px 16px',display:'flex',flexDirection:'column',gap:14}},
 
       // Status
-      React.createElement('div', {style:{background:isPaid?'#ECFDF5':'#FEF2F2',border:'1px solid '+(isPaid?'#A7F3D0':'#FCA5A5'),borderRadius:12,padding:'16px 18px'}},
+      React.createElement('div', null,
+      parseFloat(job.overweight_charge)>0 && React.createElement('div', {style:{background:'#FFFBEB',border:'2px solid #F59E0B',borderRadius:12,padding:'14px 16px',marginBottom:10}},
+        React.createElement('div', {style:{fontSize:14,fontWeight:800,color:'#92400E',marginBottom:4}}, 'OVERWEIGHT CHARGE'),
+        React.createElement('div', {style:{fontSize:13,color:'#92400E'}}, (es?'Su carga excedio el limite de peso. Cargo adicional: ':'Your load exceeded weight limit. Additional charge: ') + '$' + parseFloat(job.overweight_charge).toFixed(2))
+      )
+    ),
+    React.createElement('div', {style:{background:isPaid?'#ECFDF5':'#FEF2F2',border:'1px solid '+(isPaid?'#A7F3D0':'#FCA5A5'),borderRadius:12,padding:'16px 18px'}},
         React.createElement('div', {style:{fontSize:16,fontWeight:700,color:isPaid?'#065F46':'#991B1B'}}, isPaid?(es?'PAGADO':'PAID IN FULL'):(es?'PAGO PENDIENTE':'PAYMENT DUE')),
         React.createElement('div', {style:{fontSize:22,fontWeight:900,color:isPaid?'#065F46':'#DC2626',marginTop:4}}, '$' + total.toFixed(2))
       ),
@@ -3241,7 +3265,15 @@ function DumpClientPortal(_ref) {
         React.createElement('div', {style:{display:'flex',justifyContent:'space-between',paddingTop:10,fontSize:16,fontWeight:700}},
           React.createElement('span', null, es?'Total a Pagar':'Total Due'),
           React.createElement('span', null, '$' + total.toFixed(2))
-        )
+        ),
+        job.invoice_data && React.createElement('button', {onClick:function(){
+          try {
+            var inv=JSON.parse(job.invoice_data);
+            var html='<!DOCTYPE html><html><head><title>Invoice</title><style>body{font-family:Arial;padding:24px;max-width:680px;margin:0 auto}h2{color:#1D4ED8}hr{border:3px solid #1D4ED8}table{width:100%;border-collapse:collapse}th{background:#1D4ED8;color:#fff;padding:8px;text-align:left}td{padding:6px 8px;border-bottom:1px solid #BDD6E8}.tot{background:#D6E8F7;font-weight:700;text-align:right;padding:10px}</style></head><body><h2>SAMS CONSTRUCTION SERVICES LTD</h2><hr><p>Invoice: '+inv.invNo+'<br>Date: '+inv.invDate+'<br>Bill To: '+inv.billTo+'</p><table><thead><tr><th>Description</th><th style=text-align:right>Amount</th></tr></thead><tbody><tr><td>Dump Job</td><td style=text-align:right>$'+parseFloat(inv.base).toFixed(2)+'</td></tr>'+(inv.ow>0?'<tr><td>Overweight</td><td style=text-align:right>$'+parseFloat(inv.ow).toFixed(2)+'</td></tr>':'')+'</tbody></table><p class=tot>TOTAL: $'+parseFloat(inv.total).toFixed(2)+'</p></body></html>';
+            var b=new Blob([html],{type:'text/html'});
+            window.open(URL.createObjectURL(b),'_blank');
+          } catch(e) { alert('Invoice not available yet'); }
+        }, style:{width:'100%',padding:14,borderRadius:10,fontSize:15,fontWeight:800,cursor:'pointer',border:'none',background:'#1D4ED8',color:'#fff',marginTop:10}}, es?'VER MI FACTURA':'VIEW MY INVOICE')
       ),
 
       // Payment options
@@ -6247,7 +6279,9 @@ function DriverApp({
         fontSize: 13,
         color: '#6B7280'
       }
-    }, r.client_name)), /*#__PURE__*/React.createElement("div", {
+    }, r.client_name),
+      r._isDump && /*#__PURE__*/React.createElement("span", {style:{fontSize:10,fontWeight:700,background:'#FEF9C3',color:'#92400E',padding:'2px 8px',borderRadius:20,marginLeft:6}}, 'DUMP')
+    )), /*#__PURE__*/React.createElement("div", {
       style: {
         padding: '12px 16px',
         fontSize: 13,
@@ -6255,7 +6289,9 @@ function DriverApp({
         lineHeight: 2,
         borderBottom: '1px solid #E5E7EB'
       }
-    }, /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCCD ", r.client_address), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCC5 Vence: ", r.due_date, " (", d < 0 ? Math.abs(d) + 'd vencido' : d === 0 ? 'hoy' : d + 'd restantes', ")"), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCB0 ", money(r.price), " \xB7 ", r.payment_status === 'paid' ? 'PAGADO' : r.payment_status === 'partial' ? 'PARCIAL' : 'NO PAGADO'), r.notes && /*#__PURE__*/React.createElement("div", {
+    },
+    r._isDump && /*#__PURE__*/React.createElement("div", {style:{background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:8,padding:'8px 10px',marginBottom:8,fontSize:12,color:'#92400E',fontWeight:600}}, 'Manda foto del recibo de American Recycling al WhatsApp de la oficina'),
+    /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCCD ", r.client_address), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCC5 Vence: ", r.due_date, " (", d < 0 ? Math.abs(d) + 'd vencido' : d === 0 ? 'hoy' : d + 'd restantes', ")"), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCB0 ", money(r.price), " \xB7 ", r.payment_status === 'paid' ? 'PAGADO' : r.payment_status === 'partial' ? 'PARCIAL' : 'NO PAGADO'), r.notes && /*#__PURE__*/React.createElement("div", {
       style: {
         marginTop: 6,
         padding: '8px 10px',
