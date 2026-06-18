@@ -2826,6 +2826,26 @@ var MATERIAL_PRICES = {
   'Mix': 1300,
   'Garbage': 0,
 };
+// Garbage priced by weight per owner note (IMG_9781): 2T=700, 3T=900, 4T=1000, 6T=1200; overweight $140/ton above the bracket
+var GARBAGE_TONS = [
+  { tons: 2, price: 700 },
+  { tons: 3, price: 900 },
+  { tons: 4, price: 1000 },
+  { tons: 6, price: 1200 }
+];
+var GARBAGE_OVERWEIGHT_PER_TON = 140;
+function garbagePrice(weight) {
+  var w = parseFloat(weight) || 0;
+  if (w <= 0) return { base: 700, ow: 0 };
+  // find the highest bracket at or below the weight
+  var bracket = GARBAGE_TONS[0];
+  for (var i = 0; i < GARBAGE_TONS.length; i++) {
+    if (w >= GARBAGE_TONS[i].tons) bracket = GARBAGE_TONS[i];
+  }
+  var extra = w - bracket.tons;
+  var ow = extra > 0 ? Math.round(extra * GARBAGE_OVERWEIGHT_PER_TON) : 0;
+  return { base: bracket.price, ow: ow };
+}
 
 var MATERIALS = Object.keys(MATERIAL_PRICES);
 var CONTAINER_SIZES = ['10yd','15yd','20yd','30yd'];
@@ -2891,21 +2911,32 @@ function DumpingTab(_ref) {
   };
 
   var calcTotal = function(f) {
+    if (f.material_type === 'Garbage') {
+      var g = garbagePrice(f.weight_tons);
+      return g.base + g.ow;
+    }
     var base = parseFloat(f.price) || 0;
     var ow = parseFloat(f.overweight_charge) || 0;
     return base + ow;
   };
 
   var saveJob = async function() {
+    if (!form.client_name || !form.client_name.trim()) { showToast('Client name is required'); return; }
     var total = calcTotal(form);
     var payload = Object.assign({}, form, {total_price: total});
+    // Clean empty strings from uuid/date columns so Postgres does not reject the insert
+    ['rental_id','scheduled_dropoff','scheduled_pickup','permit_start','permit_expiry','completed_at'].forEach(function(k){
+      if (payload[k] === '' || payload[k] === undefined) { payload[k] = null; }
+    });
+    if (payload.weight_tons === '') payload.weight_tons = null;
+    var res;
     if (editJob) {
-      await sb.from('dump_jobs').update(payload).eq('id', editJob.id);
-      showToast('Dump job updated ✓');
+      res = await sb.from('dump_jobs').update(payload).eq('id', editJob.id);
     } else {
-      await sb.from('dump_jobs').insert([payload]);
-      showToast('Dump job created ✓');
+      res = await sb.from('dump_jobs').insert([payload]);
     }
+    if (res && res.error) { showToast('Save failed: ' + res.error.message); return; }
+    showToast(editJob ? 'Dump job updated' : 'Dump job created');
     setShowForm(false);
     setEditJob(null);
     setForm(emptyForm);
@@ -3000,12 +3031,12 @@ function DumpingTab(_ref) {
         )
       ),
       React.createElement('div', null, React.createElement('label', {style:lbl}, 'Material Type'),
-        React.createElement('select', {style:inp, value:form.material_type, onChange:function(e){set('material_type',e.target.value);}},
+        React.createElement('select', {style:inp, value:form.material_type, onChange:function(e){var mt=e.target.value; setForm(function(prev){var nf=Object.assign({},prev,{material_type:mt}); if(mt==='Garbage'){var g=garbagePrice(nf.weight_tons); nf.price=g.base; nf.overweight_charge=g.ow;} else if(MATERIAL_PRICES[mt]!==undefined){nf.price=MATERIAL_PRICES[mt]; nf.overweight_charge=0;} return nf;});}},
           MATERIALS.map(function(m){return React.createElement('option',{key:m,value:m},m);})
         )
       ),
       React.createElement('div', null, React.createElement('label', {style:lbl}, 'Number of Loads'), React.createElement('input', {type:'number',style:inp, value:form.num_loads, onChange:function(e){set('num_loads',parseInt(e.target.value)||1);}, min:1})),
-      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Weight (tons)'), React.createElement('input', {type:'number',style:inp, value:form.weight_tons, onChange:function(e){set('weight_tons',e.target.value);}, placeholder:'From American Recycling receipt',step:'0.01'})),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Weight (tons)'), React.createElement('input', {type:'number',style:inp, value:form.weight_tons, onChange:function(e){var wt=e.target.value; setForm(function(prev){var nf=Object.assign({},prev,{weight_tons:wt}); if(nf.material_type==='Garbage'){var g=garbagePrice(wt); nf.price=g.base; nf.overweight_charge=g.ow;} return nf;});}, placeholder:'From American Recycling receipt',step:'0.01'})),
       React.createElement('div', null, React.createElement('label', {style:lbl}, 'Assigned Driver'),
         React.createElement('select', {style:inp, value:form.assigned_driver, onChange:function(e){set('assigned_driver',e.target.value);}},
           DRIVERS.map(function(d){return React.createElement('option',{key:d,value:d},d);})
@@ -3015,7 +3046,7 @@ function DumpingTab(_ref) {
 
       // Pricing
       React.createElement('div', {style:{gridColumn:'1/-1',fontWeight:700,fontSize:13,color:'#374151',borderBottom:'1px solid #F3F4F6',paddingBottom:8,marginTop:8,marginBottom:4}}, '💰 Pricing'),
-      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Price ($)'), React.createElement('input', {type:'number',style:inp, value:form.price, onChange:function(e){set('price',parseFloat(e.target.value)||0);}})),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Price ($)'), React.createElement('input', {type:'number',style:inp, value:form.price, onChange:function(e){set('price',parseFloat(e.target.value)||0);}}), form.material_type==='Garbage' && React.createElement('div', {style:{fontSize:11,color:'#92400E',marginTop:4,lineHeight:1.5}}, 'Garbage auto-priced by tons: 2T=$700, 3T=$900, 4T=$1000, 6T=$1200. Over bracket: $140/ton.')),
       React.createElement('div', null, React.createElement('label', {style:lbl}, 'Overweight Charge ($)'), React.createElement('input', {type:'number',style:inp, value:form.overweight_charge, onChange:function(e){set('overweight_charge',parseFloat(e.target.value)||0);}})),
       React.createElement('div', {style:{gridColumn:'1/-1',background:'#EFF6FF',borderRadius:8,padding:'12px 14px',border:'1px solid #BFDBFE'}},
         React.createElement('div', {style:{fontSize:13,color:'#6B7280'}}, 'Total Amount Due:'),
@@ -3026,7 +3057,7 @@ function DumpingTab(_ref) {
       React.createElement('div', {style:{gridColumn:'1/-1',fontWeight:700,fontSize:13,color:'#374151',borderBottom:'1px solid #F3F4F6',paddingBottom:8,marginTop:8,marginBottom:4}}, '💳 Payment'),
       React.createElement('div', null, React.createElement('label', {style:lbl}, 'Payment Type'),
         React.createElement('select', {style:inp, value:form.payment_type, onChange:function(e){set('payment_type',e.target.value);}},
-          ['ON ACCOUNT','COD','CHECK'].map(function(t){return React.createElement('option',{key:t,value:t},t);})
+          ['ON ACCOUNT','Cash','Check','Zelle','Venmo','Bank Transfer','Credit Card','COD'].map(function(t){return React.createElement('option',{key:t,value:t},t);})
         )
       ),
       React.createElement('div', null, React.createElement('label', {style:lbl}, 'Payment Recipient (Zelle)'),
@@ -5126,7 +5157,7 @@ function ClientPortal({
       background: lang === 'en' ? '#2563EB' : '#F9FAFB',
       color: lang === 'en' ? '#fff' : '#9CA3AF'
     }
-  }, "\uD83C\uDDFA\uD83C\uDDF8 ENGLISH"), /*#__PURE__*/React.createElement("button", {
+  }, "ENGLISH"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setLang('es'),
     style: {
       flex: 1,
@@ -5139,7 +5170,7 @@ function ClientPortal({
       background: lang === 'es' ? '#2563EB' : '#F9FAFB',
       color: lang === 'es' ? '#fff' : '#9CA3AF'
     }
-  }, "\uD83C\uDDF2\uD83C\uDDFD ESPA\xD1OL"))), /*#__PURE__*/React.createElement("div", {
+  }, "ESPA\xD1OL"))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
       borderRadius: 16,
@@ -5293,7 +5324,7 @@ function ClientPortal({
       background: lang === 'en' ? '#fff' : 'transparent',
       color: lang === 'en' ? '#111827' : '#9CA3AF'
     }
-  }, "\uD83C\uDDFA\uD83C\uDDF8 EN"), /*#__PURE__*/React.createElement("button", {
+  }, "EN"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setLang('es'),
     style: {
       padding: '6px 14px',
@@ -5305,7 +5336,7 @@ function ClientPortal({
       background: lang === 'es' ? '#fff' : 'transparent',
       color: lang === 'es' ? '#111827' : '#9CA3AF'
     }
-  }, "\uD83C\uDDF2\uD83C\uDDFD ES"))), /*#__PURE__*/React.createElement("div", {
+  }, "ES"))), /*#__PURE__*/React.createElement("div", {
     style: {
       maxWidth: 500,
       margin: '0 auto',
