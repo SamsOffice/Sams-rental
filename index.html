@@ -2860,6 +2860,7 @@ function DumpingTab(_ref) {
   var setClientPanel = _ref.setClientPanel || function(){};
   var openDumpForm = _ref.openDumpForm;
   var setOpenDumpForm = _ref.setOpenDumpForm || function(){};
+  var goToDashboard = _ref.goToDashboard || function(){};
   var _dst = React.useState('jobs'), dumpSubTab = _dst[0], setDumpSubTab = _dst[1];
   var _React$useState = React.useState([]), jobs = _React$useState[0], setJobs = _React$useState[1];
   var _React$useState2 = React.useState(true), loading = _React$useState2[0], setLoading = _React$useState2[1];
@@ -2942,6 +2943,7 @@ function DumpingTab(_ref) {
     setForm(emptyForm);
     loadJobs();
     if(reloadData) reloadData();
+    goToDashboard();
   };
 
   var markComplete = async function(id) {
@@ -2996,7 +2998,7 @@ function DumpingTab(_ref) {
   if (showForm) return React.createElement('div', {style:{maxWidth:700,margin:'0 auto'}},
     React.createElement('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}},
       React.createElement('h2', {style:{fontSize:18,fontWeight:700}}, editJob?'Edit Dump Job':'New Dump Job'),
-      React.createElement('button', {onClick:function(){setShowForm(false);setEditJob(null);setForm(emptyForm);}, style:{padding:'6px 14px',background:'#F3F4F6',border:'none',borderRadius:7,cursor:'pointer',fontSize:13}}, '✕ Cancel')
+      React.createElement('button', {onClick:function(){setShowForm(false);setEditJob(null);setForm(emptyForm);goToDashboard();}, style:{padding:'6px 14px',background:'#F3F4F6',border:'none',borderRadius:7,cursor:'pointer',fontSize:13}}, '✕ Cancel')
     ),
     React.createElement('div', {style:{background:'#fff',borderRadius:12,padding:24,border:'1px solid #E5E7EB',display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}},
 
@@ -3179,7 +3181,8 @@ function DumpClientPortal(_ref) {
   var _s2 = React.useState(true), loading = _s2[0], setLoading = _s2[1];
   var _s3 = React.useState(false), confirmed = _s3[0], setConfirmed = _s3[1];
   var _s4 = React.useState('en'), lang = _s4[0], setLang = _s4[1];
-  var _s5D = React.useState(false), showTermsD = _s5D[0], setShowTermsD = _s5D[1];
+  var _s5 = React.useState(false), showTerms = _s5[0], setShowTerms = _s5[1];
+  var _s6 = React.useState(''), payChoice = _s6[0], setPayChoice = _s6[1];
   var es = lang === 'es';
 
   React.useEffect(function() {
@@ -3189,149 +3192,135 @@ function DumpClientPortal(_ref) {
     });
   }, [token]);
 
-  var confirm = function() {
-    try { sb.from('dump_jobs').update({portal_confirmed: true, portal_confirmed_at: new Date().toISOString()}).eq('portal_token', token).then(function(){}, function(){}); } catch(e){}
+  var logConfirmation = function() {
     setConfirmed(true);
+    try { sb.from('dump_jobs').update({ portal_confirmed: true, portal_confirmed_at: new Date().toISOString() }).eq('portal_token', token).then(function(){}, function(){}); } catch (e) {}
   };
 
-  if (loading) return React.createElement('div', {style:{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center'}}, React.createElement('div', {className:'spinner'}));
-  if (!job) return React.createElement('div', {style:{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',padding:20,textAlign:'center'}},
-    React.createElement('div', null,
-      React.createElement('div', {style:{fontSize:48}}, '🔍'),
-      React.createElement('h1', {style:{fontSize:20,fontWeight:700,margin:'12px 0'}}, es?'Trabajo No Encontrado':'Job Not Found'),
-      React.createElement('a', {href:'tel:+19176636369', style:{color:'#2563EB'}}, '+1 (917) 663-6369')
-    )
+  if (loading) return React.createElement('div', { style: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' } }, React.createElement('div', { className: 'spinner' }));
+  if (!job) return React.createElement('div', { style: { minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20, textAlign: 'center' } },
+    React.createElement('div', { style: { fontSize: 18, fontWeight: 700, marginBottom: 8 } }, es ? 'Trabajo No Encontrado' : 'Job Not Found'),
+    React.createElement('a', { href: 'tel:+19176636369', style: { color: '#2563EB' } }, '+1 (917) 663-6369')
   );
 
   var isPaid = job.payment_status === 'paid';
   var total = parseFloat(job.total_price) || 0;
   var isOverweight = parseFloat(job.overweight_charge) > 0;
   var zelle = '+1 (917) 663-6369';
+  var d = days(job.scheduled_pickup || job.permit_expiry || job.date);
+  var od = d < 0 ? Math.abs(d) : 0;
 
-  // Confirmation screen
-  if (!confirmed && !isPaid) return React.createElement('div', {style:{minHeight:'100vh',background:'#fff',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:24}},
-    React.createElement('div', {style:{maxWidth:480,width:'100%'}},
-      React.createElement('div', {style:{background:'#fff',borderRadius:14,padding:'16px',marginBottom:20,border:'1px solid #E5E7EB',textAlign:'center'}},
-        React.createElement('div', {style:{fontSize:14,fontWeight:600,color:'#6B7280',marginBottom:12}}, '🌐 Choose Your Language / Elija su Idioma'),
-        React.createElement('div', {style:{display:'flex',gap:10}},
-          React.createElement('button', {onClick:function(){setLang('en');}, style:{flex:1,padding:'14px',borderRadius:10,fontSize:17,fontWeight:800,cursor:'pointer',border:'3px solid '+(lang==='en'?'#2563EB':'#E5E7EB'),background:lang==='en'?'#2563EB':'#F9FAFB',color:lang==='en'?'#fff':'#9CA3AF'}}, 'ENGLISH'),
-          React.createElement('button', {onClick:function(){setLang('es');}, style:{flex:1,padding:'14px',borderRadius:10,fontSize:17,fontWeight:800,cursor:'pointer',border:'3px solid '+(lang==='es'?'#2563EB':'#E5E7EB'),background:lang==='es'?'#2563EB':'#F9FAFB',color:lang==='es'?'#fff':'#9CA3AF'}}, 'ESPANOL')
-        )
-      ),
-      React.createElement('div', {style:{background:'#fff',borderRadius:16,padding:28,border:'1px solid #E5E7EB',boxShadow:'0 2px 12px rgba(0,0,0,0.08)',marginBottom:16}},
-        React.createElement('div', {style:{fontSize:13,fontWeight:700,color:'#9CA3AF',textTransform:'uppercase',marginBottom:6}}, 'Sams Construction Services LTD'),
-        React.createElement('h2', {style:{fontSize:22,fontWeight:800,color:'#111827',marginBottom:20}}, es?'Acuerdo de Servicio':'Service Agreement'),
-        React.createElement('div', {style:{background:'#EFF6FF',borderRadius:10,padding:16,marginBottom:20,border:'1px solid #BFDBFE'}},
-          React.createElement('div', {style:{fontSize:13,color:'#6B7280',marginBottom:8}}, es?'Yo, ':'I, '), React.createElement('strong', null, job.client_name), ' ', es?'confirmo que debo:':'confirm I owe:',
-          React.createElement('div', {style:{fontSize:28,fontWeight:900,color:'#2563EB',margin:'8px 0'}}, '$' + total.toFixed(2)),
-          React.createElement('div', {style:{fontSize:13,color:'#6B7280'}}, (es?'Por: ':'For: '), React.createElement('strong', null, job.job_type + ' — ' + job.material_type + ' (' + job.container_size + ')')),
-          isOverweight && React.createElement('div', {style:{fontSize:12,color:'#DC2626',marginTop:6,fontWeight:700}}, (es?'⚠️ Incluye cargo por sobrepeso: $':'⚠️ Includes overweight charge: $') + parseFloat(job.overweight_charge).toFixed(2))
+  var DUMP_STEPS = [
+    { key: 'pending', l: es ? 'Programado' : 'Scheduled' },
+    { key: 'on_the_way', l: es ? 'En Camino' : 'On The Way' },
+    { key: 'arrived', l: es ? 'Contenedor Entregado' : 'Container Dropped' },
+    { key: 'completed', l: es ? 'Completado' : 'Completed' }
+  ];
+  var stepIdx = DUMP_STEPS.findIndex(function(x){ return x.key === job.driver_status; });
+  if (stepIdx < 0) stepIdx = 0;
+  var pct = Math.round((stepIdx / (DUMP_STEPS.length - 1)) * 100);
+
+  var PAY_METHODS = [
+    { key: 'zelle', icon: '\u26A1', label: 'Zelle' },
+    { key: 'cash', icon: '\uD83D\uDCB5', label: es ? 'Efectivo' : 'Cash' },
+    { key: 'check', icon: '\uD83C\uDFE6', label: es ? 'Cheque' : 'Check' },
+    { key: 'venmo', icon: '\uD83D\uDC9C', label: 'Venmo' },
+    { key: 'credit', icon: '\uD83D\uDCB3', label: es ? 'Tarjeta' : 'Credit Card' },
+    { key: 'bank', icon: '\uD83C\uDFDB', label: es ? 'Transferencia' : 'Bank Transfer' }
+  ];
+
+  // CONFIRM GATE
+  if (!confirmed && !isPaid) {
+    return React.createElement('div', { style: { minHeight: '100vh', background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 } },
+      React.createElement('div', { style: { maxWidth: 460, width: '100%', background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 4px 20px rgba(0,0,0,0.08)' } },
+        React.createElement('div', { style: { display: 'flex', gap: 6, justifyContent: 'flex-end', marginBottom: 12 } },
+          React.createElement('button', { onClick: function(){ setLang('en'); }, style: { padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: '1px solid ' + (lang === 'en' ? '#2563EB' : '#E5E7EB'), background: lang === 'en' ? '#2563EB' : '#F9FAFB', color: lang === 'en' ? '#fff' : '#9CA3AF' } }, 'ENGLISH'),
+          React.createElement('button', { onClick: function(){ setLang('es'); }, style: { padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: '1px solid ' + (lang === 'es' ? '#2563EB' : '#E5E7EB'), background: lang === 'es' ? '#2563EB' : '#F9FAFB', color: lang === 'es' ? '#fff' : '#9CA3AF' } }, 'ESPA\u00D1OL')
         ),
-        React.createElement('div', {style:{fontSize:12,color:'#374151',lineHeight:1.9,marginBottom:20,padding:12,background:'#F0F4F8',borderRadius:8,border:'1px solid #D1D5DB'}},
-          React.createElement('strong', null, es?'TERMINOS:':'TERMS:'), React.createElement('br', null),
-          es?'• El pago completo debe realizarse inmediatamente.':'• Full payment is due immediately upon completion.', React.createElement('br', null),
-          es?'• El incumplimiento resultara en cargos adicionales y suspensión de cuenta.':'• Non-payment will result in additional charges and account suspension.', React.createElement('br', null),
-          es?'• Cualquier material mezclado incorrectamente sera cobrado a tarifa maxima.':'• Any incorrectly mixed material will be charged at maximum rate.', React.createElement('br', null),
-          es?'• Cargos por sobrepeso se aplican automaticamente segun el recibo.':'• Overweight charges apply automatically per American Recycling receipt.', React.createElement('br', null),
-          es?'• No se otorgan extensiones de pago.':'• No payment extensions granted.', React.createElement('br', null),
-          es?'• Cuenta suspendida permanentemente por falta de pago.':'• Account permanently suspended for non-payment.'
+        React.createElement('div', { style: { textAlign: 'center', marginBottom: 6, fontSize: 13, color: '#9CA3AF', fontWeight: 600 } }, 'SAMS CONSTRUCTION SERVICES LTD'),
+        React.createElement('div', { style: { textAlign: 'center', fontSize: 13, color: '#F59E0B', fontWeight: 700, marginBottom: 16 } }, es ? 'Servicio de Contenedor / Basura' : 'Dumpster / Dump Service'),
+        React.createElement('div', { style: { background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 12, padding: 18, marginBottom: 16, textAlign: 'center' } },
+          React.createElement('div', { style: { fontSize: 13, color: '#92400E', marginBottom: 4 } }, es ? 'Total a Pagar' : 'Total Due'),
+          React.createElement('div', { style: { fontSize: 34, fontWeight: 800, color: '#B45309' } }, money(total)),
+          isOverweight && React.createElement('div', { style: { fontSize: 12, color: '#B45309', marginTop: 4 } }, (es ? 'Incluye sobrepeso: ' : 'Includes overweight: ') + money(job.overweight_charge))
         ),
-        React.createElement('button', {onClick:confirm, style:{width:'100%',padding:16,borderRadius:10,background:'#2563EB',color:'#fff',border:'none',fontSize:16,fontWeight:800,cursor:'pointer',marginBottom:10}},
-          es?('CONFIRMO QUE DEBO $'+total.toFixed(2)):('I CONFIRM I OWE $'+total.toFixed(2))
-        ),
-        React.createElement('div', {style:{fontSize:11,color:'#9CA3AF',textAlign:'center'}}, es?'Al confirmar, su IP y hora seran registradas.':'By confirming, your IP and timestamp will be recorded.')
+        React.createElement('button', { onClick: function(){ setShowTerms(true); }, style: { width: '100%', padding: 10, marginBottom: 12, borderRadius: 8, border: '1px solid #E5E7EB', background: '#F9FAFB', color: '#374151', fontSize: 13, fontWeight: 600, cursor: 'pointer' } }, es ? 'Ver Terminos y Condiciones' : 'View Terms & Conditions'),
+        React.createElement('button', { onClick: logConfirmation, style: { width: '100%', padding: 16, borderRadius: 10, background: '#2563EB', color: '#fff', border: 'none', fontSize: 15, fontWeight: 700, cursor: 'pointer' } }, es ? ('CONFIRMO QUE DEBO ' + money(total)) : ('I CONFIRM I OWE ' + money(total))),
+        React.createElement('div', { style: { fontSize: 11, color: '#9CA3AF', textAlign: 'center', marginTop: 10 } }, es ? 'Al confirmar, usted acepta los terminos.' : 'By confirming, you agree to the terms.'),
+        showTerms && React.createElement(TermsPopup, { onClose: function(){ setShowTerms(false); }, es: es })
       )
-    )
-  );
+    );
+  }
 
-  // Main portal
-  return React.createElement('div', {style:{minHeight:'100vh',background:'#F9FAFB'}},
-    React.createElement('div', {style:{background:'#111827',padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center'}},
-      React.createElement('div', null,
-        React.createElement('div', {style:{fontSize:14,fontWeight:700,color:'#fff'}}, 'SAMS CONSTRUCTION SERVICES LTD'),
-        React.createElement('div', {style:{fontSize:10,color:'#9CA3AF'}}, '188-16 Woodhull Ave, Hollis NY 11423')
-      ),
-      React.createElement('div', {style:{display:'flex',gap:6}},
-        React.createElement('button', {onClick:function(){setLang('en');}, style:{padding:'5px 12px',borderRadius:7,fontSize:12,fontWeight:800,cursor:'pointer',border:'2px solid '+(lang==='en'?'#fff':'#4B5563'),background:lang==='en'?'#fff':'transparent',color:lang==='en'?'#111827':'#9CA3AF'}}, 'EN'),
-        React.createElement('button', {onClick:function(){setLang('es');}, style:{padding:'5px 12px',borderRadius:7,fontSize:12,fontWeight:800,cursor:'pointer',border:'2px solid '+(lang==='es'?'#fff':'#4B5563'),background:lang==='es'?'#fff':'transparent',color:lang==='es'?'#111827':'#9CA3AF'}}, 'ES')
+  // MAIN PORTAL
+  return React.createElement('div', { style: { minHeight: '100vh', background: '#F9FAFB', paddingBottom: 40 } },
+    React.createElement('div', { style: { background: '#111827', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+      React.createElement('div', { style: { color: '#fff', fontWeight: 700, fontSize: 14 } }, 'SAMS CONSTRUCTION'),
+      React.createElement('div', { style: { display: 'flex', gap: 6 } },
+        React.createElement('button', { onClick: function(){ setLang('en'); }, style: { padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: '1px solid ' + (lang === 'en' ? '#fff' : '#4B5563'), background: lang === 'en' ? '#fff' : 'transparent', color: lang === 'en' ? '#111827' : '#9CA3AF' } }, 'EN'),
+        React.createElement('button', { onClick: function(){ setLang('es'); }, style: { padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: '1px solid ' + (lang === 'es' ? '#fff' : '#4B5563'), background: lang === 'es' ? '#fff' : 'transparent', color: lang === 'es' ? '#111827' : '#9CA3AF' } }, 'ES')
       )
     ),
-    React.createElement('div', {style:{maxWidth:500,margin:'0 auto',padding:'20px 16px',display:'flex',flexDirection:'column',gap:14}},
-
-      // Status
-      parseFloat(job.overweight_charge)>0 && React.createElement('div', {style:{background:'#FFFBEB',border:'2px solid #F59E0B',borderRadius:12,padding:'14px 16px',marginBottom:10}},
-        React.createElement('div', {style:{fontSize:13,fontWeight:800,color:'#92400E'}}, (es?'CARGO POR SOBREPESO: $':'OVERWEIGHT CHARGE: $') + parseFloat(job.overweight_charge).toFixed(2))
-      ),
-      React.createElement('div', {style:{background:isPaid?'#ECFDF5':'#FEF2F2',border:'1px solid '+(isPaid?'#A7F3D0':'#FCA5A5'),borderRadius:12,padding:'16px 18px'}},
-        React.createElement('div', {style:{fontSize:16,fontWeight:700,color:isPaid?'#065F46':'#991B1B'}}, isPaid?(es?'PAGADO':'PAID IN FULL'):(es?'PAGO PENDIENTE':'PAYMENT DUE')),
-        React.createElement('div', {style:{fontSize:22,fontWeight:900,color:isPaid?'#065F46':'#DC2626',marginTop:4}}, '$' + total.toFixed(2))
-      ),
-
-      // Overweight alert
-      isOverweight && React.createElement('div', {style:{background:'#FFFBEB',border:'2px solid #F59E0B',borderRadius:12,padding:'14px 16px'}},
-        React.createElement('div', {style:{fontSize:14,fontWeight:800,color:'#92400E',marginBottom:4}}, '⚠️ ' + (es?'CARGO POR SOBREPESO':'OVERWEIGHT CHARGE')),
-        React.createElement('div', {style:{fontSize:13,color:'#92400E'}},(es?'Su carga excedio el peso limite. Cargo adicional: ':'Your load exceeded weight limit. Additional charge: ') + '$' + parseFloat(job.overweight_charge).toFixed(2))
-      ),
-
-      // Job details
-      React.createElement('div', {style:{background:'#fff',borderRadius:12,padding:'16px 18px',border:'1px solid #F3F4F6'}},
-        React.createElement('h3', {style:{fontSize:14,fontWeight:700,marginBottom:12}}, es?'Detalles del Trabajo':'Job Details'),
-        [
-          [es?'Ticket':'Ticket', '#' + job.ticket_no],
-          [es?'Tipo':'Job Type', job.job_type],
-          [es?'Contenedor':'Container', job.container_size],
-          [es?'Material':'Material', job.material_type],
-          [es?'Peso':'Weight', job.weight_tons ? job.weight_tons + ' tons' : '—'],
-          [es?'Chofer':'Driver', job.assigned_driver],
-          [es?'Fecha':'Date', job.date],
-          job.permit_no ? [es?'Permiso':'Permit #', job.permit_no] : null,
-        ].filter(Boolean).map(function(row) {
-          return React.createElement('div', {key:row[0], style:{display:'flex',justifyContent:'space-between',padding:'5px 0',borderBottom:'1px solid #F9FAFB',fontSize:13}},
-            React.createElement('span', {style:{color:'#9CA3AF'}}, row[0]),
-            React.createElement('span', {style:{fontWeight:500}}, row[1])
+    React.createElement('div', { style: { maxWidth: 460, margin: '0 auto', padding: '20px 16px' } },
+      React.createElement('div', { style: { background: '#fff', borderRadius: 16, padding: 20, marginBottom: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.05)' } },
+        React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 } },
+          React.createElement('div', { style: { fontSize: 13, color: '#9CA3AF' } }, '#' + (job.ticket_no || '')),
+          React.createElement('div', { style: { fontSize: 16, fontWeight: 700, color: isPaid ? '#065F46' : od > 0 ? '#991B1B' : d <= 2 ? '#92400E' : '#1D4ED8' } }, isPaid ? (es ? 'PAGADO EN SU TOTALIDAD' : 'PAID IN FULL') : od > 0 ? (es ? (od + ' DIAS VENCIDO') : (od + ' DAYS OVERDUE')) : d === 0 ? (es ? 'RECOGIDA HOY' : 'PICKUP TODAY') : (es ? (d + ' DIAS RESTANTES') : (d + ' DAYS LEFT')))
+        ),
+        React.createElement('div', { style: { fontSize: 22, fontWeight: 800, marginBottom: 4 } }, job.job_type + ' \u2014 ' + job.material_type),
+        React.createElement('div', { style: { fontSize: 14, color: '#6B7280', marginBottom: 16 } }, (job.container_size || '') + ' \u2022 ' + (job.client_name || '')),
+        [['#' + (job.ticket_no || ''), es ? 'Boleto' : 'Ticket'], [job.container_size || '', es ? 'Contenedor' : 'Container'], [job.material_type || '', es ? 'Material' : 'Material'], [es ? 'Conductor' : 'Driver', job.assigned_driver || '']].map(function(pair, i) {
+          return React.createElement('div', { key: i, style: { display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #F9FAFB', fontSize: 13 } },
+            React.createElement('span', { style: { color: '#9CA3AF' } }, pair[1]),
+            React.createElement('span', { style: { fontWeight: 500 } }, pair[0])
           );
         }),
-        React.createElement('div', {style:{display:'flex',justifyContent:'space-between',paddingTop:10,fontSize:16,fontWeight:700}},
-          React.createElement('span', null, es?'Total a Pagar':'Total Due'),
-          React.createElement('span', null, '$' + total.toFixed(2))
+        React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', paddingTop: 12, fontSize: 16, fontWeight: 700 } },
+          React.createElement('span', null, es ? 'Total a Pagar' : 'Total Due'),
+          React.createElement('span', null, money(total))
         ),
-        job.invoice_data && React.createElement('button', {onClick:function(){
-          try{var inv=JSON.parse(job.invoice_data);var html='<html><head><title>Invoice</title></head><body style="font-family:Arial;padding:24px"><h2 style="color:#1D4ED8">SAMS CONSTRUCTION SERVICES LTD</h2><p>Invoice: '+inv.invNo+'<br>Date: '+inv.invDate+'<br>Bill To: '+inv.billTo+'</p><p style="font-size:20px;font-weight:700">TOTAL: $'+parseFloat(inv.total).toFixed(2)+'</p></body></html>';var b=new Blob([html],{type:'text/html'});window.open(URL.createObjectURL(b),'_blank');}catch(e){alert('Save invoice first');}
-        }, style:{width:'100%',padding:12,borderRadius:9,border:'none',background:'#1D4ED8',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer',marginTop:10}}, es?'VER FACTURA':'VIEW INVOICE')
+        job.invoice_data && React.createElement('button', { onClick: function(){
+          try { var inv = JSON.parse(job.invoice_data); var html = '<html><head><title>Invoice</title></head><body style="font-family:Arial;padding:24px"><h2 style="color:#1D4ED8">SAMS CONSTRUCTION SERVICES LTD</h2><p>Invoice: ' + inv.invNo + '<br>Date: ' + inv.invDate + '<br>Bill To: ' + inv.billTo + '</p><p style="font-size:20px;font-weight:700">TOTAL: $' + parseFloat(inv.total).toFixed(2) + '</p></body></html>'; var b = new Blob([html], { type: 'text/html' }); window.open(URL.createObjectURL(b), '_blank'); } catch (e) { alert('Invoice not available'); }
+        }, style: { width: '100%', padding: 12, borderRadius: 9, border: 'none', background: '#1D4ED8', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', marginTop: 12 } }, es ? 'VER FACTURA' : 'VIEW INVOICE')
       ),
-
-      // Payment options
-      !isPaid && React.createElement('div', {style:{background:'#fff',borderRadius:12,border:'1px solid #F3F4F6',overflow:'hidden'}},
-        React.createElement('div', {style:{background:'#111827',padding:'14px 18px'}},
-          React.createElement('h3', {style:{fontSize:14,fontWeight:700,color:'#fff'}}, es?'Opciones de Pago':'Payment Options')
+      isOverweight && React.createElement('div', { style: { background: '#FFFBEB', border: '2px solid #F59E0B', borderRadius: 12, padding: 14, marginBottom: 16 } },
+        React.createElement('div', { style: { fontSize: 13, fontWeight: 800, color: '#92400E' } }, (es ? 'CARGO POR SOBREPESO: ' : 'OVERWEIGHT CHARGE: ') + money(job.overweight_charge))
+      ),
+      React.createElement('div', { style: { background: '#fff', borderRadius: 16, padding: 20, marginBottom: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.05)' } },
+        React.createElement('div', { style: { fontSize: 13, fontWeight: 700, color: '#6B7280', marginBottom: 12 } }, es ? 'ESTADO DEL TRABAJO' : 'JOB STATUS'),
+        React.createElement('div', { style: { height: 8, background: '#F3F4F6', borderRadius: 4, overflow: 'hidden', marginBottom: 8 } },
+          React.createElement('div', { style: { height: '100%', width: pct + '%', background: '#F59E0B', transition: 'width 0.3s' } })
         ),
-        React.createElement('div', {style:{padding:'16px 18px',display:'flex',flexDirection:'column',gap:10}},
-          React.createElement('div', {style:{background:'#F0F7FF',border:'1px solid #BFDBFE',borderRadius:10,padding:14}},
-            React.createElement('div', {style:{fontSize:15,fontWeight:700,color:'#1D4ED8',marginBottom:6}}, '⚡ Zelle — ' + (es?'Mas Rapido':'Fastest')),
-            React.createElement('div', {style:{fontSize:13,marginBottom:8}}, (es?'Enviar a: ':'Send to: '), React.createElement('strong', null, zelle)),
-            React.createElement('button', {onClick:function(){navigator.clipboard.writeText(zelle).catch(function(){});}, style:{width:'100%',padding:10,borderRadius:8,border:'none',background:'#2563EB',color:'#fff',fontSize:14,fontWeight:700,cursor:'pointer'}}, es?'Copiar Numero':'Copy Number')
-          ),
-          React.createElement('a', {href:'tel:+19176636369', style:{display:'block',padding:12,borderRadius:9,background:'#111827',color:'#fff',textDecoration:'none',fontSize:14,fontWeight:700,textAlign:'center'}},
-            '📞 ' + (es?'Llamar para Pagar':'Call to Pay') + ' — +1 (917) 663-6369'
-          )
+        React.createElement('div', { style: { fontSize: 14, fontWeight: 600, color: '#F59E0B' } }, DUMP_STEPS[stepIdx].l)
+      ),
+      !isPaid && React.createElement('div', { style: { background: '#fff', borderRadius: 16, padding: 20, marginBottom: 16, boxShadow: '0 2px 12px rgba(0,0,0,0.05)' } },
+        React.createElement('div', { style: { fontSize: 13, fontWeight: 700, color: '#6B7280', marginBottom: 12 } }, es ? 'COMO PAGAR' : 'HOW TO PAY'),
+        React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 } },
+          PAY_METHODS.map(function(m) {
+            return React.createElement('button', { key: m.key, onClick: function(){ setPayChoice(m.key); }, style: { padding: '12px 6px', borderRadius: 10, border: '2px solid ' + (payChoice === m.key ? '#2563EB' : '#E5E7EB'), background: payChoice === m.key ? '#EFF6FF' : '#fff', cursor: 'pointer', textAlign: 'center' } },
+              React.createElement('div', { style: { fontSize: 22 } }, m.icon),
+              React.createElement('div', { style: { fontSize: 11, fontWeight: 600, marginTop: 4 } }, m.label)
+            );
+          })
+        ),
+        payChoice === 'zelle' && React.createElement('div', { style: { background: '#EFF6FF', borderRadius: 10, padding: 14 } },
+          React.createElement('div', { style: { fontSize: 15, fontWeight: 700, color: '#1D4ED8', marginBottom: 6 } }, '\u26A1 Zelle \u2014 ' + (es ? 'Mas Rapido' : 'Fastest')),
+          React.createElement('div', { style: { fontSize: 13, marginBottom: 8 } }, (es ? 'Enviar a: ' : 'Send to: '), React.createElement('strong', null, zelle)),
+          React.createElement('button', { onClick: function(){ navigator.clipboard.writeText(zelle).catch(function(){}); }, style: { width: '100%', padding: 10, borderRadius: 8, border: 'none', background: '#2563EB', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' } }, es ? 'Copiar Numero' : 'Copy Number')
+        ),
+        payChoice && payChoice !== 'zelle' && React.createElement('div', { style: { background: '#F9FAFB', borderRadius: 10, padding: 14, textAlign: 'center' } },
+          React.createElement('div', { style: { fontSize: 13, color: '#6B7280', marginBottom: 8 } }, es ? 'Llame para coordinar el pago' : 'Call to arrange this payment'),
+          React.createElement('a', { href: 'tel:+19176636369', style: { display: 'block', padding: 10, borderRadius: 8, background: '#111827', color: '#fff', textDecoration: 'none', fontSize: 13, fontWeight: 700 } }, '\uD83D\uDCDE +1 (917) 663-6369')
         )
       ),
-
-      // Call/Email
-      React.createElement('div', {style:{display:'flex',gap:10}},
-        React.createElement('a', {href:'tel:+19176636369', style:{flex:1,padding:12,borderRadius:9,background:'#EFF6FF',color:'#1D4ED8',textDecoration:'none',fontSize:13,fontWeight:600,textAlign:'center'}}, '📞 ' + (es?'Llamar':'Call')),
-        React.createElement('a', {href:'mailto:samsconstructionltd23@outlook.com', style:{flex:1,padding:12,borderRadius:9,background:'#F9FAFB',color:'#374151',textDecoration:'none',fontSize:13,fontWeight:600,textAlign:'center',border:'1px solid #E5E7EB'}}, '✉ Email')
+      React.createElement('div', { style: { textAlign: 'center' } },
+        React.createElement('button', { onClick: function(){ setShowTerms(true); }, style: { background: 'none', border: 'none', color: '#2563EB', fontSize: 12, cursor: 'pointer', textDecoration: 'underline' } }, es ? 'Ver Terminos y Condiciones' : 'View Terms & Conditions'),
+        React.createElement('div', { style: { fontSize: 11, color: '#9CA3AF', marginTop: 8 } }, es ? 'Este enlace es privado y solo para usted.' : 'This link is private and only for you.')
       ),
-      React.createElement('div', {style:{textAlign:'center'}},
-        showTermsD && React.createElement(TermsPopup, {onClose:function(){setShowTermsD(false);}, es:es}),
-        React.createElement('button', {onClick:function(){setShowTermsD(true);}, style:{background:'none',border:'none',color:'#2563EB',fontSize:12,cursor:'pointer',textDecoration:'underline',display:'block',margin:'4px auto'}}, es?'Ver Terminos':'View Terms'),
-        React.createElement('p', {style:{fontSize:11,color:'#9CA3AF'}}, es?'Este enlace es privado y solo para usted.':'This link is private and only for you.')
-      )
+      showTerms && React.createElement(TermsPopup, { onClose: function(){ setShowTerms(false); }, es: es })
     )
   );
 }
-
-
 function TermsPopup(props) {
   var onClose=props.onClose; var es=props.es;
   return React.createElement('div',{style:{position:'fixed',top:0,left:0,right:0,bottom:0,background:'rgba(0,0,0,0.75)',zIndex:9999,display:'flex',alignItems:'center',justifyContent:'center',padding:16}},
@@ -3856,9 +3845,6 @@ function App() {
     id: 'confirmations',
     l: '📋 Confirmations'
   }, {
-    id: 'dumping',
-    l: '🚛 Dumping'
-  }, {
     id: 'invoice',
     l: '📄 Invoice'
   }, {
@@ -3943,7 +3929,7 @@ function App() {
       maxWidth: 1400,
       margin: '0 auto'
     }
-  }, dumpJobs.length > 0 && /*#__PURE__*/React.createElement("div", {style:{marginBottom:20}},
+  }, tab === 'dashboard' && dumpJobs.length > 0 && /*#__PURE__*/React.createElement("div", {style:{marginBottom:20}},
     /*#__PURE__*/React.createElement("div", {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
       /*#__PURE__*/React.createElement("h2", {style:{fontSize:18,fontWeight:700}}, "Active Dump Jobs (" + dumpJobs.filter(function(j){return j.driver_status!=='completed';}).length + ")"),
       /*#__PURE__*/React.createElement("button", {onClick:function(){setTab('dumping');}, style:{padding:"6px 14px",background:"#F59E0B",color:"#fff",border:"none",borderRadius:7,cursor:"pointer",fontSize:13,fontWeight:700}}, "View All")
@@ -4796,7 +4782,7 @@ function App() {
     rentals: rentals
   }), !loading && tab === 'schedule' && /*#__PURE__*/React.createElement(ScheduleTab, {
     rentals: rentals
-  }), !loading && tab === 'dumping' && React.createElement(DumpingTab, {showToast: showToast, dumpJobs: dumpJobs, reloadData: loadData, rentals: rentals, setClientPanel: setClientPanel, openDumpForm: openDumpForm, setOpenDumpForm: setOpenDumpForm}),
+  }), !loading && tab === 'dumping' && React.createElement(DumpingTab, {showToast: showToast, dumpJobs: dumpJobs, reloadData: loadData, rentals: rentals, setClientPanel: setClientPanel, openDumpForm: openDumpForm, setOpenDumpForm: setOpenDumpForm, goToDashboard: function(){ setTab('dashboard'); }}),
         !loading && tab === 'confirmations' && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
