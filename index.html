@@ -2838,6 +2838,8 @@ function DumpingTab(_ref) {
   var reloadData = _ref.reloadData || function(){};
   var rentals = _ref.rentals || [];
   var setClientPanel = _ref.setClientPanel || function(){};
+  var openDumpForm = _ref.openDumpForm;
+  var setOpenDumpForm = _ref.setOpenDumpForm || function(){};
   var _dst = React.useState('jobs'), dumpSubTab = _dst[0], setDumpSubTab = _dst[1];
   var _React$useState = React.useState([]), jobs = _React$useState[0], setJobs = _React$useState[1];
   var _React$useState2 = React.useState(true), loading = _React$useState2[0], setLoading = _React$useState2[1];
@@ -2864,6 +2866,7 @@ function DumpingTab(_ref) {
   };
 
   React.useEffect(function() { loadJobs(); }, []);
+  React.useEffect(function(){ if(openDumpForm){ setShowForm(true); setDumpSubTab('jobs'); setOpenDumpForm(false); } }, [openDumpForm]);
 
   var set = function(k, v) {
     setForm(function(f) {
@@ -3156,7 +3159,7 @@ function DumpClientPortal(_ref) {
   }, [token]);
 
   var confirm = function() {
-    sb.from('dump_jobs').update({payment_status: job.payment_status}).eq('portal_token', token).catch(function(){});
+    try { sb.from('dump_jobs').update({portal_confirmed: true, portal_confirmed_at: new Date().toISOString()}).eq('portal_token', token).then(function(){}, function(){}); } catch(e){}
     setConfirmed(true);
   };
 
@@ -3589,6 +3592,7 @@ function App() {
   const [toast, setToast] = useState('');
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [openDumpForm, setOpenDumpForm] = useState(false);
   const [showEquip, setShowEquip] = useState(false);
   const [clientPanel, setClientPanel] = useState(null);
   const [editRental, setEditRental] = useState(null);
@@ -3886,6 +3890,9 @@ function App() {
       color: '#fff'
     }
   }, "+ New Rental"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => { setOpenDumpForm(true); setTab('dumping'); },
+    style: { padding: '6px 12px', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none', background: '#F59E0B', color: '#fff' }
+  }, "+ New Dumping"), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       localStorage.removeItem('sams_user');
       setUser(null);
@@ -4758,7 +4765,7 @@ function App() {
     rentals: rentals
   }), !loading && tab === 'schedule' && /*#__PURE__*/React.createElement(ScheduleTab, {
     rentals: rentals
-  }), !loading && tab === 'dumping' && React.createElement(DumpingTab, {showToast: showToast, dumpJobs: dumpJobs, reloadData: loadData}),
+  }), !loading && tab === 'dumping' && React.createElement(DumpingTab, {showToast: showToast, dumpJobs: dumpJobs, reloadData: loadData, rentals: rentals, setClientPanel: setClientPanel, openDumpForm: openDumpForm, setOpenDumpForm: setOpenDumpForm}),
         !loading && tab === 'confirmations' && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
