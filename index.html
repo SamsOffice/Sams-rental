@@ -2015,7 +2015,7 @@ function InvoiceTab({
     const body = 'Dear ' + billTo + ',%0A%0APlease find your invoice from Sams Construction Services LTD.%0A%0ASAMS CONSTRUCTION SERVICES LTD%0A188-16 Woodhull Ave, Hollis NY 11423%0A+1 (917) 663-6369 | BIC%234376%0A%0AINVOICE: ' + (invNo || '—') + '%0ADATE: ' + fd(invDate) + '%0A%0ABILL TO: ' + billTo + '%0A' + (addr1 ? 'ADDRESS: ' + addr1 + (addr2 ? ' ' + addr2 : '') + '%0A' : '') + (phone ? 'PHONE: ' + phone + '%0A' : '') + '%0A----%0A' + itemLines + '%0A----%0A' + (parseFloat(tax) > 0 ? 'Sales Tax: $' + parseFloat(tax).toFixed(2) + '%0A' : '') + (parseFloat(other) > 0 ? 'Other: $' + parseFloat(other).toFixed(2) + '%0A' : '') + 'TOTAL DUE: $' + total.toFixed(2) + '%0A%0APAY VIA ZELLE: ' + (localStorage.getItem('sams_zelle') || '+1 (917) 663-6369') + '%0ACALL: +1 (917) 663-6369' + portalLine + '%0A%0AThank you,%0ASams Construction Services LTD';
     // Save invoice to portal
     if (r) {
-      await sb.from('rentals').update({
+      await sb.from(r._isDump ? 'dump_jobs' : 'rentals').update({
         invoice_data: JSON.stringify({
           inv_no: invNo,
           inv_date: invDate,
@@ -2402,10 +2402,10 @@ function InvoiceTab({
     onChange: e => doPrefill(e.target.value)
   }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "Select rental..."), rentals.map(r => /*#__PURE__*/React.createElement("option", {
+  }, "Select client..."), rentals.map(r => /*#__PURE__*/React.createElement("option", {
     key: r.id,
     value: r.id
-  }, r.id, " \u2014 ", r.client_name)))), /*#__PURE__*/React.createElement("div", {
+  }, (r._isDump ? "[DUMP] " : "[RENTAL] ") + r.client_name + " \u2014 " + (r.asset || ""))))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
       borderRadius: 12,
@@ -3147,18 +3147,9 @@ function DumpingTab(_ref) {
   // Stats
   var totalUnpaid = jobs.filter(function(j){return j.payment_status==='unpaid';}).reduce(function(s,j){return s+(parseFloat(j.total_price)||0);},0);
 
-  var subNav = React.createElement('div', {style:{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}},
-    ['jobs','invoice','collections','schedule'].map(function(t){
-      var lbs={jobs:'Jobs',invoice:'Invoice',collections:'Collections',schedule:'Schedule'};
-      return React.createElement('button',{key:t,onClick:function(){setDumpSubTab(t);},style:{padding:'7px 14px',borderRadius:8,border:'none',cursor:'pointer',fontSize:13,fontWeight:600,background:dumpSubTab===t?'#F59E0B':'#F3F4F6',color:dumpSubTab===t?'#fff':'#374151'}},lbs[t]);
-    })
-  );
-  if(dumpSubTab==='invoice')return React.createElement('div',null,subNav,React.createElement(DumpInvoiceTab,{showToast:showToast,dumpJobs:jobs,rentals:rentals}));
-  if(dumpSubTab==='collections')return React.createElement('div',null,subNav,React.createElement(DumpCollectionsTab,{showToast:showToast,dumpJobs:jobs}));
-  if(dumpSubTab==='schedule')return React.createElement('div',null,subNav,React.createElement(DumpScheduleTab,{dumpJobs:jobs}));
+  
 
   return React.createElement('div', null,
-    subNav,
     // Header
     React.createElement('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20,flexWrap:'wrap',gap:10}},
       React.createElement('div', null,
@@ -3885,11 +3876,11 @@ function App() {
     setToast(m);
     setTimeout(() => setToast(''), 3000);
   };
-  const copyLink = (t, id) => {
-    const url = APP + '/#/portal/' + t;
+  const copyLink = (t, id, isDump) => {
+    const url = APP + (isDump ? '/#/dump/' : '/#/portal/') + t;
     window.open(url, '_blank');
     navigator.clipboard.writeText(url);
-    if (id) sb.from('rentals').update({
+    if (id && !isDump) sb.from('rentals').update({
       portal_opened_at: new Date().toISOString()
     }).eq('id', id).catch(() => {});
     showToast('Portal link copied ✓');
@@ -3979,6 +3970,17 @@ function App() {
   const active = rentals.filter(r => r.rental_status === 'active').length;
   const overdue = rentals.filter(r => days(r.due_date) < 0 && r.payment_status !== 'paid').length;
   const revenue = rentals.filter(r => r.payment_status === 'paid').reduce((s, r) => s + r.price, 0);
+  // Normalize dump jobs so they can share the rental tabs (Collections, Confirmations, Invoice)
+  const dumpsAsRecords = dumpJobs.map(function(j){
+    return Object.assign({}, j, {
+      _isDump: true,
+      asset: (j.job_type || '') + ' \u2014 ' + (j.material_type || ''),
+      price: parseFloat(j.total_price) || 0,
+      due_date: j.scheduled_pickup || j.date || null,
+      rental_status: j.driver_status === 'completed' ? 'completed' : 'active'
+    });
+  });
+  const allRecords = [].concat(rentals, dumpsAsRecords);
   const _now = new Date();
   const _wk = new Date(_now); _wk.setDate(_now.getDate()-7);
   const _mo = new Date(_now.getFullYear(), _now.getMonth(), 1);
@@ -4922,7 +4924,7 @@ function App() {
       fontWeight: 700,
       color: '#991B1B'
     }
-  }, "\u2696\uFE0F Total Outstanding: ", money(rentals.filter(r => r.payment_status !== 'paid').reduce((s, r) => s + r.price, 0)))), rentals.filter(r => r.payment_status !== 'paid').map(r => {
+  }, "\u2696\uFE0F Total Outstanding: ", money(allRecords.filter(r => r.payment_status !== 'paid').reduce((s, r) => s + r.price, 0)))), allRecords.filter(r => r.payment_status !== 'paid').map(r => {
     const d = days(r.due_date);
     const od = d < 0 ? Math.abs(d) : 0;
     const lienBody = encodeURIComponent('NOTICE OF INTENT TO FILE MECHANIC S LIEN\n\nTo: ' + r.client_name + '\n' + r.client_address + '\n\nInvoice: ' + r.id + '\nAmount: ' + money(r.price) + '\nEquipment: ' + r.asset + '\n\nPay within 10 days to avoid lien filing.\n\nZelle: ' + getZelle() + '\nCall: ' + PHONE);
@@ -5004,7 +5006,7 @@ function App() {
         border: '1px solid #BFDBFE'
       }
     }, "\uD83D\uDCDE Call"), /*#__PURE__*/React.createElement("button", {
-      onClick: () => copyLink(r.portal_token, r.id),
+      onClick: () => copyLink(r.portal_token, r.id, r._isDump),
       style: {
         padding: '6px 12px',
         borderRadius: 6,
@@ -5041,7 +5043,7 @@ function App() {
       }
     }, "\u2713 Paid"))));
   })), !loading && tab === 'invoice' && /*#__PURE__*/React.createElement(InvoiceTab, {
-    rentals: rentals
+    rentals: allRecords
   }), !loading && tab === 'schedule' && /*#__PURE__*/React.createElement(ScheduleTab, {
     rentals: rentals, dumpJobs: dumpJobs
   }), !loading && tab === 'overview' && React.createElement(OverviewTab, {rentals: rentals, dumpJobs: dumpJobs, money: money, showToast: showToast}), tab === 'dumping' && React.createElement(DumpingTab, {showToast: showToast, dumpJobs: dumpJobs, reloadData: loadData, rentals: rentals, setClientPanel: setClientPanel, openDumpForm: openDumpForm, setOpenDumpForm: setOpenDumpForm, goToDashboard: function(){ setTab('dashboard'); }, editDumpJob: editDumpJob, setEditDumpJob: setEditDumpJob}),
@@ -5079,12 +5081,12 @@ function App() {
       color: '#6EE7B7',
       fontWeight: 600
     }
-  }, "\u2705 ", rentals.filter(r => r.portal_confirmed).length, " Confirmed"), /*#__PURE__*/React.createElement("span", {
+  }, "\u2705 ", allRecords.filter(r => r.portal_confirmed).length, " Confirmed"), /*#__PURE__*/React.createElement("span", {
     style: {
       color: '#FDE68A',
       fontWeight: 600
     }
-  }, "\u23F3 ", rentals.filter(r => !r.portal_confirmed).length, " Not Yet"))), /*#__PURE__*/React.createElement("div", {
+  }, "\u23F3 ", allRecords.filter(r => !r.portal_confirmed).length, " Not Yet"))), /*#__PURE__*/React.createElement("div", {
     style: {
       overflowX: 'auto'
     }
@@ -5110,7 +5112,7 @@ function App() {
       borderBottom: '1px solid #F3F4F6',
       whiteSpace: 'nowrap'
     }
-  }, h)))), /*#__PURE__*/React.createElement("tbody", null, [...rentals].sort((a, b) => {
+  }, h)))), /*#__PURE__*/React.createElement("tbody", null, [...allRecords].sort((a, b) => {
     if (a.portal_confirmed && !b.portal_confirmed) return 1;
     if (!a.portal_confirmed && b.portal_confirmed) return -1;
     return 0;
