@@ -4120,7 +4120,7 @@ function App() {
       fontWeight: 600,
       color: '#991B1B'
     }
-  }, overdue, " overdue"), /*#__PURE__*/React.createElement("button", {
+  }, overdue, " overdue"), tab === 'dashboard' && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
     onClick: () => setShowEquip(true),
     style: {
       padding: '5px 10px',
@@ -4146,7 +4146,7 @@ function App() {
   }, "+ New Rental"), /*#__PURE__*/React.createElement("button", {
     onClick: () => { setOpenDumpForm(true); setTab('dumping'); },
     style: { padding: '6px 12px', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none', background: '#F59E0B', color: '#fff' }
-  }, "+ New Dumping"), /*#__PURE__*/React.createElement("button", {
+  }, "+ New Dumping")), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       localStorage.removeItem('sams_user');
       setUser(null);
