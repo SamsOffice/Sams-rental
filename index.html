@@ -2921,6 +2921,8 @@ function DumpingTab(_ref) {
   var setClientPanel = _ref.setClientPanel || function(){};
   var openDumpForm = _ref.openDumpForm;
   var setOpenDumpForm = _ref.setOpenDumpForm || function(){};
+  var editDumpJob = _ref.editDumpJob;
+  var setEditDumpJob = _ref.setEditDumpJob || function(){};
   var goToDashboard = _ref.goToDashboard || function(){};
   var savingRef = React.useRef(false);
   var _dst = React.useState('jobs'), dumpSubTab = _dst[0], setDumpSubTab = _dst[1];
@@ -2949,7 +2951,7 @@ function DumpingTab(_ref) {
   };
 
   React.useEffect(function() { loadJobs(); }, []);
-  React.useEffect(function(){ if(openDumpForm){ setShowForm(true); setDumpSubTab('jobs'); setOpenDumpForm(false); } }, [openDumpForm]);
+  React.useEffect(function(){ if(openDumpForm){ if(editDumpJob){ openEdit(editDumpJob); setEditDumpJob(null); } else { setEditJob(null); setForm(emptyForm); setShowForm(true); } setDumpSubTab('jobs'); setOpenDumpForm(false); } }, [openDumpForm]);
 
   var set = function(k, v) {
     setForm(function(f) {
@@ -3818,6 +3820,8 @@ function App() {
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [openDumpForm, setOpenDumpForm] = useState(false);
+  const [editDumpJob, setEditDumpJob] = useState(null);
+  const [inventory, setInventory] = useState([]);
   const [showEquip, setShowEquip] = useState(false);
   const [clientPanel, setClientPanel] = useState(null);
   const [editRental, setEditRental] = useState(null);
@@ -3841,6 +3845,7 @@ function App() {
     }
     if (r2.data) setExtensions(r2.data);
     if (r3.data) { var seen={}; setDumpJobs(r3.data.filter(function(j){ if(seen[j.id]) return false; seen[j.id]=true; return true; })); }
+    sb.from('inventory').select('*').then(function(ir){ if(ir.data) setInventory(ir.data); });
     setLoading(false);
   };
   const showToast = m => {
@@ -3885,6 +3890,21 @@ function App() {
     await sb.from('rentals').delete().eq('id', id);
     showToast('Deleted permanently');
     loadData();
+  };
+  const markDumpPaid = async (id) => {
+    await sb.from('dump_jobs').update({ payment_status: 'paid', updated_at: new Date().toISOString() }).eq('id', id);
+    loadData();
+    showToast('Dump job marked paid');
+  };
+  const markDumpComplete = async (id) => {
+    await sb.from('dump_jobs').update({ driver_status: 'completed', completed_at: new Date().toISOString() }).eq('id', id);
+    loadData();
+    showToast('Dump job completed');
+  };
+  const deleteDumpJob = async (id) => {
+    await sb.from('dump_jobs').update({ deleted: true }).eq('id', id);
+    loadData();
+    showToast('Dump job deleted');
   };
   const setDriverStatus = async (id, status, isDump) => {
     if (isDump) {
@@ -3933,6 +3953,13 @@ function App() {
   const revenueWeek = rentals.filter(r=>r.payment_status==='paid'&&new Date(r.updated_at)>=_wk).reduce((s,r)=>s+(parseFloat(r.price)||0),0) + dumpJobs.filter(j=>j.payment_status==='paid'&&new Date(j.updated_at)>=_wk).reduce((s,j)=>s+(parseFloat(j.total_price)||0),0);
   const revenueMonth = rentals.filter(r=>r.payment_status==='paid'&&new Date(r.updated_at)>=_mo).reduce((s,r)=>s+(parseFloat(r.price)||0),0) + dumpJobs.filter(j=>j.payment_status==='paid'&&new Date(j.updated_at)>=_mo).reduce((s,j)=>s+(parseFloat(j.total_price)||0),0);
   const revenueYear = rentals.filter(r=>r.payment_status==='paid'&&new Date(r.updated_at)>=_yr).reduce((s,r)=>s+(parseFloat(r.price)||0),0) + dumpJobs.filter(j=>j.payment_status==='paid'&&new Date(j.updated_at)>=_yr).reduce((s,j)=>s+(parseFloat(j.total_price)||0),0);
+  var _cTot = (inventory.find(function(x){return x.kind==='container';})||{}).total_qty; if(_cTot===undefined)_cTot=40;
+  var _mTot = (inventory.find(function(x){return x.kind==='machine';})||{}).total_qty; if(_mTot===undefined)_mTot=10;
+  var _contOut = dumpJobs.filter(function(j){return j.driver_status==='delivered'||j.driver_status==='arrived'||j.driver_status==='on_the_way';}).length;
+  var _machOut = rentals.filter(function(r){return r.rental_status==='active';}).length;
+  var _contAvail = Math.max(0, _cTot - _contOut);
+  var _machAvail = Math.max(0, _mTot - _machOut);
+  var _activeDumpsNow = dumpJobs.filter(function(j){return j.driver_status!=='completed';}).length;
   return /*#__PURE__*/React.createElement("div", {
     style: {
       minHeight: '100vh'
@@ -4285,51 +4312,35 @@ function App() {
       marginBottom: 20
     }
   }, [{
-    l: 'Active Dumps',
-    v: dumpJobs.filter(function(j){return j.driver_status!=='completed';}).length,
+    l: 'Available Containers',
+    v: _contAvail + ' / ' + _cTot,
     a: false,
     color: '#F59E0B'
   }, {
     l: 'Containers Out',
-    v: dumpJobs.filter(function(j){return j.driver_status==='delivered'||j.driver_status==='arrived';}).length,
+    v: _contOut,
     a: false,
     color: '#F59E0B'
   }, {
-    l: 'Unpaid Dumps',
-    v: dumpJobs.filter(function(j){return j.payment_status==='unpaid';}).length,
-    a: dumpJobs.filter(function(j){return j.payment_status==='unpaid';}).length > 0,
+    l: 'Active Dumps (now)',
+    v: _activeDumpsNow,
+    a: false,
     color: '#F59E0B'
   }, {
-    l: 'Active Rentals',
+    l: 'Available Machines/Tools',
+    v: _machAvail + ' / ' + _mTot,
+    a: false,
+    color: '#DC2626'
+  }, {
+    l: 'Machines/Tools Out',
+    v: _machOut,
+    a: false,
+    color: '#DC2626'
+  }, {
+    l: 'Active Machines (now)',
     v: active,
     a: false,
     color: '#DC2626'
-  }, {
-    l: 'Overdue Rentals',
-    v: overdue,
-    a: overdue > 0,
-    color: '#DC2626'
-  }, {
-    l: 'Total Rentals',
-    v: rentals.length,
-    a: false,
-    color: '#DC2626'
-  }, {
-    l: 'This Week',
-    v: money(revenueWeek),
-    a: false
-  }, {
-    l: 'This Month',
-    v: money(revenueMonth),
-    a: false
-  }, {
-    l: 'This Year',
-    v: money(revenueYear),
-    a: false
-  }, {
-    l: 'All Revenue',
-    v: money(revenue),
-    a: false
   }].map((s, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
@@ -4353,30 +4364,44 @@ function App() {
       fontWeight: 700,
       color: s.a ? '#DC2626' : '#111827'
     }
-  }, s.v)))), dumpJobs.length > 0 && dumpJobs.length > 0 && /*#__PURE__*/React.createElement("div", {style:{marginBottom:20}},
-    /*#__PURE__*/React.createElement("div", {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
-      /*#__PURE__*/React.createElement("h2", {style:{fontSize:18,fontWeight:700}}, "Active Dump Jobs (" + dumpJobs.filter(function(j){return j.driver_status!=='completed';}).length + ")"),
-      /*#__PURE__*/React.createElement("button", {onClick:function(){setTab('dumping');}, style:{padding:"6px 14px",background:"#F59E0B",color:"#fff",border:"none",borderRadius:7,cursor:"pointer",fontSize:13,fontWeight:700}}, "View All")
-    ),
+  }, s.v)))), dumpJobs.length > 0 && /*#__PURE__*/React.createElement("div", {style:{marginBottom:20}},
+    /*#__PURE__*/React.createElement("h2", {style:{fontSize:18,fontWeight:700,marginBottom:10}}, "All Dumping (" + dumpJobs.length + ")"),
     /*#__PURE__*/React.createElement("div", {style:{background:"#fff",borderRadius:12,border:"1px solid #FDE68A",overflow:"hidden"}},
+      dumpJobs.length === 0 ? /*#__PURE__*/React.createElement("div", {style:{padding:30,textAlign:"center",color:"#9CA3AF",fontSize:14}}, "No dumping jobs yet. Press + New Dumping to create one.") :
+      /*#__PURE__*/React.createElement("div", {style:{overflowX:"auto"}},
       /*#__PURE__*/React.createElement("table", {style:{width:"100%",borderCollapse:"collapse",fontSize:13}},
         /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {style:{background:"#FFFBEB"}},
-          ["Client","Type","Container","Material","Driver","Total","Status"].map(function(h){return /*#__PURE__*/React.createElement("th",{key:h,style:{padding:"8px 10px",textAlign:"left",fontSize:11,fontWeight:700,color:"#92400E",textTransform:"uppercase",borderBottom:"1px solid #FDE68A"}},h);})
+          ["Ticket","Client","Type","Container","Material","Driver","Total","Status","Job","Actions"].map(function(h){return /*#__PURE__*/React.createElement("th",{key:h,style:{padding:"8px 10px",textAlign:"left",fontSize:11,fontWeight:700,color:"#92400E",textTransform:"uppercase",borderBottom:"1px solid #FDE68A",whiteSpace:"nowrap"}},h);})
         )),
         /*#__PURE__*/React.createElement("tbody", null,
-          dumpJobs.filter(function(j){return j.driver_status!=='completed';}).slice(0,8).map(function(j,i){
+          dumpJobs.map(function(j,i){
+            var jobDone = j.driver_status === "completed";
             return /*#__PURE__*/React.createElement("tr",{key:j.id,style:{background:i%2===0?"#fff":"#FFFBEB",borderBottom:"1px solid #FEF9C3"}},
-              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px"}},/*#__PURE__*/React.createElement("div",{style:{fontWeight:700}},j.client_name),/*#__PURE__*/React.createElement("div",{style:{fontSize:11,color:"#9CA3AF"}},j.client_phone)),
+              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px",fontWeight:700,color:"#92400E"}},"#"+(j.ticket_no||"")),
+              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px"}},
+                /*#__PURE__*/React.createElement("button",{onClick:function(){setClientPanel(j.client_name);},style:{fontWeight:700,background:"none",border:"none",cursor:"pointer",color:"#111827",padding:0,textAlign:"left",fontSize:13}},j.client_name),
+                /*#__PURE__*/React.createElement("div",{style:{fontSize:11,color:"#9CA3AF"}},j.client_phone||"")
+              ),
               /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px"}},/*#__PURE__*/React.createElement("span",{style:{background:j.job_type==="PULL"?"#EFF6FF":j.job_type==="SWITCH"?"#FFF7ED":"#F0FDF4",color:j.job_type==="PULL"?"#1D4ED8":j.job_type==="SWITCH"?"#C2410C":"#065F46",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700}},j.job_type)),
               /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px",color:"#6B7280"}},j.container_size),
               /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px",color:"#6B7280"}},j.material_type),
               /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px",color:"#6B7280"}},j.assigned_driver),
               /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px",fontWeight:700}},"$"+(parseFloat(j.total_price)||0).toFixed(2)),
-              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px"}},/*#__PURE__*/React.createElement("span",{style:{background:j.payment_status==="paid"?"#ECFDF5":"#FEF2F2",color:j.payment_status==="paid"?"#065F46":"#991B1B",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700}},j.payment_status==="paid"?"Paid":"Unpaid"))
+              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px"}},/*#__PURE__*/React.createElement("span",{style:{background:j.payment_status==="paid"?"#ECFDF5":"#FEF2F2",color:j.payment_status==="paid"?"#065F46":"#991B1B",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700}},j.payment_status==="paid"?"Paid":"Unpaid")),
+              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px"}},/*#__PURE__*/React.createElement("span",{style:{background:jobDone?"#F0FDF4":"#EFF6FF",color:jobDone?"#065F46":"#1D4ED8",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700}},jobDone?"Complete":"Active")),
+              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px"}},
+                /*#__PURE__*/React.createElement("div",{style:{display:"flex",gap:5,flexWrap:"wrap"}},
+                  j.payment_status!=="paid" && /*#__PURE__*/React.createElement("button",{onClick:function(){markDumpPaid(j.id);},style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,border:"none",cursor:"pointer",background:"#ECFDF5",color:"#065F46"}},"Mark Paid"),
+                  !jobDone && /*#__PURE__*/React.createElement("button",{onClick:function(){markDumpComplete(j.id);},style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,border:"none",cursor:"pointer",background:"#F0FDF4",color:"#065F46"}},"Complete"),
+                  /*#__PURE__*/React.createElement("button",{onClick:function(){var url="https://samsoffice.github.io/Sams-rental/#/dump/"+j.portal_token;navigator.clipboard.writeText(url).catch(function(){});window.open(url,"_blank");},style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,border:"none",cursor:"pointer",background:"#EFF6FF",color:"#1D4ED8"}},"Portal"),
+                  /*#__PURE__*/React.createElement("button",{onClick:function(){setEditDumpJob(j); setTab('dumping'); setOpenDumpForm(true);},style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,border:"none",cursor:"pointer",background:"#F9FAFB",color:"#374151",border:"1px solid #E5E7EB"}},"Edit"),
+                  /*#__PURE__*/React.createElement("button",{onClick:function(){if(confirm("Delete this dump job?")){deleteDumpJob(j.id);}},style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,border:"none",cursor:"pointer",background:"#FEF2F2",color:"#DC2626"}},"Delete")
+                )
+              )
             );
           })
         )
-      )
+      ))
     )
   ), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -4986,7 +5011,7 @@ function App() {
     rentals: rentals
   }), !loading && tab === 'schedule' && /*#__PURE__*/React.createElement(ScheduleTab, {
     rentals: rentals, dumpJobs: dumpJobs
-  }), !loading && tab === 'overview' && React.createElement(OverviewTab, {rentals: rentals, dumpJobs: dumpJobs, money: money, showToast: showToast}), tab === 'dumping' && React.createElement(DumpingTab, {showToast: showToast, dumpJobs: dumpJobs, reloadData: loadData, rentals: rentals, setClientPanel: setClientPanel, openDumpForm: openDumpForm, setOpenDumpForm: setOpenDumpForm, goToDashboard: function(){ setTab('dashboard'); }}),
+  }), !loading && tab === 'overview' && React.createElement(OverviewTab, {rentals: rentals, dumpJobs: dumpJobs, money: money, showToast: showToast}), tab === 'dumping' && React.createElement(DumpingTab, {showToast: showToast, dumpJobs: dumpJobs, reloadData: loadData, rentals: rentals, setClientPanel: setClientPanel, openDumpForm: openDumpForm, setOpenDumpForm: setOpenDumpForm, goToDashboard: function(){ setTab('dashboard'); }, editDumpJob: editDumpJob, setEditDumpJob: setEditDumpJob}),
         !loading && tab === 'confirmations' && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
