@@ -358,9 +358,14 @@ function Login({
 
 // ── SCHEDULE TAB ──
 function ScheduleTab({
-  rentals
+  rentals, dumpJobs
 }) {
+  dumpJobs = dumpJobs || [];
   const active = rentals.filter(r => r.rental_status === 'active');
+  const monthLabel = new Date().toLocaleString('en-US',{month:'long', year:'numeric'});
+  const containersOut = dumpJobs.filter(j => j.driver_status==='delivered'||j.driver_status==='arrived'||j.driver_status==='on_the_way');
+  const dumpDrops = dumpJobs.filter(j => j.scheduled_dropoff && j.driver_status!=='completed');
+  const dumpPicks = dumpJobs.filter(j => j.scheduled_pickup && j.driver_status!=='completed');
   const today = new Date();
   const cal = Array.from({
     length: 30
@@ -397,7 +402,7 @@ function ScheduleTab({
       fontWeight: 700,
       color: '#fff'
     }
-  }, "\uD83D\uDCCB Equipment Currently Out")), /*#__PURE__*/React.createElement("div", {
+  }, "\uD83D\uDCCB Equipment Currently Out \u2014 " + monthLabel)), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: 16,
       display: 'grid',
@@ -448,7 +453,31 @@ function ScheduleTab({
         color: d < 0 ? '#991B1B' : d <= 2 ? '#92400E' : '#065F46'
       }
     }, d < 0 ? Math.abs(d) + 'd overdue' : d === 0 ? 'due today' : d + 'd left'));
-  }))), /*#__PURE__*/React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", { style: { background: '#fff', borderRadius: 12, border: '1px solid #FDE68A', overflow: 'hidden' } },
+    /*#__PURE__*/React.createElement("div", { style: { background: '#F59E0B', padding: '14px 18px' } }, /*#__PURE__*/React.createElement("h3", { style: { fontSize: 14, fontWeight: 700, color: '#fff' } }, "\uD83D\uDEDB Containers Currently Out \u2014 " + monthLabel)),
+    /*#__PURE__*/React.createElement("div", { style: { padding: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 10 } },
+      containersOut.length === 0 ? /*#__PURE__*/React.createElement("div", { style: { padding: 24, textAlign: 'center', color: '#9CA3AF' } }, "No containers out") :
+      containersOut.map(function(j) {
+        return /*#__PURE__*/React.createElement("div", { key: j.id, style: { background: '#FFFBEB', borderRadius: 8, padding: '12px 14px', border: '1px solid #FDE68A' } },
+          /*#__PURE__*/React.createElement("div", { style: { fontWeight: 700, fontSize: 14 } }, j.client_name),
+          /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, color: '#92400E' } }, j.container_size + ' \u2022 ' + j.material_type),
+          /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, color: '#6B7280' } }, j.client_address || '')
+        );
+      })
+    ),
+    /*#__PURE__*/React.createElement("div", { style: { padding: '0 16px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
+      /*#__PURE__*/React.createElement("div", null,
+        /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: '#1D4ED8', marginBottom: 6 } }, "Scheduled Drop-offs (" + dumpDrops.length + ")"),
+        dumpDrops.length === 0 ? /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, color: '#9CA3AF' } }, "None") :
+        dumpDrops.map(function(j){ return /*#__PURE__*/React.createElement("div", { key: j.id, style: { fontSize: 12, padding: '4px 0', borderBottom: '1px solid #F3F4F6' } }, (j.scheduled_dropoff||'') + " \u2014 " + j.client_name); })
+      ),
+      /*#__PURE__*/React.createElement("div", null,
+        /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: '#7C3AED', marginBottom: 6 } }, "Scheduled Pickups (" + dumpPicks.length + ")"),
+        dumpPicks.length === 0 ? /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, color: '#9CA3AF' } }, "None") :
+        dumpPicks.map(function(j){ return /*#__PURE__*/React.createElement("div", { key: j.id, style: { fontSize: 12, padding: '4px 0', borderBottom: '1px solid #F3F4F6' } }, (j.scheduled_pickup||'') + " \u2014 " + j.client_name); })
+      )
+    )
+  ), /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
       borderRadius: 12,
@@ -953,10 +982,15 @@ function NewRentalForm({
     }
     setSaving(true);
     const cat = assets.find(a => a.name === form.asset)?.category || 'Machine';
+    const cleanForm = { ...form };
+    ['delivery_date','pickup_date','delivery_fee','trailer_fee','diesel_fee'].forEach(function(k){
+      if (k.indexOf('_date') > -1) { if (!cleanForm[k]) cleanForm[k] = null; }
+      else { cleanForm[k] = parseFloat(cleanForm[k]) || 0; }
+    });
     const {
       error
     } = await sb.from('rentals').insert({
-      ...form,
+      ...cleanForm,
       category: cat,
       due_date: due(),
       duration_days: parseInt(form.duration_days),
@@ -1222,7 +1256,17 @@ function NewRentalForm({
     placeholder: "4500",
     value: form.price,
     onChange: e => set('price', e.target.value)
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
+  })),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Delivery Fee ($)"), /*#__PURE__*/React.createElement("input", {type:"number",style:inp,value:form.delivery_fee||0,onChange:function(e){set('delivery_fee',parseFloat(e.target.value)||0);},placeholder:"0 if client picks up"})),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Trailer Fee ($100/day)"), /*#__PURE__*/React.createElement("input", {type:"number",style:inp,value:form.trailer_fee||0,onChange:function(e){set('trailer_fee',parseFloat(e.target.value)||0);},placeholder:"0 if no trailer used"})),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Diesel Charge ($)"), /*#__PURE__*/React.createElement("input", {type:"number",style:inp,value:form.diesel_fee||0,onChange:function(e){set('diesel_fee',parseFloat(e.target.value)||0);},placeholder:"0 if returned full tank"})),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Pickup Type"), /*#__PURE__*/React.createElement("select", {style:inp,value:form.pickup_type||'delivery',onChange:function(e){set('pickup_type',e.target.value);}},
+    /*#__PURE__*/React.createElement("option",{value:"delivery"},"Sams Delivers and Picks Up"),
+    /*#__PURE__*/React.createElement("option",{value:"client_pickup"},"Client Picks Up (No Delivery Fee)")
+  )),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Scheduled Delivery"), /*#__PURE__*/React.createElement("input", {type:"date",style:inp,value:form.delivery_date||'',onChange:function(e){set('delivery_date',e.target.value);}})),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Scheduled Pickup"), /*#__PURE__*/React.createElement("input", {type:"date",style:inp,value:form.pickup_date||'',onChange:function(e){set('pickup_date',e.target.value);}})),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: lbl
   }, "Payment Status"), /*#__PURE__*/React.createElement("select", {
     style: {
@@ -4918,7 +4962,7 @@ function App() {
   })), !loading && tab === 'invoice' && /*#__PURE__*/React.createElement(InvoiceTab, {
     rentals: rentals
   }), !loading && tab === 'schedule' && /*#__PURE__*/React.createElement(ScheduleTab, {
-    rentals: rentals
+    rentals: rentals, dumpJobs: dumpJobs
   }), !loading && tab === 'overview' && React.createElement(OverviewTab, {rentals: rentals, dumpJobs: dumpJobs, money: money, showToast: showToast}), tab === 'dumping' && React.createElement(DumpingTab, {showToast: showToast, dumpJobs: dumpJobs, reloadData: loadData, rentals: rentals, setClientPanel: setClientPanel, openDumpForm: openDumpForm, setOpenDumpForm: setOpenDumpForm, goToDashboard: function(){ setTab('dashboard'); }}),
         !loading && tab === 'confirmations' && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
