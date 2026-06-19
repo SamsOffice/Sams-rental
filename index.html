@@ -61,6 +61,23 @@ const STEPS = [{
   label: '✅ Delivered & Confirmed',
   pct: 100
 }];
+const DUMP_STEPS_ADMIN = [{
+  key: 'pending',
+  label: '📋 Scheduled',
+  pct: 10
+}, {
+  key: 'on_the_way',
+  label: '🚛 On The Way',
+  pct: 45
+}, {
+  key: 'arrived',
+  label: '📦 Container Dropped',
+  pct: 75
+}, {
+  key: 'completed',
+  label: '✓ Completed',
+  pct: 100
+}];
 const getStep = s => STEPS.find(x => x.key === s) || STEPS[0];
 const days = d => Math.ceil((new Date(d) - new Date().setHours(0, 0, 0, 0)) / 86400000);
 const fmtD = s => {
@@ -3869,10 +3886,12 @@ function App() {
     showToast('Deleted permanently');
     loadData();
   };
-  const setDriverStatus = async (id, status) => {
-    await sb.from('rentals').update({
-      driver_status: status
-    }).eq('id', id);
+  const setDriverStatus = async (id, status, isDump) => {
+    if (isDump) {
+      await sb.from('dump_jobs').update({ driver_status: status }).eq('id', id);
+    } else {
+      await sb.from('rentals').update({ driver_status: status }).eq('id', id);
+    }
     loadData();
   };
   const approveExt = async ext => {
@@ -4669,7 +4688,9 @@ function App() {
       gap: 20
     }
   }, WORKERS.map(driver => {
-    const jobs = rentals.filter(r => r.assigned_driver === driver && r.rental_status !== 'completed');
+    const rentalJobs = rentals.filter(r => r.assigned_driver === driver && r.rental_status !== 'completed');
+    const driverDumps = dumpJobs.filter(j => j.assigned_driver === driver && j.driver_status !== 'completed').map(function(j){ return Object.assign({}, j, { _isDump: true, asset: j.job_type + ' \u2014 ' + j.material_type }); });
+    const jobs = rentalJobs.concat(driverDumps);
     return /*#__PURE__*/React.createElement("div", {
       key: driver,
       style: {
@@ -4731,9 +4752,11 @@ function App() {
         fontSize: 12
       }
     }, "No active jobs") : jobs.map(r => {
-      const step = getStep(r.driver_status);
-      const stepIdx = STEPS.findIndex(x => x.key === r.driver_status);
-      const next = STEPS[stepIdx + 1];
+      const _steps = r._isDump ? DUMP_STEPS_ADMIN : STEPS;
+      const stepIdx0 = _steps.findIndex(x => x.key === r.driver_status);
+      const step = stepIdx0 >= 0 ? _steps[stepIdx0] : _steps[0];
+      const stepIdx = stepIdx0 >= 0 ? stepIdx0 : 0;
+      const next = _steps[stepIdx + 1];
       return /*#__PURE__*/React.createElement("div", {
         key: r.id,
         style: {
@@ -4762,7 +4785,7 @@ function App() {
           marginBottom: 8
         }
       }, step.label), next && /*#__PURE__*/React.createElement("button", {
-        onClick: () => setDriverStatus(r.id, next.key),
+        onClick: () => setDriverStatus(r.id, next.key, r._isDump),
         style: {
           width: '100%',
           padding: '8px',
@@ -6495,8 +6518,7 @@ function DriverApp({
         lineHeight: 2,
         borderBottom: '1px solid #E5E7EB'
       }
-    }, r._isDump && /*#__PURE__*/React.createElement("div", {style:{background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:8,padding:'8px 10px',marginBottom:8,fontSize:12,color:'#92400E',fontWeight:600}}, 'Manda foto del recibo de American Recycling al WhatsApp'),
-    /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCCD ", r.client_address), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCC5 Vence: ", r.due_date, " (", d < 0 ? Math.abs(d) + 'd vencido' : d === 0 ? 'hoy' : d + 'd restantes', ")"), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCB0 ", money(r.price), " \xB7 ", r.payment_status === 'paid' ? 'PAGADO' : r.payment_status === 'partial' ? 'PARCIAL' : 'NO PAGADO'), r.notes && /*#__PURE__*/React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCCD ", r.client_address), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCC5 Vence: ", r.due_date, " (", d < 0 ? Math.abs(d) + 'd vencido' : d === 0 ? 'hoy' : d + 'd restantes', ")"), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCB0 ", money(r.price), " \xB7 ", r.payment_status === 'paid' ? 'PAGADO' : r.payment_status === 'partial' ? 'PARCIAL' : 'NO PAGADO'), r.notes && /*#__PURE__*/React.createElement("div", {
       style: {
         marginTop: 6,
         padding: '8px 10px',
