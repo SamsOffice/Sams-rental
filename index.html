@@ -2861,6 +2861,7 @@ function DumpingTab(_ref) {
   var openDumpForm = _ref.openDumpForm;
   var setOpenDumpForm = _ref.setOpenDumpForm || function(){};
   var goToDashboard = _ref.goToDashboard || function(){};
+  var savingRef = React.useRef(false);
   var _dst = React.useState('jobs'), dumpSubTab = _dst[0], setDumpSubTab = _dst[1];
   var _React$useState = React.useState([]), jobs = _React$useState[0], setJobs = _React$useState[1];
   var _React$useState2 = React.useState(true), loading = _React$useState2[0], setLoading = _React$useState2[1];
@@ -2922,7 +2923,9 @@ function DumpingTab(_ref) {
   };
 
   var saveJob = async function() {
-    if (!form.client_name || !form.client_name.trim()) { showToast('Client name is required'); return; }
+    if (savingRef.current) return;
+    savingRef.current = true;
+    if (!form.client_name || !form.client_name.trim()) { showToast('Client name is required'); savingRef.current=false; return; }
     var total = calcTotal(form);
     var payload = Object.assign({}, form, {total_price: total});
     // Clean empty strings from uuid/date columns so Postgres does not reject the insert
@@ -2936,7 +2939,7 @@ function DumpingTab(_ref) {
     } else {
       res = await sb.from('dump_jobs').insert([payload]);
     }
-    if (res && res.error) { showToast('Save failed: ' + res.error.message); return; }
+    if (res && res.error) { showToast('Save failed: ' + res.error.message); savingRef.current=false; return; }
     showToast(editJob ? 'Dump job updated' : 'Dump job created');
     setShowForm(false);
     setEditJob(null);
@@ -3635,7 +3638,7 @@ function App() {
       setDeleted(r1.data.filter(r => r.deleted));
     }
     if (r2.data) setExtensions(r2.data);
-    if (r3.data) setDumpJobs(r3.data);
+    if (r3.data) { var seen={}; setDumpJobs(r3.data.filter(function(j){ if(seen[j.id]) return false; seen[j.id]=true; return true; })); }
     setLoading(false);
   };
   const showToast = m => {
@@ -3929,32 +3932,7 @@ function App() {
       maxWidth: 1400,
       margin: '0 auto'
     }
-  }, tab === 'dashboard' && dumpJobs.length > 0 && /*#__PURE__*/React.createElement("div", {style:{marginBottom:20}},
-    /*#__PURE__*/React.createElement("div", {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
-      /*#__PURE__*/React.createElement("h2", {style:{fontSize:18,fontWeight:700}}, "Active Dump Jobs (" + dumpJobs.filter(function(j){return j.driver_status!=='completed';}).length + ")"),
-      /*#__PURE__*/React.createElement("button", {onClick:function(){setTab('dumping');}, style:{padding:"6px 14px",background:"#F59E0B",color:"#fff",border:"none",borderRadius:7,cursor:"pointer",fontSize:13,fontWeight:700}}, "View All")
-    ),
-    /*#__PURE__*/React.createElement("div", {style:{background:"#fff",borderRadius:12,border:"1px solid #FDE68A",overflow:"hidden"}},
-      /*#__PURE__*/React.createElement("table", {style:{width:"100%",borderCollapse:"collapse",fontSize:13}},
-        /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {style:{background:"#FFFBEB"}},
-          ["Client","Type","Container","Material","Driver","Total","Status"].map(function(h){return /*#__PURE__*/React.createElement("th",{key:h,style:{padding:"8px 10px",textAlign:"left",fontSize:11,fontWeight:700,color:"#92400E",textTransform:"uppercase",borderBottom:"1px solid #FDE68A"}},h);})
-        )),
-        /*#__PURE__*/React.createElement("tbody", null,
-          dumpJobs.filter(function(j){return j.driver_status!=='completed';}).slice(0,8).map(function(j,i){
-            return /*#__PURE__*/React.createElement("tr",{key:j.id,style:{background:i%2===0?"#fff":"#FFFBEB",borderBottom:"1px solid #FEF9C3"}},
-              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px"}},/*#__PURE__*/React.createElement("div",{style:{fontWeight:700}},j.client_name),/*#__PURE__*/React.createElement("div",{style:{fontSize:11,color:"#9CA3AF"}},j.client_phone)),
-              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px"}},/*#__PURE__*/React.createElement("span",{style:{background:j.job_type==="PULL"?"#EFF6FF":j.job_type==="SWITCH"?"#FFF7ED":"#F0FDF4",color:j.job_type==="PULL"?"#1D4ED8":j.job_type==="SWITCH"?"#C2410C":"#065F46",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700}},j.job_type)),
-              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px",color:"#6B7280"}},j.container_size),
-              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px",color:"#6B7280"}},j.material_type),
-              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px",color:"#6B7280"}},j.assigned_driver),
-              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px",fontWeight:700}},"$"+(parseFloat(j.total_price)||0).toFixed(2)),
-              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px"}},/*#__PURE__*/React.createElement("span",{style:{background:j.payment_status==="paid"?"#ECFDF5":"#FEF2F2",color:j.payment_status==="paid"?"#065F46":"#991B1B",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700}},j.payment_status==="paid"?"Paid":"Unpaid"))
-            );
-          })
-        )
-      )
-    )
-  ),
+  }, tab === 'dashboard' && null,
   deleted.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 16
@@ -4100,6 +4078,21 @@ function App() {
       marginBottom: 20
     }
   }, [{
+    l: 'Active Dumps',
+    v: dumpJobs.filter(function(j){return j.driver_status!=='completed';}).length,
+    a: false,
+    color: '#F59E0B'
+  }, {
+    l: 'Containers Out',
+    v: dumpJobs.filter(function(j){return j.driver_status==='delivered'||j.driver_status==='arrived';}).length,
+    a: false,
+    color: '#F59E0B'
+  }, {
+    l: 'Unpaid Dumps',
+    v: dumpJobs.filter(function(j){return j.payment_status==='unpaid';}).length,
+    a: dumpJobs.filter(function(j){return j.payment_status==='unpaid';}).length > 0,
+    color: '#F59E0B'
+  }, {
     l: 'Active Rentals',
     v: active,
     a: false,
@@ -4109,31 +4102,6 @@ function App() {
     v: overdue,
     a: overdue > 0,
     color: '#DC2626'
-  }, {
-    l: 'Active Dumps',
-    v: dumpJobs.filter(function(j){return j.driver_status!=='completed';}).length,
-    a: false,
-    color: '#F59E0B'
-  }, {
-    l: 'Unpaid Dumps',
-    v: dumpJobs.filter(function(j){return j.payment_status==='unpaid';}).length,
-    a: dumpJobs.filter(function(j){return j.payment_status==='unpaid';}).length > 0,
-    color: '#F59E0B'
-  }, {
-    l: 'Active Dumps',
-    v: dumpJobs.filter(function(j){return j.driver_status!=='completed';}).length,
-    a: false,
-    color: '#F59E0B'
-  }, {
-    l: 'Unpaid Dumps',
-    v: dumpJobs.filter(function(j){return j.payment_status==='unpaid';}).length,
-    a: dumpJobs.filter(function(j){return j.payment_status==='unpaid';}).length>0,
-    color: '#F59E0B'
-  }, {
-    l: 'Containers Out',
-    v: dumpJobs.filter(function(j){return j.driver_status==='delivered'||j.driver_status==='arrived';}).length,
-    a: false,
-    color: '#F59E0B'
   }, {
     l: 'Total Rentals',
     v: rentals.length,
@@ -4178,7 +4146,32 @@ function App() {
       fontWeight: 700,
       color: s.a ? '#DC2626' : '#111827'
     }
-  }, s.v)))), /*#__PURE__*/React.createElement("div", {
+  }, s.v)))), dumpJobs.length > 0 && dumpJobs.length > 0 && /*#__PURE__*/React.createElement("div", {style:{marginBottom:20}},
+    /*#__PURE__*/React.createElement("div", {style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
+      /*#__PURE__*/React.createElement("h2", {style:{fontSize:18,fontWeight:700}}, "Active Dump Jobs (" + dumpJobs.filter(function(j){return j.driver_status!=='completed';}).length + ")"),
+      /*#__PURE__*/React.createElement("button", {onClick:function(){setTab('dumping');}, style:{padding:"6px 14px",background:"#F59E0B",color:"#fff",border:"none",borderRadius:7,cursor:"pointer",fontSize:13,fontWeight:700}}, "View All")
+    ),
+    /*#__PURE__*/React.createElement("div", {style:{background:"#fff",borderRadius:12,border:"1px solid #FDE68A",overflow:"hidden"}},
+      /*#__PURE__*/React.createElement("table", {style:{width:"100%",borderCollapse:"collapse",fontSize:13}},
+        /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {style:{background:"#FFFBEB"}},
+          ["Client","Type","Container","Material","Driver","Total","Status"].map(function(h){return /*#__PURE__*/React.createElement("th",{key:h,style:{padding:"8px 10px",textAlign:"left",fontSize:11,fontWeight:700,color:"#92400E",textTransform:"uppercase",borderBottom:"1px solid #FDE68A"}},h);})
+        )),
+        /*#__PURE__*/React.createElement("tbody", null,
+          dumpJobs.filter(function(j){return j.driver_status!=='completed';}).slice(0,8).map(function(j,i){
+            return /*#__PURE__*/React.createElement("tr",{key:j.id,style:{background:i%2===0?"#fff":"#FFFBEB",borderBottom:"1px solid #FEF9C3"}},
+              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px"}},/*#__PURE__*/React.createElement("div",{style:{fontWeight:700}},j.client_name),/*#__PURE__*/React.createElement("div",{style:{fontSize:11,color:"#9CA3AF"}},j.client_phone)),
+              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px"}},/*#__PURE__*/React.createElement("span",{style:{background:j.job_type==="PULL"?"#EFF6FF":j.job_type==="SWITCH"?"#FFF7ED":"#F0FDF4",color:j.job_type==="PULL"?"#1D4ED8":j.job_type==="SWITCH"?"#C2410C":"#065F46",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700}},j.job_type)),
+              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px",color:"#6B7280"}},j.container_size),
+              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px",color:"#6B7280"}},j.material_type),
+              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px",color:"#6B7280"}},j.assigned_driver),
+              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px",fontWeight:700}},"$"+(parseFloat(j.total_price)||0).toFixed(2)),
+              /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px"}},/*#__PURE__*/React.createElement("span",{style:{background:j.payment_status==="paid"?"#ECFDF5":"#FEF2F2",color:j.payment_status==="paid"?"#065F46":"#991B1B",padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700}},j.payment_status==="paid"?"Paid":"Unpaid"))
+            );
+          })
+        )
+      )
+    )
+  ), /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
       borderRadius: 11,
@@ -6146,6 +6139,7 @@ function DriverApp({
 }) {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [recentlyDone, setRecentlyDone] = React.useState([]);
   const load = async () => {
     const {
       data
@@ -6155,6 +6149,9 @@ function DriverApp({
     ]).then(function(results) {
       var rents = (results[0].data||[]).filter(function(r){return r.rental_status!=='completed'&&r.rental_status!=='cancelled';});
       var dumps = (results[1].data||[]).filter(function(j){return j.driver_status!=='completed';}).map(function(j){return Object.assign({},j,{_isDump:true,asset:j.job_type+' — '+j.material_type});});
+      var doneR = (results[0].data||[]).filter(function(r){return r.rental_status==='completed';}).slice(0,5);
+      var doneD = (results[1].data||[]).filter(function(j){return j.driver_status==='completed';}).map(function(j){return Object.assign({},j,{_isDump:true,asset:j.job_type+' — '+j.material_type});}).slice(0,5);
+      setRecentlyDone(doneR.concat(doneD));
       setJobs(rents.concat(dumps));
       setLoading(false);
     });
@@ -6162,6 +6159,14 @@ function DriverApp({
   useEffect(() => {
     load();
   }, []);
+  const recoverJob = async (r) => {
+    if (r._isDump) {
+      await sb.from('dump_jobs').update({ driver_status: 'on_the_way' }).eq('id', r.id);
+    } else {
+      await sb.from('rentals').update({ rental_status: 'active', driver_status: 'on_the_way' }).eq('id', r.id);
+    }
+    load();
+  };
   const setStatus = async (id, s, isDump) => {
     if (isDump) {
       await sb.from('dump_jobs').update({driver_status: s==='delivered'?'completed':s}).eq('id', id);
@@ -6405,7 +6410,18 @@ function DriverApp({
         textAlign: 'center'
       }
     }, "\uD83D\uDDFA Mapa")));
-  })));
+  })), recentlyDone.length > 0 && /*#__PURE__*/React.createElement("div", { style: { padding: 16, borderTop: '8px solid #F3F4F6' } },
+    /*#__PURE__*/React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: '#6B7280', marginBottom: 10 } }, "Completados Recientemente"),
+    recentlyDone.map(function(r) {
+      return /*#__PURE__*/React.createElement("div", { key: (r._isDump?'d':'r')+r.id, style: { background: '#fff', borderRadius: 10, padding: '12px 14px', marginBottom: 8, border: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+        /*#__PURE__*/React.createElement("div", null,
+          /*#__PURE__*/React.createElement("div", { style: { fontWeight: 600, fontSize: 14 } }, r.asset || r.client_name),
+          /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, color: '#9CA3AF' } }, r.client_name)
+        ),
+        /*#__PURE__*/React.createElement("button", { onClick: function(){ recoverJob(r); }, style: { padding: '8px 14px', borderRadius: 8, border: 'none', background: '#F59E0B', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' } }, "Recuperar")
+      );
+    })
+  ));
 }
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(/*#__PURE__*/React.createElement(App, null));
