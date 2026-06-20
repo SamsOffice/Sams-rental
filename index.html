@@ -5477,7 +5477,7 @@ function App() {
         color: '#9CA3AF',
         fontFamily: 'monospace'
       }
-    }, r.id), /*#__PURE__*/React.createElement("span", {
+    }, r._isDump ? ('DMP-' + (r.ticket_no || '')) : ('INV-' + String(r.id).slice(0,6).toUpperCase())), /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 12,
         fontWeight: 600,
