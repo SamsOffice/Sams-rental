@@ -28,6 +28,18 @@ const {
 } = React;
 const sb = supabase.createClient('https://bxrqnisgplsgnzxzugbd.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4cnFuaXNncGxzZ256eHp1Z2JkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1ODkwNzYsImV4cCI6MjA5NjE2NTA3Nn0.xtaxorZdkFBn-RkUGnPg9MU6bkIW1fEionyxFVxO1VI');
 const APP = 'https://samsoffice.github.io/Sams-rental';
+
+  function exportCSV(filename, rows){
+    if(!rows || !rows.length){ return; }
+    var headers = Object.keys(rows[0]);
+    var esc = function(v){ v = (v===null||v===undefined)?'':String(v); if(v.indexOf(',')>=0||v.indexOf('"')>=0||v.indexOf('\n')>=0){ v = '"' + v.replace(/"/g,'""') + '"'; } return v; };
+    var csv = headers.join(',') + '\n' + rows.map(function(r){ return headers.map(function(h){ return esc(r[h]); }).join(','); }).join('\n');
+    var blob = new Blob([csv], { type: 'text/csv' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+  }
 const PHONE = '+1 (917) 663-6369';
 const EMAIL = 'samsconstructionltd23@outlook.com';
 const WORKERS = ['Sams', 'Gustavo', 'Jose Luis'];
@@ -1745,7 +1757,7 @@ function ClientsTab(props) {
   return React.createElement('div', { style:{ display:'flex', flexDirection:'column', gap:16 } },
     React.createElement('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:10 } },
       React.createElement('h2', { style:{ fontSize:20, fontWeight:800 } }, '\uD83D\uDC65 Clients (' + clients.length + ')'),
-      React.createElement('input', { value:q, onChange:function(e){ setQ(e.target.value); }, placeholder:'\uD83D\uDD0D Search by name or phone...', style:{ padding:'8px 14px', border:'1px solid #E5E7EB', borderRadius:8, fontSize:13, outline:'none', background:'#F9FAFB', minWidth:240 } })
+      React.createElement('input', { value:q, onChange:function(e){ setQ(e.target.value); }, placeholder:'\uD83D\uDD0D Search by name or phone...', style:{ padding:'8px 14px', border:'1px solid #E5E7EB', borderRadius:8, fontSize:13, outline:'none', background:'#F9FAFB', minWidth:240 } }), React.createElement('button', { onClick:function(){ exportCSV('clients.csv', clients.map(function(c){ return { Name:c.name, Phone:c.phone, Email:c.email, Tag:c.tag, Rentals:c.rentals, Dumps:c.dumps, Paid:c.paid, Owed:c.owed }; })); }, style:{ padding:'8px 14px', border:'none', borderRadius:8, fontSize:13, fontWeight:700, background:'#065F46', color:'#fff', cursor:'pointer' } }, '\u2B07 Export CSV')
     ),
     clients.length === 0 && React.createElement('div', { style:{ background:'#fff', borderRadius:12, border:'1px solid #F3F4F6', padding:40, textAlign:'center', color:'#9CA3AF' } }, 'No clients yet.'),
     React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:12 } },
@@ -4478,7 +4490,7 @@ function App() {
   }, /*#__PURE__*/React.createElement("input", {
     value: search,
     onChange: e => setSearch(e.target.value),
-    placeholder: "\uD83D\uDD0D Search clients...",
+    placeholder: "\uD83D\uDD0D Search clients, rentals, dumps...",
     style: {
       width: '100%',
       padding: '6px 12px',
@@ -4809,8 +4821,34 @@ function App() {
       fontWeight: 700,
       color: s.a ? '#DC2626' : '#111827'
     }
-  }, s.v)))), dumpJobs.length > 0 && /*#__PURE__*/React.createElement("div", {style:{marginBottom:20}},
-    /*#__PURE__*/React.createElement("h2", {style:{fontSize:18,fontWeight:700,marginBottom:10}}, "All Dumping (" + dumpJobs.length + ")"),
+  }, s.v)))), (function(){
+    var today = new Date(new Date().toISOString().slice(0,10) + 'T00:00:00');
+    var b0=0, b30=0, b60=0, b90=0, total=0;
+    allRecords.filter(function(r){ return r.payment_status !== 'paid'; }).forEach(function(r){
+      var amt = parseFloat(r.price) || 0;
+      var due = r.due_date ? new Date(r.due_date + 'T00:00:00') : null;
+      var days = due ? Math.floor((today - due) / 86400000) : 0;
+      total += amt;
+      if (days <= 0) b0 += amt; else if (days <= 30) b30 += amt; else if (days <= 60) b60 += amt; else if (days <= 90) b90 += amt; else b90 += amt;
+    });
+    if (total === 0) return null;
+    return /*#__PURE__*/React.createElement("div", { style: { background: '#fff', borderRadius: 12, border: '1px solid #F3F4F6', padding: 18, marginBottom: 16 } },
+      /*#__PURE__*/React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 } },
+        /*#__PURE__*/React.createElement("h3", { style: { fontSize: 14, fontWeight: 700 } }, "\uD83D\uDCB0 Accounts Receivable Aging"),
+        /*#__PURE__*/React.createElement("span", { style: { fontSize: 16, fontWeight: 800, color: '#DC2626' } }, money(total) + ' owed')
+      ),
+      /*#__PURE__*/React.createElement("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 } }, [
+        { l: 'Current', v: b0, c: '#065F46' },
+        { l: '1-30 days', v: b30, c: '#92400E' },
+        { l: '31-60 days', v: b60, c: '#C2410C' },
+        { l: '60+ days', v: b90, c: '#991B1B' }
+      ].map(function(s){
+        return /*#__PURE__*/React.createElement("div", { key: s.l, style: { background: '#F9FAFB', borderRadius: 8, padding: '10px 12px', borderLeft: '3px solid ' + s.c } },
+          /*#__PURE__*/React.createElement("div", { style: { fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', marginBottom: 4 } }, s.l),
+          /*#__PURE__*/React.createElement("div", { style: { fontSize: 15, fontWeight: 700, color: s.c } }, money(s.v)));
+      })));
+  })(), dumpJobs.length > 0 && /*#__PURE__*/React.createElement("div", {style:{marginBottom:20}},
+    /*#__PURE__*/React.createElement("h2", {style:{fontSize:18,fontWeight:700,marginBottom:10}}, "All Dumping (" + (search ? dumpJobs.filter(function(j){return ((j.client_name||'')+' '+(j.material_type||'')+' '+(j.job_type||'')).toLowerCase().includes(search.toLowerCase());}) : dumpJobs).length + ")"),
     /*#__PURE__*/React.createElement("div", {style:{background:"#fff",borderRadius:12,border:"1px solid #FDE68A",overflow:"hidden"}},
       dumpJobs.length === 0 ? /*#__PURE__*/React.createElement("div", {style:{padding:30,textAlign:"center",color:"#9CA3AF",fontSize:14}}, "No dumping jobs yet. Press + New Dumping to create one.") :
       /*#__PURE__*/React.createElement("div", {style:{overflowX:"auto"}},
@@ -4819,7 +4857,7 @@ function App() {
           ["Ticket","Client","Type","Container","Material","Driver","Total","Payment","Delivery","Actions"].map(function(h){return /*#__PURE__*/React.createElement("th",{key:h,style:{padding:"8px 10px",textAlign:"left",fontSize:11,fontWeight:700,color:"#92400E",textTransform:"uppercase",borderBottom:"1px solid #FDE68A",whiteSpace:"nowrap"}},h);})
         )),
         /*#__PURE__*/React.createElement("tbody", null,
-          dumpJobs.map(function(j,i){
+          (search ? dumpJobs.filter(function(j){return ((j.client_name||'')+' '+(j.material_type||'')+' '+(j.job_type||'')).toLowerCase().includes(search.toLowerCase());}) : dumpJobs).map(function(j,i){
             var jobDone = j.driver_status === "completed";
             return /*#__PURE__*/React.createElement("tr",{key:j.id,style:{background:i%2===0?"#fff":"#FFFBEB",borderBottom:"1px solid #FEF9C3"}},
               /*#__PURE__*/React.createElement("td",{style:{padding:"9px 10px",fontWeight:700,color:"#92400E"}},"#"+(j.ticket_no||"")),
