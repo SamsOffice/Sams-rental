@@ -385,7 +385,7 @@ function ScheduleTab({
   const dumpPicks = dumpJobs.filter(j => j.scheduled_pickup && j.driver_status!=='completed');
   const today = new Date();
   const cal = Array.from({
-    length: 30
+    length: 365
   }, (_, i) => {
     const d = new Date(today);
     d.setDate(d.getDate() + i);
@@ -393,8 +393,18 @@ function ScheduleTab({
   });
   const forDay = date => {
     const ds = date.toISOString().slice(0, 10);
-    return active.filter(r => ds >= r.start_date && ds <= r.due_date);
+    const rentalsOn = active.filter(r => ds >= r.start_date && ds <= r.due_date).map(function(r){ return Object.assign({}, r, { _kind:'rental' }); });
+    const dumpsOn = dumpJobs.filter(function(j){ return j.driver_status!=='completed' && (j.scheduled_dropoff === ds || j.scheduled_pickup === ds || j.due_date === ds); }).map(function(j){ return Object.assign({}, j, { _kind:'dump', asset: (j.job_type||'') + ' \u2014 ' + (j.material_type||''), _label: j.scheduled_dropoff===ds?'Drop':j.scheduled_pickup===ds?'Pickup':'Due' }); });
+    return rentalsOn.concat(dumpsOn);
   };
+  // Group calendar days by month for headers
+  const calMonths = [];
+  cal.forEach(function(d){
+    const key = d.getFullYear() + '-' + d.getMonth();
+    let m = calMonths.find(function(x){ return x.key === key; });
+    if (!m) { m = { key: key, label: d.toLocaleString('en-US',{month:'long', year:'numeric'}), days: [] }; calMonths.push(m); }
+    m.days.push(d);
+  });
   return /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
@@ -512,7 +522,7 @@ function ScheduleTab({
       fontWeight: 700,
       color: '#fff'
     }
-  }, "\uD83D\uDCC5 30-Day Calendar")), /*#__PURE__*/React.createElement("div", {
+  }, "\uD83D\uDCC5 12-Month Calendar")), /*#__PURE__*/React.createElement("div", {
     style: {
       padding: 16,
       overflowX: 'auto'
@@ -556,13 +566,13 @@ function ScheduleTab({
         color: isT ? '#2563EB' : '#6B7280',
         marginBottom: 2
       }
-    }, date.getDate()), rents.slice(0, 2).map((r, j) => /*#__PURE__*/React.createElement("div", {
+    }, date.getDate()), rents.slice(0, 3).map((r, j) => /*#__PURE__*/React.createElement("div", {
       key: j,
       style: {
         fontSize: 8,
         fontWeight: 600,
-        background: '#BFDBFE',
-        color: '#1D4ED8',
+        background: r._kind === 'dump' ? '#FDE68A' : '#BFDBFE',
+        color: r._kind === 'dump' ? '#92400E' : '#1D4ED8',
         borderRadius: 3,
         padding: '1px 3px',
         marginBottom: 1,
@@ -570,12 +580,12 @@ function ScheduleTab({
         whiteSpace: 'nowrap',
         textOverflow: 'ellipsis'
       }
-    }, r.asset.split(' ').slice(-1)[0])), rents.length > 2 && /*#__PURE__*/React.createElement("div", {
+    }, (r._kind === 'dump' ? (r._label + ': ') : '') + ((r.asset || r.client_name || '').split(' ').slice(-1)[0]))), rents.length > 3 && /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 8,
         color: '#9CA3AF'
       }
-    }, "+", rents.length - 2));
+    }, "+", rents.length - 3));
   })))), /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
