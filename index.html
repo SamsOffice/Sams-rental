@@ -3246,7 +3246,10 @@ function DumpingTab(_ref) {
           ['Company','Sams','Gustavo','Jose Luis'].map(function(t){return React.createElement('option',{key:t,value:t},t);})
         )
       ),
-      React.createElement('div', {style:{gridColumn:'1/-1'}}, React.createElement('label', {style:lbl}, 'Linked Rental ID (optional)'), React.createElement('input', {style:inp, value:form.rental_id, onChange:function(e){set('rental_id',e.target.value);}, placeholder:'R-012 if client also has a machine rental'})),
+      React.createElement('div', {style:{gridColumn:'1/-1'}}, React.createElement('label', {style:lbl}, 'Link to Rental (for combined portal)'), React.createElement('select', {style:inp, value:form.rental_id||'', onChange:function(e){set('rental_id',e.target.value);}},
+        React.createElement('option', {value:''}, 'Not linked'),
+        rentals.filter(function(r){return r.rental_status!=='completed';}).map(function(r){ return React.createElement('option', {key:r.id, value:r.id}, (r.client_name||'')+' \u2014 '+(r.asset||'')); })
+      )),
       React.createElement('div', {style:{gridColumn:'1/-1'}}, React.createElement('label', {style:lbl}, 'Notes'), React.createElement('textarea', {style:Object.assign({},inp,{minHeight:60,resize:'vertical'}), value:form.notes, onChange:function(e){set('notes',e.target.value);}, placeholder:'Any additional notes...'})),
 
       React.createElement('div', {style:{gridColumn:'1/-1'}},
@@ -3855,6 +3858,31 @@ function CombinedPortal(props) {
   var rT=rental?(parseFloat(rental.price)||0):0;
   var dT=dump?(parseFloat(dump.total_price)||0):0;
   var grand=rT+dT;
+  var openCombinedInvoice=function(){
+    var rows='';
+    var addRow=function(desc,date,amt){ rows+='<tr style=\"border-bottom:1px solid #BDD6E8\"><td style=\"padding:8px 10px;font-style:italic\">'+desc+'</td><td style=\"padding:8px 10px;text-align:center\">'+(date||'')+'</td><td style=\"padding:8px 10px;text-align:right\">$ '+(parseFloat(amt)||0).toFixed(2)+'</td></tr>'; };
+    if(rental){ addRow((rental.asset||'Equipment Rental'), rental.start_date||'', rental.price||0);
+      if(parseFloat(rental.delivery_fee)>0) addRow('Delivery Fee','',rental.delivery_fee);
+      if(parseFloat(rental.pickup_fee)>0) addRow('Pick-up Fee','',rental.pickup_fee);
+      if(parseFloat(rental.trailer_fee)>0) addRow('Trailer Fee','',rental.trailer_fee);
+      if(parseFloat(rental.diesel_fee)>0) addRow('Diesel Charge','',rental.diesel_fee);
+    }
+    if(dump){ addRow((dump.job_type||'')+' - '+(dump.material_type||'')+' ('+(dump.container_size||'')+')', dump.date||'', dump.price||dump.total_price||0);
+      if(parseFloat(dump.overweight_charge)>0) addRow('Overweight Charge','',dump.overweight_charge);
+      if(parseFloat(dump.permit_fee)>0) addRow('Permit Fee','',dump.permit_fee);
+    }
+    var cust=rental||dump||{};
+    var html='<!DOCTYPE html><html><head><title>Combined Invoice</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:28px 32px;max-width:680px;margin:0 auto;font-size:12px;color:#111}</style></head><body>'+
+      '<div style=\"font-size:17px;font-weight:700;color:#1D4ED8;margin-bottom:4px\">SAMS CONSTRUCTION SERVICES LTD</div>'+
+      '<div style=\"color:#555;margin-bottom:16px\">188-16 Woodhull Ave, Hollis NY 11423 &nbsp;|&nbsp; +1 (917) 663-6369 &nbsp;|&nbsp; BIC#4376</div>'+
+      '<div style=\"margin-bottom:14px\"><strong>Bill To:</strong> '+(cust.client_name||'')+'<br>'+(cust.client_address||'')+'<br>'+(cust.client_phone||'')+'</div>'+
+      '<table style=\"width:100%;border-collapse:collapse;margin-bottom:14px\"><thead><tr style=\"background:#1D4ED8;color:#fff\"><th style=\"padding:8px 10px;text-align:left\">Description</th><th style=\"padding:8px 10px\">Date</th><th style=\"padding:8px 10px;text-align:right\">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+      '<div style=\"text-align:right;font-size:16px;font-weight:800\">TOTAL: $ '+grand.toFixed(2)+'</div>'+
+      '<div style=\"margin-top:8px;color:#888;font-size:10px;text-align:right\">Combined rental + dumping invoice</div>'+
+      '</body></html>';
+    var blob=new Blob([html],{type:'text/html'});
+    window.open(URL.createObjectURL(blob),'_blank');
+  };
   var allPaid=(!rental||rental.payment_status==='paid')&&(!dump||dump.payment_status==='paid');
   if(!confirmed&&!allPaid)return React.createElement('div',{style:{minHeight:'100vh',background:'#F9FAFB',display:'flex',alignItems:'center',justifyContent:'center',padding:20}},
     React.createElement('div',{style:{maxWidth:480,width:'100%',background:'#fff',borderRadius:14,padding:24,border:'1px solid #E5E7EB'}},
@@ -3896,6 +3924,7 @@ function CombinedPortal(props) {
         React.createElement('div',{style:{fontWeight:700,color:allPaid?'#065F46':'#991B1B'}},allPaid?(es?'TODO PAGADO':'ALL PAID'):(es?'TOTAL A PAGAR':'TOTAL DUE')),
         React.createElement('div',{style:{fontSize:26,fontWeight:900,color:allPaid?'#065F46':'#DC2626'}},'$'+grand.toFixed(2))
       ),
+      React.createElement('button',{onClick:openCombinedInvoice,style:{width:'100%',padding:16,borderRadius:12,fontSize:17,fontWeight:800,cursor:'pointer',border:'none',background:'#1D4ED8',color:'#fff',marginBottom:14}},'\uD83D\uDCC4 '+(es?'VER FACTURA COMBINADA':'VIEW COMBINED INVOICE')),
       rental&&React.createElement('div',{style:{background:'#fff',borderRadius:12,padding:'14px 16px',border:'2px solid #BFDBFE'}},
         React.createElement('div',{style:{fontSize:12,fontWeight:700,color:'#1D4ED8',marginBottom:4}},es?'Renta de Maquina':'Machine Rental'),
         React.createElement('div',{style:{fontWeight:600}},rental.asset),
