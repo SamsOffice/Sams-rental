@@ -1715,10 +1715,20 @@ function ClientPanel({
   copyLink,
   showToast
 }) {
-  const h = rentals.filter(r => r.client_name === client);
-  const paid = h.filter(r => r.payment_status === 'paid').reduce((s, r) => s + r.price, 0);
-  const owed = h.filter(r => r.payment_status !== 'paid').reduce((s, r) => s + r.price, 0);
-  const r0 = h[0];
+  const _norm = function(p){ return (p||'').replace(/[^0-9]/g,''); };
+  // Find this client's identity (name + any phone) to merge split profiles
+  const _seedR = rentals.filter(function(r){ return r.client_name === client; });
+  const _seedD = (panelDumps||[]).filter(function(j){ return j.client_name === client; });
+  const _phones = {};
+  _seedR.concat(_seedD).forEach(function(x){ if(_norm(x.client_phone)) _phones[_norm(x.client_phone)] = true; });
+  const _match = function(x){ return x.client_name === client || (_norm(x.client_phone) && _phones[_norm(x.client_phone)]); };
+  // Unified history: rentals + dumps for this client (by name or phone)
+  const h = rentals.filter(_match);
+  const dh = (panelDumps||[]).filter(_match);
+  const allH = h.concat(dh.map(function(j){ return Object.assign({}, j, { _isDump:true, asset:(j.job_type||'')+' \u2014 '+(j.material_type||''), price: parseFloat(j.total_price)||0 }); }));
+  const paid = allH.filter(r => r.payment_status === 'paid').reduce((s, r) => s + (parseFloat(r.price)||0), 0);
+  const owed = allH.filter(r => r.payment_status !== 'paid').reduce((s, r) => s + (parseFloat(r.price)||0), 0);
+  const r0 = h[0] || dh[0];
   const [tag, setTag] = useState(r0?.client_tag || 'New Client');
   const updateTag = async t => {
     setTag(t);
@@ -1836,8 +1846,8 @@ function ClientPanel({
       gap: 10
     }
   }, [{
-    l: 'Rentals',
-    v: h.length,
+    l: 'Jobs',
+    v: allH.length,
     c: '#111827'
   }, {
     l: 'Paid',
@@ -1874,7 +1884,7 @@ function ClientPanel({
       fontSize: 13,
       fontWeight: 700
     }
-  }, "History (", h.length, ")"), h.map(r => /*#__PURE__*/React.createElement("div", {
+  }, "History (", allH.length, ")"), allH.map(r => /*#__PURE__*/React.createElement("div", {
     key: r.id,
     style: {
       background: '#fff',
