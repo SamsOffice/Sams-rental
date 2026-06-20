@@ -1705,6 +1705,73 @@ function EditRental({
 }
 
 // ── CLIENT PANEL ──
+function ClientsTab(props) {
+  var rentals = props.rentals || [];
+  var dumpJobs = props.dumpJobs || [];
+  var setClientPanel = props.setClientPanel || function(){};
+  var _q = React.useState(''), q = _q[0], setQ = _q[1];
+
+  function norm(p){ return (p||'').replace(/[^0-9]/g,''); }
+  function money(n){ return '$' + Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+  // Build unified client list keyed by phone (fallback to name)
+  var map = {};
+  function add(rec, isDump){
+    var key = norm(rec.client_phone) || ('name:' + (rec.client_name||'').toLowerCase().trim());
+    if (!key || key==='name:') return;
+    if (!map[key]) map[key] = { name: rec.client_name||'', phone: rec.client_phone||'', email: rec.client_email||'', tag: rec.client_tag||'', rentals:0, dumps:0, paid:0, owed:0, last:null };
+    var m = map[key];
+    if (!m.name && rec.client_name) m.name = rec.client_name;
+    if (!m.phone && rec.client_phone) m.phone = rec.client_phone;
+    if (!m.email && rec.client_email) m.email = rec.client_email;
+    if (rec.client_tag) m.tag = rec.client_tag;
+    var amt = isDump ? (parseFloat(rec.total_price)||0) : (parseFloat(rec.price)||0);
+    if (isDump) m.dumps++; else m.rentals++;
+    if (rec.payment_status === 'paid') m.paid += amt; else m.owed += amt;
+    var d = rec.created_at || rec.start_date || rec.date || null;
+    if (d && (!m.last || d > m.last)) m.last = d;
+  }
+  rentals.forEach(function(r){ add(r, false); });
+  dumpJobs.forEach(function(j){ if(!j.deleted) add(j, true); });
+
+  var clients = Object.keys(map).map(function(k){ return map[k]; });
+  // Search filter
+  if (q.trim()) {
+    var ql = q.toLowerCase();
+    clients = clients.filter(function(c){ return (c.name||'').toLowerCase().indexOf(ql)>=0 || norm(c.phone).indexOf(norm(q))>=0; });
+  }
+  clients.sort(function(a,b){ return (b.owed - a.owed) || ((b.rentals+b.dumps) - (a.rentals+a.dumps)); });
+
+  return React.createElement('div', { style:{ display:'flex', flexDirection:'column', gap:16 } },
+    React.createElement('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:10 } },
+      React.createElement('h2', { style:{ fontSize:20, fontWeight:800 } }, '\uD83D\uDC65 Clients (' + clients.length + ')'),
+      React.createElement('input', { value:q, onChange:function(e){ setQ(e.target.value); }, placeholder:'\uD83D\uDD0D Search by name or phone...', style:{ padding:'8px 14px', border:'1px solid #E5E7EB', borderRadius:8, fontSize:13, outline:'none', background:'#F9FAFB', minWidth:240 } })
+    ),
+    clients.length === 0 && React.createElement('div', { style:{ background:'#fff', borderRadius:12, border:'1px solid #F3F4F6', padding:40, textAlign:'center', color:'#9CA3AF' } }, 'No clients yet.'),
+    React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:12 } },
+      clients.map(function(cl, i){
+        return React.createElement('div', { key:i, onClick:function(){ setClientPanel(cl.name); }, style:{ background:'#fff', borderRadius:12, border:'1px solid #F3F4F6', padding:16, cursor:'pointer', transition:'all 0.15s' } },
+          React.createElement('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:10 } },
+            React.createElement('div', null,
+              React.createElement('div', { style:{ fontSize:15, fontWeight:700 } }, cl.name || '(no name)'),
+              React.createElement('div', { style:{ fontSize:12, color:'#9CA3AF', marginTop:2 } }, cl.phone || 'No phone')
+            ),
+            cl.tag && React.createElement('span', { style:{ fontSize:10, fontWeight:700, background:'#EFF6FF', color:'#1D4ED8', padding:'2px 8px', borderRadius:20 } }, cl.tag)
+          ),
+          React.createElement('div', { style:{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:10 } },
+            cl.rentals > 0 && React.createElement('span', { style:{ fontSize:11, fontWeight:600, background:'#EFF6FF', color:'#1D4ED8', padding:'3px 8px', borderRadius:6 } }, cl.rentals + ' rental' + (cl.rentals>1?'s':'')),
+            cl.dumps > 0 && React.createElement('span', { style:{ fontSize:11, fontWeight:600, background:'#FFF7ED', color:'#C2410C', padding:'3px 8px', borderRadius:6 } }, cl.dumps + ' dump' + (cl.dumps>1?'s':''))
+          ),
+          React.createElement('div', { style:{ display:'flex', justifyContent:'space-between', borderTop:'1px solid #F3F4F6', paddingTop:10 } },
+            React.createElement('div', null, React.createElement('div', { style:{ fontSize:10, color:'#9CA3AF' } }, 'PAID'), React.createElement('div', { style:{ fontSize:14, fontWeight:700, color:'#065F46' } }, money(cl.paid))),
+            React.createElement('div', { style:{ textAlign:'right' } }, React.createElement('div', { style:{ fontSize:10, color:'#9CA3AF' } }, 'OWED'), React.createElement('div', { style:{ fontSize:14, fontWeight:700, color: cl.owed>0?'#DC2626':'#9CA3AF' } }, money(cl.owed)))
+          )
+        );
+      })
+    )
+  );
+}
+
 function ClientPanel({
   client,
   rentals,
@@ -4404,6 +4471,9 @@ function App() {
     id: 'overview',
     l: '\uD83D\uDCCA Overview'
   }, {
+    id: 'clients',
+    l: '\uD83D\uDC65 Clients'
+  }, {
     id: 'drivers',
     l: '🚛 Drivers'
   }, {
@@ -5348,7 +5418,7 @@ function App() {
     rentals: allRecords
   }), !loading && tab === 'schedule' && /*#__PURE__*/React.createElement(ScheduleTab, {
     rentals: rentals, dumpJobs: dumpJobs
-  }), !loading && tab === 'overview' && React.createElement(OverviewTab, {rentals: rentals, dumpJobs: dumpJobs, money: money, showToast: showToast}), tab === 'dumping' && React.createElement(DumpingTab, {showToast: showToast, dumpJobs: dumpJobs, reloadData: loadData, rentals: rentals, setClientPanel: setClientPanel, openDumpForm: openDumpForm, setOpenDumpForm: setOpenDumpForm, goToDashboard: function(){ setTab('dashboard'); }, editDumpJob: editDumpJob, setEditDumpJob: setEditDumpJob}),
+  }), !loading && tab === 'overview' && React.createElement(OverviewTab, {rentals: rentals, dumpJobs: dumpJobs, money: money, showToast: showToast}), tab === 'clients' && React.createElement(ClientsTab, {rentals: rentals, dumpJobs: dumpJobs, setClientPanel: setClientPanel}), tab === 'dumping' && React.createElement(DumpingTab, {showToast: showToast, dumpJobs: dumpJobs, reloadData: loadData, rentals: rentals, setClientPanel: setClientPanel, openDumpForm: openDumpForm, setOpenDumpForm: setOpenDumpForm, goToDashboard: function(){ setTab('dashboard'); }, editDumpJob: editDumpJob, setEditDumpJob: setEditDumpJob}),
         !loading && tab === 'confirmations' && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
