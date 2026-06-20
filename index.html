@@ -6434,8 +6434,21 @@ function DriverApp({
       sb.from('rentals').select('*').eq('assigned_driver', name).order('due_date'),
       sb.from('dump_jobs').select('*').eq('assigned_driver', name).eq('deleted', false).order('date')
     ]).then(function(results) {
-      var rents = (results[0].data||[]).filter(function(r){return r.rental_status!=='completed'&&r.rental_status!=='cancelled';});
-      var dumps = (results[1].data||[]).filter(function(j){return j.driver_status!=='completed';}).map(function(j){return Object.assign({},j,{_isDump:true,asset:j.job_type+' — '+j.material_type});});
+      var todayStr = new Date().toISOString().slice(0,10);
+      var rents = (results[0].data||[]).filter(function(r){
+        if (r.rental_status==='cancelled') return false;
+        if (r.rental_status!=='completed') return true;
+        // Keep completed rentals that still have an upcoming/!done pickup
+        if (r.pickup_date && r.driver_status!=='picked_up') return true;
+        return false;
+      }).map(function(r){
+        var needsPickup = r.rental_status==='completed' && r.pickup_date && r.driver_status!=='picked_up';
+        return Object.assign({}, r, { _needsPickup: needsPickup });
+      });
+      var dumps = (results[1].data||[]).filter(function(j){return j.driver_status!=='completed';}).map(function(j){
+        var needsPickup = (j.driver_status==='arrived' || j.driver_status==='delivered') && j.scheduled_pickup;
+        return Object.assign({},j,{_isDump:true, _needsPickup:needsPickup, asset:j.job_type+' — '+j.material_type});
+      });
       var doneR = (results[0].data||[]).filter(function(r){return r.rental_status==='completed';}).slice(0,5);
       var doneD = (results[1].data||[]).filter(function(j){return j.driver_status==='completed';}).map(function(j){return Object.assign({},j,{_isDump:true,asset:j.job_type+' — '+j.material_type});}).slice(0,5);
       setRecentlyDone(doneR.concat(doneD));
@@ -6585,7 +6598,8 @@ function DriverApp({
         color: '#6B7280'
       }
     }, r.client_name),
-      r._isDump && /*#__PURE__*/React.createElement("span", {style:{fontSize:10,fontWeight:700,background:'#FEF9C3',color:'#92400E',padding:'2px 8px',borderRadius:20,marginLeft:6}}, 'DUMP')
+      r._isDump && /*#__PURE__*/React.createElement("span", {style:{fontSize:10,fontWeight:700,background:'#FEF9C3',color:'#92400E',padding:'2px 8px',borderRadius:20,marginLeft:6}}, 'DUMP'),
+      r._needsPickup && /*#__PURE__*/React.createElement("span", {style:{fontSize:10,fontWeight:700,background:'#EDE9FE',color:'#6D28D9',padding:'2px 8px',borderRadius:20,marginLeft:6}}, 'PICKUP')
     ), /*#__PURE__*/React.createElement("div", {
       style: {
         padding: '12px 16px',
