@@ -1000,7 +1000,7 @@ function NewRentalForm({
     setSaving(true);
     const cat = assets.find(a => a.name === form.asset)?.category || 'Machine';
     const cleanForm = { ...form };
-    ['delivery_date','pickup_date','delivery_fee','trailer_fee','diesel_fee'].forEach(function(k){
+    ['delivery_date','pickup_date','delivery_fee','trailer_fee','diesel_fee','pickup_fee'].forEach(function(k){
       if (k.indexOf('_date') > -1) { if (!cleanForm[k]) cleanForm[k] = null; }
       else { cleanForm[k] = parseFloat(cleanForm[k]) || 0; }
     });
@@ -1274,9 +1274,9 @@ function NewRentalForm({
     value: form.price,
     onChange: e => set('price', e.target.value)
   })),
-  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Delivery Fee ($)"), /*#__PURE__*/React.createElement("input", {type:"number",style:inp,value:form.delivery_fee||0,onChange:function(e){set('delivery_fee',parseFloat(e.target.value)||0);},placeholder:"0 if client picks up"})),
-  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Trailer Fee ($100/day)"), /*#__PURE__*/React.createElement("input", {type:"number",style:inp,value:form.trailer_fee||0,onChange:function(e){set('trailer_fee',parseFloat(e.target.value)||0);},placeholder:"0 if no trailer used"})),
-  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Diesel Charge ($)"), /*#__PURE__*/React.createElement("input", {type:"number",style:inp,value:form.diesel_fee||0,onChange:function(e){set('diesel_fee',parseFloat(e.target.value)||0);},placeholder:"0 if returned full tank"})),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Delivery Fee ($)"), /*#__PURE__*/React.createElement("input", {type:"number",style:inp,value:form.delivery_fee===0||form.delivery_fee===undefined||form.delivery_fee===null?'':form.delivery_fee,onChange:function(e){set('delivery_fee',parseFloat(e.target.value)||0);},placeholder:"0 if client picks up"})), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Pickup Fee ($)"), /*#__PURE__*/React.createElement("input", {type:"number",style:inp,value:form.pickup_fee===0||form.pickup_fee===undefined||form.pickup_fee===null?'':form.pickup_fee,onChange:function(e){set('pickup_fee',parseFloat(e.target.value)||0);},placeholder:"0 if none"})),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Trailer Fee ($100/day)"), /*#__PURE__*/React.createElement("input", {type:"number",style:inp,value:form.trailer_fee===0||form.trailer_fee===undefined||form.trailer_fee===null?'':form.trailer_fee,onChange:function(e){set('trailer_fee',parseFloat(e.target.value)||0);},placeholder:"0 if no trailer used"})),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Diesel Charge ($)"), /*#__PURE__*/React.createElement("input", {type:"number",style:inp,value:form.diesel_fee===0||form.diesel_fee===undefined||form.diesel_fee===null?'':form.diesel_fee,onChange:function(e){set('diesel_fee',parseFloat(e.target.value)||0);},placeholder:"0 if returned full tank"})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Pickup Type"), /*#__PURE__*/React.createElement("select", {style:inp,value:form.pickup_type||'delivery',onChange:function(e){set('pickup_type',e.target.value);}},
     /*#__PURE__*/React.createElement("option",{value:"delivery"},"Sams Delivers and Picks Up"),
     /*#__PURE__*/React.createElement("option",{value:"client_pickup"},"Client Picks Up (No Delivery Fee)")
@@ -1607,9 +1607,9 @@ function EditRental({
     value: form.price || '',
     onChange: e => set('price', e.target.value)
   })),
-  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Delivery Fee ($)"), /*#__PURE__*/React.createElement("input", {type:"number",style:inp,value:form.delivery_fee||0,onChange:function(e){set('delivery_fee',parseFloat(e.target.value)||0);},placeholder:"0 if client picks up"})),
-  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Trailer Fee ($100/day)"), /*#__PURE__*/React.createElement("input", {type:"number",style:inp,value:form.trailer_fee||0,onChange:function(e){set('trailer_fee',parseFloat(e.target.value)||0);},placeholder:"0 if no trailer used"})),
-  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Diesel Charge ($)"), /*#__PURE__*/React.createElement("input", {type:"number",style:inp,value:form.diesel_fee||0,onChange:function(e){set('diesel_fee',parseFloat(e.target.value)||0);},placeholder:"0 if returned full tank"})),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Delivery Fee ($)"), /*#__PURE__*/React.createElement("input", {type:"number",style:inp,value:form.delivery_fee===0||form.delivery_fee===undefined||form.delivery_fee===null?'':form.delivery_fee,onChange:function(e){set('delivery_fee',parseFloat(e.target.value)||0);},placeholder:"0 if client picks up"})), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Pickup Fee ($)"), /*#__PURE__*/React.createElement("input", {type:"number",style:inp,value:form.pickup_fee===0||form.pickup_fee===undefined||form.pickup_fee===null?'':form.pickup_fee,onChange:function(e){set('pickup_fee',parseFloat(e.target.value)||0);},placeholder:"0 if none"})),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Trailer Fee ($100/day)"), /*#__PURE__*/React.createElement("input", {type:"number",style:inp,value:form.trailer_fee===0||form.trailer_fee===undefined||form.trailer_fee===null?'':form.trailer_fee,onChange:function(e){set('trailer_fee',parseFloat(e.target.value)||0);},placeholder:"0 if no trailer used"})),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Diesel Charge ($)"), /*#__PURE__*/React.createElement("input", {type:"number",style:inp,value:form.diesel_fee===0||form.diesel_fee===undefined||form.diesel_fee===null?'':form.diesel_fee,onChange:function(e){set('diesel_fee',parseFloat(e.target.value)||0);},placeholder:"0 if returned full tank"})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Pickup Type"), /*#__PURE__*/React.createElement("select", {style:inp,value:form.pickup_type||'delivery',onChange:function(e){set('pickup_type',e.target.value);}},
     /*#__PURE__*/React.createElement("option",{value:"delivery"},"Sams Delivers and Picks Up"),
     /*#__PURE__*/React.createElement("option",{value:"client_pickup"},"Client Picks Up (No Delivery Fee)")
@@ -1959,29 +1959,30 @@ function InvoiceTab({
     setPrefill(rid);
     const r = rentals.find(x => x.id === rid);
     if (!r) return;
-    setInvNo(rid);
-    setInvDate(r.start_date || '');
+    // Clean sequential invoice number: dumps use ticket #, rentals use INV-#### from a counter
+    var cleanNo = r._isDump ? ('DMP-' + (r.ticket_no || '')) : ('INV-' + (1000 + (rentals.filter(function(x){return !x._isDump;}).indexOf(r) + 1)));
+    setInvNo(cleanNo);
+    setInvDate(r.start_date || r.date || new Date().toISOString().slice(0,10));
     setBillTo(r.client_name || '');
     setAddr1(r.client_address || '');
     setAddr2('');
     setPhone(r.client_phone || '');
     setMethod(r.payment_method || '');
-    setItems([{
-      id: 1,
-      desc: r.asset || '',
-      date: r.start_date || '',
-      amount: String(r.price || '')
-    }, {
-      id: 2,
-      desc: '',
-      date: '',
-      amount: ''
-    }, {
-      id: 3,
-      desc: '',
-      date: '',
-      amount: ''
-    }]);
+    // Build line items including fees so they persist in the invoice description
+    var lines = [];
+    if (r._isDump) {
+      lines.push({ id: 1, desc: (r.job_type||'') + ' - ' + (r.material_type||'') + ' (' + (r.container_size||'') + ')', date: r.date || '', amount: String(parseFloat(r.price)||0) });
+      if (parseFloat(r.overweight_charge) > 0) lines.push({ id: lines.length+1, desc: 'Overweight Charge', date: '', amount: String(parseFloat(r.overweight_charge)) });
+      if (parseFloat(r.permit_fee) > 0) lines.push({ id: lines.length+1, desc: 'Permit Fee', date: '', amount: String(parseFloat(r.permit_fee)) });
+    } else {
+      lines.push({ id: 1, desc: r.asset || '', date: r.start_date || '', amount: String(parseFloat(r.price)||0) });
+      if (parseFloat(r.delivery_fee) > 0) lines.push({ id: lines.length+1, desc: 'Delivery Fee', date: '', amount: String(parseFloat(r.delivery_fee)) });
+      if (parseFloat(r.pickup_fee) > 0) lines.push({ id: lines.length+1, desc: 'Pick-up Fee', date: '', amount: String(parseFloat(r.pickup_fee)) });
+      if (parseFloat(r.trailer_fee) > 0) lines.push({ id: lines.length+1, desc: 'Trailer Fee', date: '', amount: String(parseFloat(r.trailer_fee)) });
+      if (parseFloat(r.diesel_fee) > 0) lines.push({ id: lines.length+1, desc: 'Diesel Charge', date: '', amount: String(parseFloat(r.diesel_fee)) });
+    }
+    while (lines.length < 3) lines.push({ id: lines.length+1, desc: '', date: '', amount: '' });
+    setItems(lines);
   };
   const doExcel = () => {
     const data = [['SAMS CONSTRUCTION SERVICES LTD', '', '', 'Invoice No.', invNo || ''], ['188-16 WOODHULL AVE', '', '', 'Invoice Date:', fd(invDate)], ['Hollis NY 11423', '', '', '', ''], ['BIC#4376', '', '', 'Bill to :', billTo], ['', '', '', 'Address:', addr1], ['', '', '', '', addr2], ['', '', '', 'Phone', phone], ['', '', '', '', ''], ['Description', '', 'Date', '', 'Amount'], ...li.map(i => [i.desc || '', '', i.date ? fd(i.date) : '', '', parseFloat(i.amount) || '']), ...Array(Math.max(0, 6 - li.length)).fill(['', '', '', '', '']), ['', '', '', 'Sales Tax', taxA > 0 ? taxA : ''], ['', '', '', 'Other', otherA > 0 ? otherA : ''], ['', '', '', 'TOTAL', '$' + total.toLocaleString('en-US', {
@@ -2390,7 +2391,7 @@ function InvoiceTab({
       color: '#1D4ED8',
       flex: 1
     }
-  }, "Auto-fill from rental"), /*#__PURE__*/React.createElement("select", {
+  }, "Auto-fill"), /*#__PURE__*/React.createElement("select", {
     style: {
       ...inp,
       width: 'auto',
@@ -2992,7 +2993,7 @@ function DumpingTab(_ref) {
     var total = calcTotal(form);
     var payload = Object.assign({}, form, {total_price: total});
     // Clean empty strings from uuid/date columns so Postgres does not reject the insert
-    ['rental_id','scheduled_dropoff','scheduled_pickup','permit_start','permit_expiry','completed_at'].forEach(function(k){
+    ['rental_id','scheduled_dropoff','scheduled_pickup','permit_start','permit_expiry','completed_at','due_date'].forEach(function(k){
       if (payload[k] === '' || payload[k] === undefined) { payload[k] = null; }
     });
     if (payload.weight_tons === '') payload.weight_tons = null;
@@ -3111,6 +3112,9 @@ function DumpingTab(_ref) {
         )
       ),
       React.createElement('div', null, React.createElement('label', {style:lbl}, 'Permit #'), React.createElement('input', {style:inp, value:form.permit_no, onChange:function(e){set('permit_no',e.target.value);}, placeholder:'NYC Street Permit #'})),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Scheduled Drop Off'), React.createElement('input', {type:'date', style:inp, value:form.scheduled_dropoff||'', onChange:function(e){set('scheduled_dropoff',e.target.value);}})),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Scheduled Pick Up'), React.createElement('input', {type:'date', style:inp, value:form.scheduled_pickup||'', onChange:function(e){set('scheduled_pickup',e.target.value);}})),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Due Date'), React.createElement('input', {type:'date', style:inp, value:form.due_date||'', onChange:function(e){set('due_date',e.target.value);}})),
 
       // Pricing
       React.createElement('div', {style:{gridColumn:'1/-1',fontWeight:700,fontSize:13,color:'#374151',borderBottom:'1px solid #F3F4F6',paddingBottom:8,marginTop:8,marginBottom:4}}, '💰 Pricing'),
