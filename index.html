@@ -374,6 +374,86 @@ function Login({
 }
 
 // ── SCHEDULE TAB ──
+
+function MonthCalendar(props) {
+  var rentals = props.rentals || [];
+  var dumpJobs = props.dumpJobs || [];
+  var _t = new Date();
+  var _ms = React.useState({ y: _t.getFullYear(), m: _t.getMonth() });
+  var view = _ms[0], setView = _ms[1];
+
+  var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var dow = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  function prevMonth(){ setView(function(v){ var m=v.m-1, y=v.y; if(m<0){m=11;y--;} return {y:y,m:m}; }); }
+  function nextMonth(){ setView(function(v){ var m=v.m+1, y=v.y; if(m>11){m=0;y++;} return {y:y,m:m}; }); }
+  function goToday(){ setView({ y:_t.getFullYear(), m:_t.getMonth() }); }
+
+  var firstDay = new Date(view.y, view.m, 1);
+  var startWeekday = firstDay.getDay();
+  var daysInMonth = new Date(view.y, view.m+1, 0).getDate();
+  var todayStr = _t.toISOString().slice(0,10);
+
+  function pad(n){ return (n<10?'0':'')+n; }
+  function dateStr(day){ return view.y + '-' + pad(view.m+1) + '-' + pad(day); }
+
+  function eventsFor(ds){
+    var out = [];
+    rentals.forEach(function(r){
+      if (r.rental_status==='cancelled') return;
+      if (r.start_date===ds) out.push({ kind:'rental', label:'Delivery: '+(r.client_name||''), color:'#1D4ED8', bg:'#BFDBFE' });
+      if (r.pickup_date===ds) out.push({ kind:'rental', label:'Pickup: '+(r.client_name||''), color:'#6D28D9', bg:'#DDD6FE' });
+      if (r.due_date===ds) out.push({ kind:'rental', label:'Due: '+(r.client_name||''), color:'#991B1B', bg:'#FECACA' });
+    });
+    dumpJobs.forEach(function(j){
+      if (j.deleted) return;
+      if (j.scheduled_dropoff===ds) out.push({ kind:'dump', label:'Drop: '+(j.client_name||''), color:'#92400E', bg:'#FDE68A' });
+      if (j.scheduled_pickup===ds) out.push({ kind:'dump', label:'Pickup: '+(j.client_name||''), color:'#92400E', bg:'#FED7AA' });
+      if (j.due_date===ds) out.push({ kind:'dump', label:'Due: '+(j.client_name||''), color:'#991B1B', bg:'#FECACA' });
+    });
+    return out;
+  }
+
+  var cells = [];
+  for (var i=0; i<startWeekday; i++) cells.push(null);
+  for (var d=1; d<=daysInMonth; d++) cells.push(d);
+
+  return React.createElement('div', { style:{ background:'#fff', borderRadius:12, border:'1px solid #F3F4F6', overflow:'hidden' } },
+    React.createElement('div', { style:{ background:'#111827', padding:'14px 18px', display:'flex', alignItems:'center', justifyContent:'space-between' } },
+      React.createElement('button', { onClick:prevMonth, style:{ background:'rgba(255,255,255,0.15)', border:'none', color:'#fff', width:34, height:34, borderRadius:8, fontSize:18, fontWeight:700, cursor:'pointer' } }, '\u2039'),
+      React.createElement('div', { style:{ display:'flex', flexDirection:'column', alignItems:'center' } },
+        React.createElement('div', { style:{ color:'#fff', fontSize:16, fontWeight:700 } }, monthNames[view.m] + ' ' + view.y),
+        React.createElement('button', { onClick:goToday, style:{ background:'none', border:'none', color:'#9CA3AF', fontSize:11, cursor:'pointer', marginTop:2, textDecoration:'underline' } }, 'Today')
+      ),
+      React.createElement('button', { onClick:nextMonth, style:{ background:'rgba(255,255,255,0.15)', border:'none', color:'#fff', width:34, height:34, borderRadius:8, fontSize:18, fontWeight:700, cursor:'pointer' } }, '\u203A')
+    ),
+    React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:1, background:'#F3F4F6', padding:'8px 8px 0' } },
+      dow.map(function(d){ return React.createElement('div', { key:d, style:{ textAlign:'center', fontSize:10, fontWeight:700, color:'#9CA3AF', padding:'4px 0', textTransform:'uppercase' } }, d); })
+    ),
+    React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:4, padding:8 } },
+      cells.map(function(day, idx){
+        if (day===null) return React.createElement('div', { key:'e'+idx });
+        var ds = dateStr(day);
+        var isToday = ds===todayStr;
+        var evs = eventsFor(ds);
+        return React.createElement('div', { key:idx, style:{ minHeight:66, border:'1px solid '+(isToday?'#2563EB':'#F3F4F6'), borderRadius:6, padding:4, background:isToday?'#EFF6FF':'#fff' } },
+          React.createElement('div', { style:{ fontSize:11, fontWeight:isToday?800:500, color:isToday?'#2563EB':'#6B7280', marginBottom:2 } }, day),
+          evs.slice(0,3).map(function(e, k){
+            return React.createElement('div', { key:k, title:e.label, style:{ fontSize:8, fontWeight:600, background:e.bg, color:e.color, borderRadius:3, padding:'1px 3px', marginBottom:1, overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' } }, e.label);
+          }),
+          evs.length>3 && React.createElement('div', { style:{ fontSize:8, color:'#9CA3AF' } }, '+'+(evs.length-3))
+        );
+      })
+    ),
+    React.createElement('div', { style:{ display:'flex', gap:12, flexWrap:'wrap', padding:'10px 14px', borderTop:'1px solid #F3F4F6', fontSize:10, color:'#6B7280' } },
+      React.createElement('span', null, React.createElement('span', { style:{ display:'inline-block', width:10, height:10, background:'#BFDBFE', borderRadius:2, marginRight:4, verticalAlign:'middle' } }), 'Rental delivery'),
+      React.createElement('span', null, React.createElement('span', { style:{ display:'inline-block', width:10, height:10, background:'#DDD6FE', borderRadius:2, marginRight:4, verticalAlign:'middle' } }), 'Rental pickup'),
+      React.createElement('span', null, React.createElement('span', { style:{ display:'inline-block', width:10, height:10, background:'#FDE68A', borderRadius:2, marginRight:4, verticalAlign:'middle' } }), 'Container drop'),
+      React.createElement('span', null, React.createElement('span', { style:{ display:'inline-block', width:10, height:10, background:'#FED7AA', borderRadius:2, marginRight:4, verticalAlign:'middle' } }), 'Container pickup')
+    )
+  );
+}
+
 function ScheduleTab({
   rentals, dumpJobs
 }) {
@@ -504,89 +584,7 @@ function ScheduleTab({
         dumpPicks.map(function(j){ return /*#__PURE__*/React.createElement("div", { key: j.id, style: { fontSize: 12, padding: '4px 0', borderBottom: '1px solid #F3F4F6' } }, (j.scheduled_pickup||'') + " \u2014 " + j.client_name); })
       )
     )
-  ), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#fff',
-      borderRadius: 12,
-      border: '1px solid #F3F4F6',
-      overflow: 'hidden'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#111827',
-      padding: '14px 18px'
-    }
-  }, /*#__PURE__*/React.createElement("h3", {
-    style: {
-      fontSize: 14,
-      fontWeight: 700,
-      color: '#fff'
-    }
-  }, "\uD83D\uDCC5 12-Month Calendar")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: 16,
-      overflowX: 'auto'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(7,1fr)',
-      gap: 4,
-      minWidth: 500
-    }
-  }, ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => /*#__PURE__*/React.createElement("div", {
-    key: d,
-    style: {
-      textAlign: 'center',
-      fontSize: 10,
-      fontWeight: 700,
-      color: '#9CA3AF',
-      padding: 4
-    }
-  }, d)), Array.from({
-    length: today.getDay()
-  }).map((_, i) => /*#__PURE__*/React.createElement("div", {
-    key: 'x' + i
-  })), cal.map((date, i) => {
-    const rents = forDay(date);
-    const isT = date.toISOString().slice(0, 10) === today.toISOString().slice(0, 10);
-    return /*#__PURE__*/React.createElement("div", {
-      key: i,
-      style: {
-        border: '1px solid #F3F4F6',
-        borderRadius: 6,
-        padding: 4,
-        minHeight: 52,
-        background: isT ? '#EFF6FF' : '#fff'
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 10,
-        fontWeight: isT ? 700 : 400,
-        color: isT ? '#2563EB' : '#6B7280',
-        marginBottom: 2
-      }
-    }, date.getDate()), rents.slice(0, 3).map((r, j) => /*#__PURE__*/React.createElement("div", {
-      key: j,
-      style: {
-        fontSize: 8,
-        fontWeight: 600,
-        background: r._kind === 'dump' ? '#FDE68A' : '#BFDBFE',
-        color: r._kind === 'dump' ? '#92400E' : '#1D4ED8',
-        borderRadius: 3,
-        padding: '1px 3px',
-        marginBottom: 1,
-        overflow: 'hidden',
-        whiteSpace: 'nowrap',
-        textOverflow: 'ellipsis'
-      }
-    }, (r._kind === 'dump' ? (r._label + ': ') : '') + ((r.asset || r.client_name || '').split(' ').slice(-1)[0]))), rents.length > 3 && /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: 8,
-        color: '#9CA3AF'
-      }
-    }, "+", rents.length - 3));
-  })))), /*#__PURE__*/React.createElement("div", {
+  ), /*#__PURE__*/React.createElement(MonthCalendar, { rentals: rentals, dumpJobs: dumpJobs }), /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
       borderRadius: 12,
@@ -5954,7 +5952,7 @@ function ClientPortal({
       fontWeight: 700,
       marginBottom: 12
     }
-  }, es ? 'Detalles de Factura' : 'Invoice Details'), [[es ? 'Factura' : 'Invoice', rental.id], [es ? 'Equipo' : 'Equipment', rental.asset], [es ? 'Inicio' : 'Start', fmtD(rental.start_date)], [es ? 'Vence' : 'Due', fmtD(rental.due_date)], [es ? 'Duracion' : 'Duration', rental.duration_days + (es ? ' dias' : ' days')], [es ? 'Conductor' : 'Driver', rental.assigned_driver]].map(([l, v]) => /*#__PURE__*/React.createElement("div", {
+  }, es ? 'Detalles de Factura' : 'Invoice Details'), [[es ? 'Factura' : 'Invoice', rental.id], [es ? 'Equipo' : 'Equipment', rental.asset], [es ? 'Inicio' : 'Start', fmtD(rental.start_date)], [es ? 'Vence' : 'Due', fmtD(rental.due_date)], [es ? 'Duracion' : 'Duration', rental.duration_days + (es ? ' dias' : ' days')], [es ? 'Conductor' : 'Driver', rental.assigned_driver]].concat(parseFloat(rental.delivery_fee)>0?[[es?'Tarifa de Entrega':'Delivery Fee', money(rental.delivery_fee)]]:[]).concat(parseFloat(rental.pickup_fee)>0?[[es?'Tarifa de Recogida':'Pick-up Fee', money(rental.pickup_fee)]]:[]).concat(parseFloat(rental.trailer_fee)>0?[[es?'Tarifa de Remolque':'Trailer Fee', money(rental.trailer_fee)]]:[]).concat(parseFloat(rental.diesel_fee)>0?[[es?'Cargo de Diesel':'Diesel Charge', money(rental.diesel_fee)]]:[]).map(([l, v]) => /*#__PURE__*/React.createElement("div", {
     key: l,
     style: {
       display: 'flex',
@@ -5979,7 +5977,7 @@ function ClientPortal({
       fontSize: 16,
       fontWeight: 700
     }
-  }, /*#__PURE__*/React.createElement("span", null, es ? 'Total a Pagar' : 'Total Due'), /*#__PURE__*/React.createElement("span", null, money(rental.price))), rental.invoice_data && /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("span", null, es ? 'Total a Pagar' : 'Total Due'), /*#__PURE__*/React.createElement("span", null, money((parseFloat(rental.price)||0)+(parseFloat(rental.delivery_fee)||0)+(parseFloat(rental.pickup_fee)||0)+(parseFloat(rental.trailer_fee)||0)+(parseFloat(rental.diesel_fee)||0)))), rental.invoice_data && /*#__PURE__*/React.createElement("button", {
     onClick: openInvoice,
     style: {
       width: '100%',
