@@ -2481,7 +2481,23 @@ function InvoiceTab({
       maxWidth: 760,
       margin: '0 auto'
     }
-  }, rentals.length > 0 && /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("div", {
+    style: { background: '#fff', border: '1px solid #F3F4F6', borderRadius: 12, padding: 18, marginBottom: 16 }
+  }, /*#__PURE__*/React.createElement("h3", { style: { fontSize: 14, fontWeight: 700, marginBottom: 12 } }, "\uD83D\uDCDC Invoice History"),
+    (function(){
+      var saved = rentals.filter(function(r){ return r.invoice_data; });
+      if (saved.length === 0) return /*#__PURE__*/React.createElement("div", { style: { fontSize: 13, color: '#9CA3AF' } }, "No saved invoices yet. Create one below and it will appear here.");
+      return /*#__PURE__*/React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 6 } }, saved.map(function(r){
+        var inv = {};
+        try { inv = JSON.parse(r.invoice_data); } catch(e){}
+        return /*#__PURE__*/React.createElement("div", { key: r.id, onClick: function(){ doPrefill(r.id); }, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: '#F9FAFB', borderRadius: 8, cursor: 'pointer', border: '1px solid #F3F4F6' } },
+          /*#__PURE__*/React.createElement("div", null,
+            /*#__PURE__*/React.createElement("div", { style: { fontSize: 13, fontWeight: 700 } }, (r._isDump ? '\uD83D\uDE9B ' : '\uD83D\uDD27 ') + (r.client_name || '')),
+            /*#__PURE__*/React.createElement("div", { style: { fontSize: 11, color: '#9CA3AF' } }, (inv.invNo || r.id) + ' \u2022 ' + (inv.invDate || ''))),
+          /*#__PURE__*/React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: '#1D4ED8' } }, "Open \u2192"));
+      }));
+    })()
+  ), rentals.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#EFF6FF',
       border: '1px solid #BFDBFE',
@@ -3086,13 +3102,14 @@ function DumpingTab(_ref) {
   };
 
   var calcTotal = function(f) {
+    var permit = parseFloat(f.permit_fee) || 0;
     if (f.material_type === 'Garbage') {
       var g = garbagePrice(f.weight_tons);
-      return g.base + g.ow;
+      return g.base + g.ow + permit;
     }
     var base = parseFloat(f.price) || 0;
     var ow = parseFloat(f.overweight_charge) || 0;
-    return base + ow;
+    return base + ow + permit;
   };
 
   var saveJob = async function() {
@@ -3221,6 +3238,7 @@ function DumpingTab(_ref) {
         )
       ),
       React.createElement('div', null, React.createElement('label', {style:lbl}, 'Permit #'), React.createElement('input', {style:inp, value:form.permit_no, onChange:function(e){set('permit_no',e.target.value);}, placeholder:'NYC Street Permit #'})),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Permit Fee ($)'), React.createElement('input', {type:'number', style:inp, value:form.permit_fee===0||form.permit_fee===undefined||form.permit_fee===null?'':form.permit_fee, onChange:function(e){set('permit_fee',parseFloat(e.target.value)||0);}, placeholder:'50'})),
       React.createElement('div', null, React.createElement('label', {style:lbl}, 'Scheduled Drop Off'), React.createElement('input', {type:'date', style:inp, value:form.scheduled_dropoff||'', onChange:function(e){set('scheduled_dropoff',e.target.value);}})),
       React.createElement('div', null, React.createElement('label', {style:lbl}, 'Scheduled Pick Up'), React.createElement('input', {type:'date', style:inp, value:form.scheduled_pickup||'', onChange:function(e){set('scheduled_pickup',e.target.value);}})),
       React.createElement('div', null, React.createElement('label', {style:lbl}, 'Due Date'), React.createElement('input', {type:'date', style:inp, value:form.due_date||'', onChange:function(e){set('due_date',e.target.value);}})),
@@ -4906,7 +4924,7 @@ function App() {
                   j.payment_status!=="paid" && /*#__PURE__*/React.createElement("button",{onClick:function(){markDumpPaid(j.id);},style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,border:"none",cursor:"pointer",background:"#ECFDF5",color:"#065F46"}},"Mark Paid"),
                   !jobDone && /*#__PURE__*/React.createElement("button",{onClick:function(){markDumpComplete(j.id);},style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,border:"none",cursor:"pointer",background:"#F0FDF4",color:"#065F46"}},"Complete"),
                   j.client_phone && /*#__PURE__*/React.createElement("a",{href:"tel:"+(j.client_phone||"").replace(/[^0-9+]/g,""),style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,textDecoration:"none",cursor:"pointer",background:"#ECFDF5",color:"#065F46",display:"inline-block"}},"\uD83D\uDCDE Call"),
-                  j.client_email && /*#__PURE__*/React.createElement("a",{href:"mailto:"+j.client_email,style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,textDecoration:"none",cursor:"pointer",background:"#EFF6FF",color:"#1D4ED8",display:"inline-block"}},"\u2709 Email"),
+                  j.client_email && /*#__PURE__*/React.createElement("a",{href:"mailto:"+j.client_email+"?subject="+encodeURIComponent("Outstanding Balance - Dumping Ticket "+(j.ticket_no||""))+"&body="+encodeURIComponent("Dear "+(j.client_name||"")+",\n\nThis is a notice from Sams Construction Services LTD regarding your dumping service.\n\nService: "+(j.job_type||"")+" - "+(j.material_type||"")+" ("+(j.container_size||"")+")\nAmount Due: $"+((parseFloat(j.total_price)||0).toFixed(2))+"\n\nPlease remit payment promptly.\n\n• Zelle: +1 (917) 663-6369\n• Portal: https://samsoffice.github.io/Sams-rental/#/dump/"+(j.portal_token||"")+"\n\nThank you,\nSams Construction Services LTD\n+1 (917) 663-6369"),style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,textDecoration:"none",cursor:"pointer",background:"#EFF6FF",color:"#1D4ED8",display:"inline-block"}},"\u2709 Email"),
                   /*#__PURE__*/React.createElement("button",{onClick:function(){var url="https://samsoffice.github.io/Sams-rental/#/dump/"+j.portal_token;navigator.clipboard.writeText(url).catch(function(){});window.open(url,"_blank");},style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,border:"none",cursor:"pointer",background:"#EFF6FF",color:"#1D4ED8"}},"Portal"),
                   /*#__PURE__*/React.createElement("button",{onClick:function(){setEditDumpJob(j); setTab('dumping'); setOpenDumpForm(true);},style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,border:"none",cursor:"pointer",background:"#F9FAFB",color:"#374151",border:"1px solid #E5E7EB"}},"Edit"),
                   /*#__PURE__*/React.createElement("button",{onClick:function(){if(confirm("Delete this dump job?")){deleteDumpJob(j.id);}},style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,border:"none",cursor:"pointer",background:"#FEF2F2",color:"#DC2626"}},"Delete")
