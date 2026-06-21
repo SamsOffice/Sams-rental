@@ -2493,23 +2493,7 @@ function InvoiceTab({
       maxWidth: 760,
       margin: '0 auto'
     }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: { background: '#fff', border: '1px solid #F3F4F6', borderRadius: 12, padding: 18, marginBottom: 16 }
-  }, /*#__PURE__*/React.createElement("h3", { style: { fontSize: 14, fontWeight: 700, marginBottom: 12 } }, "\uD83D\uDCDC Invoice History"),
-    (function(){
-      var saved = rentals.filter(function(r){ return r.invoice_data; });
-      if (saved.length === 0) return /*#__PURE__*/React.createElement("div", { style: { fontSize: 13, color: '#9CA3AF' } }, "No saved invoices yet. Create one below and it will appear here.");
-      return /*#__PURE__*/React.createElement("div", { style: { display: 'flex', flexDirection: 'column', gap: 6 } }, saved.map(function(r){
-        var inv = {};
-        try { inv = JSON.parse(r.invoice_data); } catch(e){}
-        return /*#__PURE__*/React.createElement("div", { key: r.id, onClick: function(){ doPrefill(r.id); }, style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: '#F9FAFB', borderRadius: 8, cursor: 'pointer', border: '1px solid #F3F4F6' } },
-          /*#__PURE__*/React.createElement("div", null,
-            /*#__PURE__*/React.createElement("div", { style: { fontSize: 13, fontWeight: 700 } }, (r._isDump ? '\uD83D\uDE9B ' : '\uD83D\uDD27 ') + (r.client_name || '')),
-            /*#__PURE__*/React.createElement("div", { style: { fontSize: 11, color: '#9CA3AF' } }, (inv.invNo || r.id) + ' \u2022 ' + (inv.invDate || ''))),
-          /*#__PURE__*/React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: '#1D4ED8' } }, "Open \u2192"));
-      }));
-    })()
-  ), rentals.length > 0 && /*#__PURE__*/React.createElement("div", {
+  }, rentals.length > 0 && /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#EFF6FF',
       border: '1px solid #BFDBFE',
@@ -3076,7 +3060,7 @@ function DumpingTab(_ref) {
     num_loads:1, weight_tons:'', price:1300, overweight_charge:0,
     assigned_driver:'Sams', payment_type:'ON ACCOUNT',
     payment_status:'unpaid', payment_method:'', payment_recipient:'Company',
-    permit_no:'', notes:'', rental_id:'', date: new Date().toISOString().split('T')[0]
+    permit_no:'', permit_fee:'', scheduled_dropoff:'', scheduled_pickup:'', due_date:'', notes:'', rental_id:'', date: new Date().toISOString().split('T')[0]
   };
 
   var _React$useState6 = React.useState(emptyForm), form = _React$useState6[0], setForm = _React$useState6[1];
@@ -3185,7 +3169,7 @@ function DumpingTab(_ref) {
       price: j.price||0, overweight_charge: j.overweight_charge||0,
       assigned_driver: j.assigned_driver||'Sams', payment_type: j.payment_type||'ON ACCOUNT',
       payment_status: j.payment_status||'unpaid', payment_method: j.payment_method||'',
-      payment_recipient: j.payment_recipient||'Company', permit_no: j.permit_no||'',
+      payment_recipient: j.payment_recipient||'Company', permit_no: j.permit_no||'', permit_fee: j.permit_fee||'', scheduled_dropoff: j.scheduled_dropoff||'', scheduled_pickup: j.scheduled_pickup||'', due_date: j.due_date||'',
       notes: j.notes||'', rental_id: j.rental_id||'', date: j.date||new Date().toISOString().split('T')[0]
     });
     setEditJob(j);
@@ -3407,26 +3391,22 @@ function DumpClientPortal(_ref) {
   function fmtD(d){ if(!d) return '-'; var x=new Date(d+'T00:00:00'); return x.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
 
   const openInvoice = () => {
-    if (!job.invoice_data) return;
     try {
-      const inv = JSON.parse(job.invoice_data);
-      const items = (inv.items || []).filter(function (i) {
-        return i.desc || i.amount;
-      });
-      const totalRows = Math.max(8, items.length + 2);
-      let rows = '';
-      for (let idx = 0; idx < totalRows; idx++) {
-        const item = items[idx];
-        const bg = idx % 2 === 0 ? '#fff' : '#EAF4FB';
-        rows += '<tr style="background:' + bg + ';border-bottom:1px solid #BDD6E8"><td style="padding:6px 10px;font-style:italic">' + (item && item.desc ? item.desc : '&nbsp;') + '</td><td style="padding:6px 10px;text-align:center">' + (item && item.date ? item.date : '') + '</td><td style="padding:6px 10px;text-align:right">' + (item && item.amount ? '$ ' + parseFloat(item.amount).toFixed(2) : '') + '</td></tr>';
-      }
-      const tax = parseFloat(inv.tax) || 0;
-      const other = parseFloat(inv.other) || 0;
-      const total = parseFloat(inv.total) || 0;
-      const html = '<!DOCTYPE html><html><head><title>Invoice ' + inv.inv_no + '</title><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Arial,Helvetica,sans-serif;padding:28px 32px;max-width:680px;margin:0 auto;font-size:12px;color:#111;}</style></head><body>' + '<div style="margin-bottom:14px"><div style="font-size:17px;font-weight:700;color:#1D4ED8">SAMS CONSTRUCTION SERVICES LTD</div><div style="height:3px;background:#1D4ED8;margin-top:4px"></div></div>' + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:16px">' + '<div style="font-size:11px;line-height:2.1"><div>188-16 WOODHULL AVE</div><div>Hollis NY 11423</div><div style="margin-top:4px">+1 (917) 663-6369</div><div>BIC#4376</div></div>' + '<div>' + '<table style="width:100%;border-collapse:collapse;font-size:11px;margin-bottom:8px"><tbody>' + '<tr><td style="padding:3px 6px;color:#555">Invoice No.</td><td style="padding:3px 6px;font-weight:700">' + (inv.inv_no || '—') + '</td></tr>' + '<tr><td style="padding:3px 6px;color:#555">Invoice Date:</td><td style="padding:3px 6px;font-weight:700">' + (inv.inv_date || '—') + '</td></tr>' + '</tbody></table>' + '<table style="width:100%;border-collapse:collapse;border:1px solid #90BEE0;font-size:11px"><tbody>' + '<tr style="background:#D6E8F7"><td style="padding:4px 8px;font-weight:700;width:70px">Bill to :</td><td style="padding:4px 8px;font-weight:700">' + (inv.bill_to || '—') + '</td></tr>' + '<tr style="background:#EAF4FB"><td style="padding:4px 8px;color:#555">Address:</td><td style="padding:4px 8px">' + (inv.addr1 || '') + (inv.addr2 ? ' ' + inv.addr2 : '') + '</td></tr>' + '<tr style="background:#D6E8F7"><td style="padding:4px 8px;color:#555">Phone</td><td style="padding:4px 8px;color:#1D4ED8">' + (inv.phone || '') + '</td></tr>' + '</tbody></table>' + '</div>' + '</div>' + '<table style="width:100%;border-collapse:collapse;border:1px solid #90BEE0">' + '<thead><tr style="background:#1D4ED8"><th style="padding:7px 10px;text-align:left;color:#fff;font-weight:700;width:55%">Description</th><th style="padding:7px 10px;text-align:center;color:#fff;font-weight:700;width:22%">Date</th><th style="padding:7px 10px;text-align:right;color:#fff;font-weight:700;width:23%">Amount</th></tr></thead>' + '<tbody>' + rows + '</tbody>' + '</table>' + '<table style="width:100%;border-collapse:collapse;border-left:1px solid #90BEE0;border-right:1px solid #90BEE0"><tbody>' + '<tr style="border-bottom:1px solid #BDD6E8"><td style="padding:5px 10px;width:55%;font-size:11px;color:#555">' + (inv.notes || '') + '</td><td style="padding:5px 10px;text-align:right;color:#555;font-size:11px">Sales Tax</td><td style="padding:5px 10px;text-align:right;border-left:2px solid #1D4ED8;width:23%;font-size:11px">' + (tax > 0 ? '$ ' + tax.toFixed(2) : '') + '</td></tr>' + '<tr style="border-bottom:1px solid #BDD6E8"><td style="padding:5px 10px"></td><td style="padding:5px 10px;text-align:right;color:#555;font-size:11px">Other</td><td style="padding:5px 10px;text-align:right;border-left:2px solid #1D4ED8;font-size:11px">' + (other > 0 ? '$ ' + other.toFixed(2) : '') + '</td></tr>' + '</tbody></table>' + '<table style="width:100%;border-collapse:collapse;border:1px solid #90BEE0"><tbody>' + '<tr style="background:#D6E8F7"><td style="padding:8px 10px;font-weight:700;text-align:right;width:77%;font-size:12px">TOTAL</td><td style="padding:8px 14px;font-weight:700;text-align:right;font-size:14px;border-left:2px solid #1D4ED8">$ ' + total.toFixed(2) + '</td></tr>' + '</tbody></table>' + (inv.method ? '<div style="margin-top:8px;font-size:10px;color:#555">Payment Method: <strong>' + inv.method + '</strong></div>' : '') + '</body></html>';
-      const blob = new Blob([html], {
-        type: 'text/html'
-      });
+      var rows = '';
+      var addRow = function(desc, date, amt){ rows += '<tr style="border-bottom:1px solid #BDD6E8"><td style="padding:10px 12px;font-style:italic">' + desc + '</td><td style="padding:10px 12px;text-align:center">' + (date||'') + '</td><td style="padding:10px 12px;text-align:right">$ ' + (parseFloat(amt)||0).toFixed(2) + '</td></tr>'; };
+      addRow((job.job_type||'') + ' \u2014 ' + (job.material_type||'') + ' (' + (job.container_size||'') + ')', job.date||'', base);
+      if (parseFloat(job.overweight_charge) > 0) addRow('Overweight Charge', '', job.overweight_charge);
+      if (parseFloat(job.permit_fee) > 0) addRow('Permit Fee', '', job.permit_fee);
+      var html = '<!DOCTYPE html><html><head><title>Invoice ' + (job.ticket_no||'') + '</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:28px 32px;max-width:680px;margin:0 auto;font-size:13px;color:#111}</style></head><body>' +
+        '<div style="font-size:18px;font-weight:700;color:#1D4ED8;margin-bottom:4px">SAMS CONSTRUCTION SERVICES LTD</div>' +
+        '<div style="color:#555;margin-bottom:16px;font-size:12px">188-16 Woodhull Ave, Hollis NY 11423 &nbsp;|&nbsp; +1 (917) 663-6369 &nbsp;|&nbsp; BIC#4376</div>' +
+        '<div style="display:flex;justify-content:space-between;margin-bottom:16px"><div><strong>Bill To:</strong><br>' + (job.client_name||'') + '<br>' + (job.client_address||'') + '<br>' + (job.client_phone||'') + '</div>' +
+        '<div style="text-align:right"><strong>Invoice:</strong> DMP-' + (job.ticket_no||'') + '<br><strong>Date:</strong> ' + (job.date||'') + '<br><strong>Driver:</strong> ' + (job.assigned_driver||'') + '</div></div>' +
+        '<table style="width:100%;border-collapse:collapse;margin-bottom:16px"><thead><tr style="background:#1D4ED8;color:#fff"><th style="padding:10px 12px;text-align:left">Description</th><th style="padding:10px 12px">Date</th><th style="padding:10px 12px;text-align:right">Amount</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+        '<div style="text-align:right;font-size:18px;font-weight:800;border-top:2px solid #1D4ED8;padding-top:12px">TOTAL: $ ' + total.toFixed(2) + '</div>' +
+        (isPaid ? '<div style="text-align:right;color:#065F46;font-weight:700;margin-top:6px">PAID</div>' : '') +
+        '</body></html>';
+      var blob = new Blob([html], { type: 'text/html' });
       window.open(URL.createObjectURL(blob), '_blank');
     } catch (e) {
       alert('Could not open invoice');
@@ -3572,7 +3552,7 @@ function DumpClientPortal(_ref) {
           React.createElement('span', null, es?'Total a Pagar':'Total Due'),
           React.createElement('span', null, money(total))
         ),
-        job.invoice_data && React.createElement('button', { onClick:openInvoice, style:{ width:'100%', padding:16, borderRadius:12, fontSize:18, fontWeight:800, cursor:'pointer', border:'none', background:'#2563EB', color:'#fff', marginTop:14 } }, '\uD83D\uDCC4 '+(es?'VER MI FACTURA':'VIEW MY INVOICE'))
+        React.createElement('button', { onClick:openInvoice, style:{ width:'100%', padding:16, borderRadius:12, fontSize:18, fontWeight:800, cursor:'pointer', border:'none', background:'#2563EB', color:'#fff', marginTop:14 } }, '\uD83D\uDCC4 '+(es?'VER MI FACTURA':'VIEW MY INVOICE'))
       ),
 
       !isPaid && React.createElement('div', { style:{ background:'#fff', borderRadius:12, border:'1px solid #F3F4F6', overflow:'hidden' } },
@@ -4939,8 +4919,9 @@ function App() {
                   j.payment_status!=="paid" && /*#__PURE__*/React.createElement("button",{onClick:function(){markDumpPaid(j.id);},style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,border:"none",cursor:"pointer",background:"#ECFDF5",color:"#065F46"}},"Mark Paid"),
                   !jobDone && /*#__PURE__*/React.createElement("button",{onClick:function(){markDumpComplete(j.id);},style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,border:"none",cursor:"pointer",background:"#F0FDF4",color:"#065F46"}},"Complete"),
                   j.client_phone && /*#__PURE__*/React.createElement("a",{href:"tel:"+(j.client_phone||"").replace(/[^0-9+]/g,""),style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,textDecoration:"none",cursor:"pointer",background:"#ECFDF5",color:"#065F46",display:"inline-block"}},"\uD83D\uDCDE Call"),
-                  j.client_email && /*#__PURE__*/React.createElement("a",{href:"mailto:"+j.client_email+"?subject="+encodeURIComponent("Outstanding Balance - Dumping Ticket "+(j.ticket_no||""))+"&body="+encodeURIComponent("Dear "+(j.client_name||"")+",\n\nThis is a notice from Sams Construction Services LTD regarding your dumping service.\n\nService: "+(j.job_type||"")+" - "+(j.material_type||"")+" ("+(j.container_size||"")+")\nAmount Due: $"+((parseFloat(j.total_price)||0).toFixed(2))+"\n\nPlease remit payment promptly.\n\n• Zelle: +1 (917) 663-6369\n• Portal: https://samsoffice.github.io/Sams-rental/#/dump/"+(j.portal_token||"")+"\n\nThank you,\nSams Construction Services LTD\n+1 (917) 663-6369"),style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,textDecoration:"none",cursor:"pointer",background:"#EFF6FF",color:"#1D4ED8",display:"inline-block"}},"\u2709 Email"),
+                  /*#__PURE__*/React.createElement("a",{href:"mailto:"+(j.client_email||"")+"?subject="+encodeURIComponent("Outstanding Balance - Dumping Ticket "+(j.ticket_no||""))+"&body="+encodeURIComponent("Dear "+(j.client_name||"")+",\n\nThis is a notice from Sams Construction Services LTD regarding your dumping service.\n\nService: "+(j.job_type||"")+" - "+(j.material_type||"")+" ("+(j.container_size||"")+")\nAmount Due: $"+((parseFloat(j.total_price)||0).toFixed(2))+"\n\nPlease remit payment promptly.\n\n• Zelle: +1 (917) 663-6369\n• Portal: https://samsoffice.github.io/Sams-rental/#/dump/"+(j.portal_token||"")+"\n\nThank you,\nSams Construction Services LTD\n+1 (917) 663-6369"),style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,textDecoration:"none",cursor:"pointer",background:"#EFF6FF",color:"#1D4ED8",display:"inline-block"}},"\u2709 Email"),
                   /*#__PURE__*/React.createElement("button",{onClick:function(){var url="https://samsoffice.github.io/Sams-rental/#/dump/"+j.portal_token;navigator.clipboard.writeText(url).catch(function(){});window.open(url,"_blank");},style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,border:"none",cursor:"pointer",background:"#EFF6FF",color:"#1D4ED8"}},"Portal"),
+                  (function(){var _np=function(p){return (p||'').replace(/[^0-9]/g,'');};var lr=j.rental_id?rentals.find(function(r){return r.id===j.rental_id;}):null; if(!lr) lr=rentals.find(function(r){return r.rental_status!=='completed' && _np(r.client_phone) && _np(r.client_phone)===_np(j.client_phone);}); return lr;})() && /*#__PURE__*/React.createElement("button",{onClick:function(){var _np=function(p){return (p||'').replace(/[^0-9]/g,'');};var lr=j.rental_id?rentals.find(function(r){return r.id===j.rental_id;}):null; if(!lr) lr=rentals.find(function(r){return r.rental_status!=='completed' && _np(r.client_phone) && _np(r.client_phone)===_np(j.client_phone);}); if(lr){window.open("https://samsoffice.github.io/Sams-rental/#/combined/"+lr.portal_token+"/"+j.portal_token,"_blank");showToast("Combined portal opened");}else{showToast("No linked rental found");}},style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,border:"none",cursor:"pointer",background:"#FFF7ED",color:"#C2410C"}},"\uD83D\uDD17 Combined"),
                   /*#__PURE__*/React.createElement("button",{onClick:function(){setEditDumpJob(j); setTab('dumping'); setOpenDumpForm(true);},style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,border:"none",cursor:"pointer",background:"#F9FAFB",color:"#374151",border:"1px solid #E5E7EB"}},"Edit"),
                   /*#__PURE__*/React.createElement("button",{onClick:function(){if(confirm("Delete this dump job?")){deleteDumpJob(j.id);}},style:{padding:"4px 9px",fontSize:11,fontWeight:700,borderRadius:6,border:"none",cursor:"pointer",background:"#FEF2F2",color:"#DC2626"}},"Delete")
                 )
