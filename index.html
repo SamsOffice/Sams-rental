@@ -1840,6 +1840,35 @@ function ClientPanel({
   });
   const yearKeys = Object.keys(byYear).sort(function(a,b){ return String(b).localeCompare(String(a)); });
   const r0 = h[0] || dh[0];
+  var openClientInvoice = function(r){
+    try {
+      var isDump = !!r._isDump;
+      var rows = '';
+      var addRow = function(desc, date, amt){ rows += '<tr style="border-bottom:1px solid #BDD6E8"><td style="padding:10px 12px;font-style:italic">' + desc + '</td><td style="padding:10px 12px;text-align:center">' + (date||'') + '</td><td style="padding:10px 12px;text-align:right">$ ' + (parseFloat(amt)||0).toFixed(2) + '</td></tr>'; };
+      var ticket = isDump ? ('DMP-' + (r.ticket_no||'')) : ('INV-' + String(r.id).slice(0,6).toUpperCase());
+      var dt = isDump ? (r.date||'') : (r.start_date||'');
+      var total = parseFloat(r.price)||0;
+      if (isDump) {
+        addRow((r.job_type||'') + ' - ' + (r.material_type||'') + ' (' + (r.container_size||'') + ')', dt, total - (parseFloat(r.permit_fee)||0));
+        if (parseFloat(r.permit_fee) > 0) addRow('Permit Fee', '', r.permit_fee);
+      } else {
+        addRow(r.asset||'Equipment Rental', dt, total);
+      }
+      var fillers = ''; for (var k=0;k<6;k++){ fillers += '<tr style="height:34px;background:' + (k%2?'#EAF4FB':'#fff') + '"><td></td><td></td><td></td></tr>'; }
+      var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Invoice ' + ticket + '</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:28px 32px;max-width:700px;margin:0 auto;font-size:13px;color:#111}</style></head><body>' +
+        '<div style="font-size:20px;font-weight:800;color:#1D4ED8;border-bottom:3px solid #1D4ED8;padding-bottom:8px;margin-bottom:14px">SAMS CONSTRUCTION SERVICES LTD</div>' +
+        '<div style="display:flex;justify-content:space-between;margin-bottom:14px"><div style="color:#333;font-size:12px;line-height:1.6">188-16 WOODHULL AVE<br>Hollis NY 11423<br>+1 (917) 663-6369<br>BIC#4376</div>' +
+        '<div style="font-size:12px;line-height:1.8;text-align:right"><span style="color:#777">Invoice No.</span> <strong>' + ticket + '</strong><br><span style="color:#777">Invoice Date:</span> <strong>' + dt + '</strong></div></div>' +
+        '<div style="background:#DCECF8;border-radius:4px;padding:10px 12px;margin-bottom:14px;font-size:12px"><strong>Bill to :</strong> ' + (r.client_name||'') + '<br><span style="color:#555">Address:</span> ' + (r.client_address||'') + '<br><span style="color:#555">Phone:</span> ' + (r.client_phone||'') + '</div>' +
+        '<table style="width:100%;border-collapse:collapse;margin-bottom:0"><thead><tr style="background:#1D4ED8;color:#fff"><th style="padding:10px 12px;text-align:left">Description</th><th style="padding:10px 12px">Date</th><th style="padding:10px 12px;text-align:right">Amount</th></tr></thead><tbody>' + rows + fillers +
+        '<tr><td></td><td style="padding:8px 12px;text-align:right;color:#555">Sales Tax</td><td></td></tr>' +
+        '<tr><td></td><td style="padding:8px 12px;text-align:right;color:#555">Other</td><td></td></tr>' +
+        '<tr style="background:#DCECF8"><td></td><td style="padding:12px;text-align:right;font-weight:800;font-size:15px">TOTAL</td><td style="padding:12px;text-align:right;font-weight:800;font-size:15px">$ ' + total.toFixed(2) + '</td></tr>' +
+        '</tbody></table></body></html>';
+      var blob = new Blob([html], { type: 'text/html' });
+      window.open(URL.createObjectURL(blob), '_blank');
+    } catch(e){ alert('Could not open invoice'); }
+  };
   const [tag, setTag] = useState(r0?.client_tag || 'New Client');
   const updateTag = async t => {
     setTag(t);
@@ -2033,7 +2062,8 @@ function ClientPanel({
                 /*#__PURE__*/React.createElement(Badge, { status: r.payment_status })),
               /*#__PURE__*/React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between' } },
                 /*#__PURE__*/React.createElement("span", { style: { fontSize: 11, color: '#9CA3AF' } }, _dOf(r) || '-'),
-                /*#__PURE__*/React.createElement("span", { style: { fontSize: 13, fontWeight: 700 } }, money(parseFloat(r.price)||0))));
+                /*#__PURE__*/React.createElement("span", { style: { fontSize: 13, fontWeight: 700 } }, money(parseFloat(r.price)||0))),
+              /*#__PURE__*/React.createElement("button", { onClick: function(){ openClientInvoice(r); }, style: { marginTop: 8, width: '100%', padding: '7px', borderRadius: 6, border: 'none', background: '#EFF6FF', color: '#1D4ED8', fontSize: 11, fontWeight: 700, cursor: 'pointer' } }, "\uD83D\uDCC4 Open Invoice"));
           }));
       }));
   }))));
