@@ -1024,10 +1024,21 @@ function NewRentalForm({
       if (k.indexOf('_date') > -1) { if (!cleanForm[k]) cleanForm[k] = null; }
       else { cleanForm[k] = parseFloat(cleanForm[k]) || 0; }
     });
+    // Generate rental ID in-app (DB sequence rental_seq is missing), format R-###
+    var _newId;
+    try {
+      var _last = await sb.from('rentals').select('id').like('id', 'R-%').order('id', { ascending: false }).limit(50);
+      var _maxN = 0;
+      if (_last && _last.data) {
+        _last.data.forEach(function(r){ var m = /R-(\d+)/.exec(r.id||''); if (m) { var n = parseInt(m[1]); if (n > _maxN) _maxN = n; } });
+      }
+      _newId = 'R-' + String(_maxN + 1).padStart(3, '0');
+    } catch(e) { _newId = 'R-' + Date.now(); }
     const {
       error
     } = await sb.from('rentals').insert({
       ...cleanForm,
+      id: _newId,
       category: cat,
       due_date: due(),
       duration_days: parseInt(form.duration_days),
