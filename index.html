@@ -3101,7 +3101,7 @@ function DumpingTab(_ref) {
     num_loads:1, weight_tons:'', price:1300, overweight_charge:0,
     assigned_driver:'Sams', payment_type:'ON ACCOUNT',
     payment_status:'unpaid', payment_method:'', payment_recipient:'Company',
-    permit_no:'', permit_fee:'', scheduled_dropoff:'', scheduled_pickup:'', due_date:'', notes:'', rental_id:'', date: new Date().toISOString().split('T')[0]
+    permit_no:'', permit_fee:'', scheduled_dropoff:'', scheduled_dropoff_time:'', scheduled_pickup:'', scheduled_pickup_time:'', due_date:'', notes:'', rental_id:'', date: new Date().toISOString().split('T')[0]
   };
 
   var _React$useState6 = React.useState(emptyForm), form = _React$useState6[0], setForm = _React$useState6[1];
@@ -3210,7 +3210,7 @@ function DumpingTab(_ref) {
       price: j.price||0, overweight_charge: j.overweight_charge||0,
       assigned_driver: j.assigned_driver||'Sams', payment_type: j.payment_type||'ON ACCOUNT',
       payment_status: j.payment_status||'unpaid', payment_method: j.payment_method||'',
-      payment_recipient: j.payment_recipient||'Company', permit_no: j.permit_no||'', permit_fee: j.permit_fee||'', scheduled_dropoff: j.scheduled_dropoff||'', scheduled_pickup: j.scheduled_pickup||'', due_date: j.due_date||'',
+      payment_recipient: j.payment_recipient||'Company', permit_no: j.permit_no||'', permit_fee: j.permit_fee||'', scheduled_dropoff: j.scheduled_dropoff||'', scheduled_dropoff_time: j.scheduled_dropoff_time||'', scheduled_pickup: j.scheduled_pickup||'', scheduled_pickup_time: j.scheduled_pickup_time||'', due_date: j.due_date||'',
       notes: j.notes||'', rental_id: j.rental_id||'', date: j.date||new Date().toISOString().split('T')[0]
     });
     setEditJob(j);
@@ -3276,8 +3276,8 @@ function DumpingTab(_ref) {
       ),
       React.createElement('div', null, React.createElement('label', {style:lbl}, 'Permit #'), React.createElement('input', {style:inp, value:form.permit_no, onChange:function(e){set('permit_no',e.target.value);}, placeholder:'NYC Street Permit #'})),
       React.createElement('div', null, React.createElement('label', {style:lbl}, 'Permit Fee ($)'), React.createElement('input', {type:'number', style:inp, value:form.permit_fee===0||form.permit_fee===undefined||form.permit_fee===null?'':form.permit_fee, onChange:function(e){set('permit_fee',parseFloat(e.target.value)||0);}, placeholder:'50'})),
-      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Scheduled Drop Off'), React.createElement('input', {type:'date', style:inp, value:form.scheduled_dropoff||'', onChange:function(e){set('scheduled_dropoff',e.target.value);}})),
-      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Scheduled Pick Up'), React.createElement('input', {type:'date', style:inp, value:form.scheduled_pickup||'', onChange:function(e){set('scheduled_pickup',e.target.value);}})),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Scheduled Drop Off'), React.createElement('input', {type:'date', style:inp, value:form.scheduled_dropoff||'', onChange:function(e){set('scheduled_dropoff',e.target.value);}}), React.createElement('input', {type:'time', style:Object.assign({},inp,{marginTop:6}), value:form.scheduled_dropoff_time||'', onChange:function(e){set('scheduled_dropoff_time',e.target.value);}})),
+      React.createElement('div', null, React.createElement('label', {style:lbl}, 'Scheduled Pick Up'), React.createElement('input', {type:'date', style:inp, value:form.scheduled_pickup||'', onChange:function(e){set('scheduled_pickup',e.target.value);}}), React.createElement('input', {type:'time', style:Object.assign({},inp,{marginTop:6}), value:form.scheduled_pickup_time||'', onChange:function(e){set('scheduled_pickup_time',e.target.value);}})),
       React.createElement('div', null, React.createElement('label', {style:lbl}, 'Due Date'), React.createElement('input', {type:'date', style:inp, value:form.due_date||'', onChange:function(e){set('due_date',e.target.value);}})),
 
       // Pricing
@@ -3569,8 +3569,8 @@ function DumpClientPortal(_ref) {
       React.createElement('div', { style:{ background:'#fff', borderRadius:12, border:'1px solid #F3F4F6', padding:18 } },
         React.createElement('h3', { style:{ fontSize:14, fontWeight:700, marginBottom:12 } }, es?'Cronograma del Contenedor':'Container Timeline'),
         React.createElement('div', { style:{ display:'flex', justifyContent:'space-between', fontSize:12, color:'#9CA3AF', marginBottom:6 } },
-          React.createElement('span', null, (es?'Entrega: ':'Drop: ')+fmtD(job.scheduled_dropoff||job.date)),
-          React.createElement('span', null, (es?'Recogida: ':'Pickup: ')+fmtD(dueDate))
+          React.createElement('span', null, (es?'Entrega: ':'Drop: ')+fmtD(job.scheduled_dropoff||job.date)+(job.scheduled_dropoff_time?(' '+job.scheduled_dropoff_time):'')),
+          React.createElement('span', null, (es?'Recogida: ':'Pickup: ')+fmtD(dueDate)+(job.scheduled_pickup_time?(' '+job.scheduled_pickup_time):''))
         ),
         React.createElement('div', { style:{ height:10, background:'#F3F4F6', borderRadius:10 } }, React.createElement('div', { style:{ height:'100%', width:(daysLeft!==null&&daysLeft<=0?100:60)+'%', background:'#F59E0B', borderRadius:10 } })),
         daysLeft !== null && React.createElement('div', { style:{ display:'flex', justifyContent:'flex-end', marginTop:8 } },
@@ -7146,7 +7146,7 @@ function DriverApp({
         lineHeight: 2,
         borderBottom: '1px solid #E5E7EB'
       }
-    }, /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCCD ", r.client_address), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCC5 Vence: ", r.due_date, " (", d < 0 ? Math.abs(d) + 'd vencido' : d === 0 ? 'hoy' : d + 'd restantes', ")"), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCB0 ", money(r.price), " \xB7 ", r.payment_status === 'paid' ? 'PAGADO' : r.payment_status === 'partial' ? 'PARCIAL' : 'NO PAGADO'), r.notes && /*#__PURE__*/React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCCD ", r.client_address), r._isDump && (r.scheduled_dropoff_time || r.scheduled_pickup_time) && /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, color: "#2563EB", fontWeight: 700, marginTop: 2 } }, "\uD83D\uDD52 " + (r.scheduled_dropoff_time ? ("Entrega: " + r.scheduled_dropoff_time) : "") + (r.scheduled_dropoff_time && r.scheduled_pickup_time ? "  \xB7  " : "") + (r.scheduled_pickup_time ? ("Recogida: " + r.scheduled_pickup_time) : "")), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCC5 Vence: ", r.due_date, " (", d < 0 ? Math.abs(d) + 'd vencido' : d === 0 ? 'hoy' : d + 'd restantes', ")"), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCB0 ", money(r.price), " \xB7 ", r.payment_status === 'paid' ? 'PAGADO' : r.payment_status === 'partial' ? 'PARCIAL' : 'NO PAGADO'), r.notes && /*#__PURE__*/React.createElement("div", {
       style: {
         marginTop: 6,
         padding: '8px 10px',
