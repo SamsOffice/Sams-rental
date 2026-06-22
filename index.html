@@ -694,17 +694,19 @@ function EquipmentManager({
       showToast('Already exists');
       return;
     }
-    await sb.from('assets').insert({
+    var _r = await sb.from('assets').insert({
       name: name.trim(),
       category: cat
     });
+    if (_r && _r.error) { showToast('Could not add: ' + _r.error.message); return; }
     setNewName('');
     await load();
     onChange && onChange();
     showToast('Added ✓');
   };
   const remove = async id => {
-    await sb.from('assets').delete().eq('id', id);
+    var _r = await sb.from('assets').delete().eq('id', id);
+    if (_r && _r.error) { showToast('Could not remove: ' + _r.error.message); return; }
     await load();
     onChange && onChange();
     showToast('Removed');
@@ -4623,9 +4625,10 @@ function App() {
     showToast('Portal link copied ✓');
   };
   const markPaid = async id => {
-    await sb.from('rentals').update({
+    var _r = await sb.from('rentals').update({
       payment_status: 'paid'
     }).eq('id', id);
+    if (_r && _r.error) { showToast('Could not mark paid: ' + _r.error.message); return; }
     showToast('Marked paid ✓');
     loadData();
   };
