@@ -4329,6 +4329,87 @@ function OverviewTab(props) {
   );
 }
 
+function DispatchTab(_ref) {
+  var rentals = _ref.rentals || [];
+  var dumpJobs = _ref.dumpJobs || [];
+  var showToast = _ref.showToast || function(){};
+  var _d = useState(new Date().toISOString().slice(0,10)); var day = _d[0]; var setDay = _d[1];
+  var _dr = useState('all'); var driverFilter = _dr[0]; var setDriverFilter = _dr[1];
+  var WK = ['Sams','Gustavo','Jose Luis'];
+
+  // Build a unified stop list for the chosen day
+  var stops = [];
+  dumpJobs.forEach(function(j){
+    if (j.deleted) return;
+    var dropD = j.scheduled_dropoff || j.date;
+    var pickD = j.scheduled_pickup;
+    if (dropD === day) stops.push({ kind:'dump', action:'Drop Off', driver:j.assigned_driver||'Unassigned', name:j.client_name, addr:j.client_address, phone:j.client_phone, time:j.scheduled_dropoff_time, detail:(j.job_type||'')+' - '+(j.material_type||'')+' ('+(j.container_size||'')+')', id:'d'+j.id });
+    if (pickD === day) stops.push({ kind:'dump', action:'Pick Up', driver:j.assigned_driver||'Unassigned', name:j.client_name, addr:j.client_address, phone:j.client_phone, time:j.scheduled_pickup_time, detail:(j.container_size||'')+' container pickup', id:'dp'+j.id });
+  });
+  rentals.forEach(function(r){
+    if (r.deleted) return;
+    var delD = r.delivery_date || r.start_date;
+    var pickD = r.pickup_date;
+    if (delD === day) stops.push({ kind:'rental', action:'Delivery', driver:r.assigned_driver||'Unassigned', name:r.client_name, addr:r.client_address, phone:r.client_phone, time:r.delivery_time, detail:r.asset||'Equipment', id:'r'+r.id });
+    if (pickD === day) stops.push({ kind:'rental', action:'Pick Up', driver:r.assigned_driver||'Unassigned', name:r.client_name, addr:r.client_address, phone:r.client_phone, time:r.pickup_time, detail:(r.asset||'Equipment')+' pickup', id:'rp'+r.id });
+  });
+
+  // sort stops by time within each driver (blank times last)
+  var byTime = function(a,b){ var ta=a.time||'99:99'; var tb=b.time||'99:99'; return ta<tb?-1:ta>tb?1:0; };
+
+  var drivers = driverFilter === 'all' ? WK.concat(['Unassigned']) : [driverFilter];
+  var navUrl = function(addr){ return 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(addr||''); };
+
+  var actionColor = function(a){ return a==='Drop Off'?'#D97706':a==='Delivery'?'#2563EB':a==='Pick Up'?'#7C3AED':'#374151'; };
+
+  return React.createElement('div', { style:{ maxWidth:820, margin:'0 auto' } },
+    React.createElement('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:10, marginBottom:16 } },
+      React.createElement('h2', { style:{ fontSize:20, fontWeight:800 } }, '🗺️ Dispatch Board'),
+      React.createElement('div', { style:{ display:'flex', gap:8, alignItems:'center' } },
+        React.createElement('button', { onClick:function(){ var d=new Date(day); d.setDate(d.getDate()-1); setDay(d.toISOString().slice(0,10)); }, style:{ padding:'6px 10px', borderRadius:8, border:'1px solid #D1D5DB', background:'#fff', cursor:'pointer', fontWeight:700 } }, '‹'),
+        React.createElement('input', { type:'date', value:day, onChange:function(e){ setDay(e.target.value); }, style:{ padding:'7px 10px', borderRadius:8, border:'1px solid #D1D5DB', fontSize:14 } }),
+        React.createElement('button', { onClick:function(){ var d=new Date(day); d.setDate(d.getDate()+1); setDay(d.toISOString().slice(0,10)); }, style:{ padding:'6px 10px', borderRadius:8, border:'1px solid #D1D5DB', background:'#fff', cursor:'pointer', fontWeight:700 } }, '›'),
+        React.createElement('button', { onClick:function(){ setDay(new Date().toISOString().slice(0,10)); }, style:{ padding:'7px 12px', borderRadius:8, border:'none', background:'#EFF6FF', color:'#1D4ED8', cursor:'pointer', fontWeight:700, fontSize:13 } }, 'Today')
+      )
+    ),
+    React.createElement('div', { style:{ display:'flex', gap:8, marginBottom:16, flexWrap:'wrap' } },
+      ['all'].concat(WK).map(function(d){
+        return React.createElement('button', { key:d, onClick:function(){ setDriverFilter(d); }, style:{ padding:'6px 14px', borderRadius:20, border:'none', cursor:'pointer', fontWeight:700, fontSize:13, background: driverFilter===d?'#1D4ED8':'#F3F4F6', color: driverFilter===d?'#fff':'#374151' } }, d==='all'?'All Drivers':d);
+      })
+    ),
+    stops.length === 0 ? React.createElement('div', { style:{ textAlign:'center', color:'#9CA3AF', padding:50, background:'#fff', borderRadius:12 } }, 'No jobs scheduled for this day.') :
+    drivers.map(function(drv){
+      var list = stops.filter(function(s){ return s.driver===drv; }).sort(byTime);
+      if (list.length === 0) return null;
+      return React.createElement('div', { key:drv, style:{ marginBottom:22 } },
+        React.createElement('div', { style:{ display:'flex', alignItems:'center', gap:8, marginBottom:10 } },
+          React.createElement('span', { style:{ fontSize:16, fontWeight:800 } }, '🚛 ' + drv),
+          React.createElement('span', { style:{ fontSize:12, fontWeight:700, background:'#1D4ED8', color:'#fff', padding:'2px 10px', borderRadius:20 } }, list.length + (list.length===1?' stop':' stops'))
+        ),
+        list.map(function(s, idx){
+          return React.createElement('div', { key:s.id, style:{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:12, padding:14, marginBottom:8, display:'flex', alignItems:'flex-start', gap:12 } },
+            React.createElement('div', { style:{ minWidth:30, height:30, borderRadius:'50%', background:'#1D4ED8', color:'#fff', fontWeight:800, fontSize:14, display:'flex', alignItems:'center', justifyContent:'center' } }, idx+1),
+            React.createElement('div', { style:{ flex:1 } },
+              React.createElement('div', { style:{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' } },
+                React.createElement('span', { style:{ fontSize:11, fontWeight:800, color:'#fff', background:actionColor(s.action), padding:'2px 8px', borderRadius:6 } }, s.action.toUpperCase()),
+                React.createElement('span', { style:{ fontWeight:700, fontSize:15 } }, s.name||'-'),
+                s.time ? React.createElement('span', { style:{ fontSize:13, fontWeight:700, color:'#2563EB' } }, '🕐 '+s.time) : null
+              ),
+              React.createElement('div', { style:{ fontSize:13, color:'#6B7280', marginTop:3 } }, s.detail),
+              s.addr ? React.createElement('div', { style:{ fontSize:13, color:'#374151', marginTop:3 } }, '📍 '+s.addr) : React.createElement('div', { style:{ fontSize:12, color:'#DC2626', marginTop:3 } }, '⚠ No address on file'),
+              React.createElement('div', { style:{ display:'flex', gap:8, marginTop:10, flexWrap:'wrap' } },
+                s.addr ? React.createElement('a', { href:navUrl(s.addr), target:'_blank', style:{ padding:'7px 14px', borderRadius:8, background:'#2563EB', color:'#fff', textDecoration:'none', fontSize:13, fontWeight:700 } }, '🧭 Navigate') : null,
+                s.phone ? React.createElement('a', { href:'tel:'+(s.phone||'').replace(/[^0-9+]/g,''), style:{ padding:'7px 14px', borderRadius:8, background:'#ECFDF5', color:'#065F46', textDecoration:'none', fontSize:13, fontWeight:700 } }, '📞 Call') : null
+              )
+            )
+          );
+        })
+      );
+    })
+  );
+}
+
+
 function BookingsInbox(_ref) {
   var showToast = _ref.showToast || function(){};
   var _s = useState([]); var bookings = _s[0]; var setBookings = _s[1];
@@ -4795,6 +4876,9 @@ function App() {
   }, {
     id: 'schedule',
     l: '📅 Schedule'
+  }, {
+    id: 'dispatch',
+    l: '🗺️ Dispatch'
   }, {
     id: 'settings',
     l: '⚙️ Settings'
@@ -5752,7 +5836,7 @@ function App() {
     rentals: allRecords
   }), !loading && tab === 'schedule' && /*#__PURE__*/React.createElement(ScheduleTab, {
     rentals: rentals, dumpJobs: dumpJobs
-  }), !loading && tab === 'overview' && React.createElement(OverviewTab, {rentals: rentals, dumpJobs: dumpJobs, money: money, showToast: showToast}), tab === 'clients' && React.createElement(ClientsTab, {rentals: rentals, dumpJobs: dumpJobs, setClientPanel: setClientPanel}), tab === 'bookings' && React.createElement(BookingsInbox, {showToast: showToast}), tab === 'dumping' && React.createElement(DumpingTab, {showToast: showToast, dumpJobs: dumpJobs, reloadData: loadData, rentals: rentals, setClientPanel: setClientPanel, openDumpForm: openDumpForm, setOpenDumpForm: setOpenDumpForm, goToDashboard: function(){ setTab('dashboard'); }, editDumpJob: editDumpJob, setEditDumpJob: setEditDumpJob}),
+  }), !loading && tab === 'overview' && React.createElement(OverviewTab, {rentals: rentals, dumpJobs: dumpJobs, money: money, showToast: showToast}), tab === 'clients' && React.createElement(ClientsTab, {rentals: rentals, dumpJobs: dumpJobs, setClientPanel: setClientPanel}), tab === 'bookings' && React.createElement(BookingsInbox, {showToast: showToast}), tab === 'dispatch' && React.createElement(DispatchTab, {rentals: rentals, dumpJobs: dumpJobs, showToast: showToast}), tab === 'dumping' && React.createElement(DumpingTab, {showToast: showToast, dumpJobs: dumpJobs, reloadData: loadData, rentals: rentals, setClientPanel: setClientPanel, openDumpForm: openDumpForm, setOpenDumpForm: setOpenDumpForm, goToDashboard: function(){ setTab('dashboard'); }, editDumpJob: editDumpJob, setEditDumpJob: setEditDumpJob}),
         !loading && tab === 'confirmations' && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
