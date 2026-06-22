@@ -4331,6 +4331,111 @@ function OverviewTab(props) {
   );
 }
 
+function CollectionsCenter(_ref) {
+  var allRecords = _ref.allRecords || [];
+  var money = _ref.money || function(n){ return '$' + (parseFloat(n)||0).toLocaleString(); };
+  var showToast = _ref.showToast || function(){};
+  var setClientPanel = _ref.setClientPanel || function(){};
+  var _s = useState('priority'); var sortBy = _s[0]; var setSortBy = _s[1];
+
+  var today = new Date(); today.setHours(0,0,0,0);
+  var daysOver = function(d){ if(!d) return 0; var dt = new Date(d); dt.setHours(0,0,0,0); return Math.floor((today - dt)/86400000); };
+
+  // unpaid records only
+  var unpaid = allRecords.filter(function(r){ return r.payment_status !== 'paid' && (parseFloat(r.price)||0) > 0; });
+
+  // group by client (normalized phone or name)
+  var groups = {};
+  unpaid.forEach(function(r){
+    var key = (r.client_phone||'').replace(/[^0-9]/g,'') || (r.client_name||'unknown');
+    if(!groups[key]) groups[key] = { name:r.client_name||'Unknown', phone:r.client_phone||'', email:r.client_email||'', jobs:[], total:0, oldest:0 };
+    groups[key].jobs.push(r);
+    groups[key].total += parseFloat(r.price)||0;
+    var od = daysOver(r.due_date);
+    if (od > groups[key].oldest) groups[key].oldest = od;
+    if (r.client_email && !groups[key].email) groups[key].email = r.client_email;
+  });
+  var list = Object.keys(groups).map(function(k){ return groups[k]; });
+
+  // priority score: amount weighted by how overdue
+  var score = function(g){ return g.total * (1 + Math.max(0,g.oldest)/30); };
+  list.sort(function(a,b){
+    if (sortBy === 'amount') return b.total - a.total;
+    if (sortBy === 'oldest') return b.oldest - a.oldest;
+    return score(b) - score(a); // priority
+  });
+
+  // totals
+  var grandTotal = list.reduce(function(s,g){ return s + g.total; }, 0);
+  var current=0, b30=0, b60=0, b90=0;
+  unpaid.forEach(function(r){ var od=daysOver(r.due_date); var amt=parseFloat(r.price)||0; if(od<=0)current+=amt; else if(od<=30)b30+=amt; else if(od<=60)b60+=amt; else b90+=amt; });
+
+  var bucket = function(od){ return od<=0?{l:'Current',c:'#059669',bg:'#ECFDF5'}:od<=30?{l:od+'d overdue',c:'#D97706',bg:'#FFFBEB'}:od<=60?{l:od+'d overdue',c:'#DC2626',bg:'#FEF2F2'}:{l:od+'d \u2014 LIEN STAGE',c:'#991B1B',bg:'#FEE2E2'}; };
+
+  var emailBody = function(g){
+    return encodeURIComponent('Dear ' + g.name + ',\n\nThis is a reminder from Sams Construction Services LTD that you have an outstanding balance of $' + g.total.toFixed(2) + ' across ' + g.jobs.length + ' invoice(s).\n\nPlease arrange payment promptly to avoid additional fees or collection action.\n\nPay by Zelle: +1 (917) 663-6369\n\nThank you,\nSams Construction Services LTD\n+1 (917) 663-6369');
+  };
+
+  var statCard = function(label, val, color){
+    return React.createElement('div', { style:{ flex:1, minWidth:120, background:'#fff', border:'1px solid #E5E7EB', borderRadius:12, padding:'14px 16px' } },
+      React.createElement('div', { style:{ fontSize:11, fontWeight:700, color:'#6B7280', textTransform:'uppercase', letterSpacing:.3 } }, label),
+      React.createElement('div', { style:{ fontSize:22, fontWeight:800, color:color, marginTop:4 } }, money(val))
+    );
+  };
+
+  return React.createElement('div', { style:{ maxWidth:860, margin:'0 auto' } },
+    React.createElement('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8, marginBottom:16 } },
+      React.createElement('h2', { style:{ fontSize:20, fontWeight:800 } }, '\uD83D\uDCB0 Collections Command Center'),
+      React.createElement('div', { style:{ fontSize:13, color:'#6B7280' } }, list.length + ' clients owe money')
+    ),
+
+    // top stats
+    React.createElement('div', { style:{ display:'flex', gap:10, flexWrap:'wrap', marginBottom:8 } },
+      statCard('Total Owed', grandTotal, '#111827'),
+      statCard('Current', current, '#059669'),
+      statCard('1-30 Days', b30, '#D97706'),
+      statCard('31-60 Days', b60, '#DC2626'),
+      statCard('60+ (Lien)', b90, '#991B1B')
+    ),
+
+    b90 > 0 ? React.createElement('div', { style:{ background:'#FEE2E2', border:'1px solid #FECACA', borderRadius:10, padding:'10px 14px', margin:'12px 0', fontSize:13, color:'#991B1B', fontWeight:600 } }, '\u26A0 ' + money(b90) + ' is 60+ days overdue \u2014 these clients are at lien-filing stage. Prioritize them.') : null,
+
+    // sort
+    React.createElement('div', { style:{ display:'flex', gap:8, margin:'14px 0', alignItems:'center', flexWrap:'wrap' } },
+      React.createElement('span', { style:{ fontSize:12, color:'#6B7280', fontWeight:700 } }, 'Sort by:'),
+      [['priority','\uD83C\uDFAF Priority'],['amount','\uD83D\uDCB5 Amount'],['oldest','\u23F3 Most Overdue']].map(function(o){
+        return React.createElement('button', { key:o[0], onClick:function(){ setSortBy(o[0]); }, style:{ padding:'6px 12px', borderRadius:20, border:'none', cursor:'pointer', fontWeight:700, fontSize:12, background: sortBy===o[0]?'#1D4ED8':'#F3F4F6', color: sortBy===o[0]?'#fff':'#374151' } }, o[1]);
+      })
+    ),
+
+    list.length === 0 ? React.createElement('div', { style:{ textAlign:'center', color:'#059669', padding:50, background:'#ECFDF5', borderRadius:12, fontWeight:700 } }, '\uD83C\uDF89 Everyone has paid! No outstanding balances.') :
+
+    list.map(function(g, i){
+      var bk = bucket(g.oldest);
+      return React.createElement('div', { key:i, style:{ background:'#fff', border:'1px solid #E5E7EB', borderLeft:'5px solid '+bk.c, borderRadius:12, padding:16, marginBottom:10 } },
+        React.createElement('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', flexWrap:'wrap', gap:8 } },
+          React.createElement('div', null,
+            React.createElement('button', { onClick:function(){ setClientPanel(g.name); }, style:{ fontSize:17, fontWeight:800, background:'none', border:'none', cursor:'pointer', color:'#111827', padding:0, textAlign:'left' } }, g.name),
+            React.createElement('div', { style:{ fontSize:12, marginTop:3 } },
+              React.createElement('span', { style:{ fontWeight:700, color:bk.c, background:bk.bg, padding:'2px 8px', borderRadius:10 } }, bk.l),
+              React.createElement('span', { style:{ color:'#6B7280', marginLeft:8 } }, g.jobs.length + (g.jobs.length===1?' invoice':' invoices'))
+            )
+          ),
+          React.createElement('div', { style:{ textAlign:'right' } },
+            React.createElement('div', { style:{ fontSize:22, fontWeight:800, color:bk.c } }, money(g.total))
+          )
+        ),
+        React.createElement('div', { style:{ display:'flex', gap:8, marginTop:12, flexWrap:'wrap' } },
+          g.phone ? React.createElement('a', { href:'tel:'+g.phone.replace(/[^0-9+]/g,''), style:{ padding:'8px 14px', borderRadius:8, background:'#ECFDF5', color:'#065F46', textDecoration:'none', fontSize:13, fontWeight:700 } }, '\uD83D\uDCDE Call') : null,
+          g.email ? React.createElement('a', { href:'mailto:'+g.email+'?subject='+encodeURIComponent('Outstanding Balance - Sams Construction')+'&body='+emailBody(g), style:{ padding:'8px 14px', borderRadius:8, background:'#EFF6FF', color:'#1D4ED8', textDecoration:'none', fontSize:13, fontWeight:700 } }, '\u2709 Email Reminder') : null,
+          React.createElement('button', { onClick:function(){ setClientPanel(g.name); }, style:{ padding:'8px 14px', borderRadius:8, background:'#F3F4F6', color:'#374151', border:'none', cursor:'pointer', fontSize:13, fontWeight:700 } }, 'View Profile \u2192')
+        )
+      );
+    })
+  );
+}
+
+
 function DispatchTab(_ref) {
   var rentals = _ref.rentals || [];
   var dumpJobs = _ref.dumpJobs || [];
@@ -4882,6 +4987,9 @@ function App() {
   }, {
     id: 'dispatch',
     l: '🗺️ Dispatch'
+  }, {
+    id: 'collectionscenter',
+    l: '💰 Collections+'
   }, {
     id: 'settings',
     l: '⚙️ Settings'
@@ -5839,7 +5947,7 @@ function App() {
     rentals: allRecords
   }), !loading && tab === 'schedule' && /*#__PURE__*/React.createElement(ScheduleTab, {
     rentals: rentals, dumpJobs: dumpJobs
-  }), !loading && tab === 'overview' && React.createElement(OverviewTab, {rentals: rentals, dumpJobs: dumpJobs, money: money, showToast: showToast}), tab === 'clients' && React.createElement(ClientsTab, {rentals: rentals, dumpJobs: dumpJobs, setClientPanel: setClientPanel}), tab === 'bookings' && React.createElement(BookingsInbox, {showToast: showToast}), tab === 'dispatch' && React.createElement(DispatchTab, {rentals: rentals, dumpJobs: dumpJobs, showToast: showToast}), tab === 'dumping' && React.createElement(DumpingTab, {showToast: showToast, dumpJobs: dumpJobs, reloadData: loadData, rentals: rentals, setClientPanel: setClientPanel, openDumpForm: openDumpForm, setOpenDumpForm: setOpenDumpForm, goToDashboard: function(){ setTab('dashboard'); }, editDumpJob: editDumpJob, setEditDumpJob: setEditDumpJob}),
+  }), !loading && tab === 'overview' && React.createElement(OverviewTab, {rentals: rentals, dumpJobs: dumpJobs, money: money, showToast: showToast}), tab === 'clients' && React.createElement(ClientsTab, {rentals: rentals, dumpJobs: dumpJobs, setClientPanel: setClientPanel}), tab === 'bookings' && React.createElement(BookingsInbox, {showToast: showToast}), tab === 'dispatch' && React.createElement(DispatchTab, {rentals: rentals, dumpJobs: dumpJobs, showToast: showToast}), tab === 'collectionscenter' && React.createElement(CollectionsCenter, {allRecords: allRecords, money: money, showToast: showToast, setClientPanel: setClientPanel}), tab === 'dumping' && React.createElement(DumpingTab, {showToast: showToast, dumpJobs: dumpJobs, reloadData: loadData, rentals: rentals, setClientPanel: setClientPanel, openDumpForm: openDumpForm, setOpenDumpForm: setOpenDumpForm, goToDashboard: function(){ setTab('dashboard'); }, editDumpJob: editDumpJob, setEditDumpJob: setEditDumpJob}),
         !loading && tab === 'confirmations' && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
