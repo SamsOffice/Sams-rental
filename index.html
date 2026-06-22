@@ -982,6 +982,10 @@ function NewRentalForm({
     start_date: '',
     duration_days: '',
     price: '',
+    delivery_date: '',
+    delivery_time: '',
+    pickup_date: '',
+    pickup_time: '',
     payment_status: 'unpaid',
     payment_method: '',
     notes: ''
@@ -1312,8 +1316,8 @@ function NewRentalForm({
     /*#__PURE__*/React.createElement("option",{value:"delivery"},(form.assigned_driver||"Driver")+" Delivers and Picks Up"),
     /*#__PURE__*/React.createElement("option",{value:"client_pickup"},"Client Picks Up (No Delivery Fee)")
   )),
-  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Scheduled Delivery"), /*#__PURE__*/React.createElement("input", {type:"date",style:inp,value:form.delivery_date||'',onChange:function(e){set('delivery_date',e.target.value);}})),
-  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Scheduled Pickup"), /*#__PURE__*/React.createElement("input", {type:"date",style:inp,value:form.pickup_date||'',onChange:function(e){set('pickup_date',e.target.value);}})),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Scheduled Delivery"), /*#__PURE__*/React.createElement("input", {type:"date",style:inp,value:form.delivery_date||'',onChange:function(e){set('delivery_date',e.target.value);}}), /*#__PURE__*/React.createElement("input", {type:"time",style:Object.assign({},inp,{marginTop:6}),value:form.delivery_time||'',onChange:function(e){set('delivery_time',e.target.value);}})),
+  /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {style:lbl}, "Scheduled Pickup"), /*#__PURE__*/React.createElement("input", {type:"date",style:inp,value:form.pickup_date||'',onChange:function(e){set('pickup_date',e.target.value);}}), /*#__PURE__*/React.createElement("input", {type:"time",style:Object.assign({},inp,{marginTop:6}),value:form.pickup_time||'',onChange:function(e){set('pickup_time',e.target.value);}})),
   /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
     style: lbl
   }, "Payment Status"), /*#__PURE__*/React.createElement("select", {
@@ -6864,7 +6868,7 @@ function ClientPortal({
       color: '#374151',
       marginBottom: 12
     }
-  }, es ? 'Su recogida esta programada para:' : 'Your pickup is scheduled for:', " ", /*#__PURE__*/React.createElement("strong", null, fmtD(rental.pickup_date))) : /*#__PURE__*/React.createElement("p", {
+  }, es ? 'Su recogida esta programada para:' : 'Your pickup is scheduled for:', " ", /*#__PURE__*/React.createElement("strong", null, fmtD(rental.pickup_date) + (rental.pickup_time ? (' ' + rental.pickup_time) : ''))) : /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
       color: '#6B7280',
@@ -7146,7 +7150,7 @@ function DriverApp({
         lineHeight: 2,
         borderBottom: '1px solid #E5E7EB'
       }
-    }, /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCCD ", r.client_address), r._isDump && (r.scheduled_dropoff_time || r.scheduled_pickup_time) && /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, color: "#2563EB", fontWeight: 700, marginTop: 2 } }, "\uD83D\uDD52 " + (r.scheduled_dropoff_time ? ("Entrega: " + r.scheduled_dropoff_time) : "") + (r.scheduled_dropoff_time && r.scheduled_pickup_time ? "  \xB7  " : "") + (r.scheduled_pickup_time ? ("Recogida: " + r.scheduled_pickup_time) : "")), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCC5 Vence: ", r.due_date, " (", d < 0 ? Math.abs(d) + 'd vencido' : d === 0 ? 'hoy' : d + 'd restantes', ")"), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCB0 ", money(r.price), " \xB7 ", r.payment_status === 'paid' ? 'PAGADO' : r.payment_status === 'partial' ? 'PARCIAL' : 'NO PAGADO'), r.notes && /*#__PURE__*/React.createElement("div", {
+    }, /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCCD ", r.client_address), r._isDump && (r.scheduled_dropoff_time || r.scheduled_pickup_time) && /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, color: "#2563EB", fontWeight: 700, marginTop: 2 } }, "\uD83D\uDD52 " + (r.scheduled_dropoff_time ? ("Entrega: " + r.scheduled_dropoff_time) : "") + (r.scheduled_dropoff_time && r.scheduled_pickup_time ? "  \xB7  " : "") + (r.scheduled_pickup_time ? ("Recogida: " + r.scheduled_pickup_time) : "")), !r._isDump && (r.delivery_time || r.pickup_time) && /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, color: "#2563EB", fontWeight: 700, marginTop: 2 } }, "\uD83D\uDD52 " + (r.delivery_time ? ("Entrega: " + r.delivery_time) : "") + (r.delivery_time && r.pickup_time ? "  \xB7  " : "") + (r.pickup_time ? ("Recogida: " + r.pickup_time) : "")), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCC5 Vence: ", r.due_date, " (", d < 0 ? Math.abs(d) + 'd vencido' : d === 0 ? 'hoy' : d + 'd restantes', ")"), /*#__PURE__*/React.createElement("div", null, "\uD83D\uDCB0 ", money(r.price), " \xB7 ", r.payment_status === 'paid' ? 'PAGADO' : r.payment_status === 'partial' ? 'PARCIAL' : 'NO PAGADO'), r.notes && /*#__PURE__*/React.createElement("div", {
       style: {
         marginTop: 6,
         padding: '8px 10px',
