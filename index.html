@@ -4329,8 +4329,153 @@ function OverviewTab(props) {
   );
 }
 
+function BookingsInbox(_ref) {
+  var showToast = _ref.showToast || function(){};
+  var _s = useState([]); var bookings = _s[0]; var setBookings = _s[1];
+  var _l = useState(true); var loading = _l[0]; var setLoading = _l[1];
+  var _f = useState('new'); var filter = _f[0]; var setFilter = _f[1];
+  var load = async function(){
+    setLoading(true);
+    var res = await sb.from('booking_requests').select('*').order('created_at', { ascending:false });
+    if (res && res.data) setBookings(res.data);
+    setLoading(false);
+  };
+  useEffect(function(){ load(); }, []);
+  var setStatus = async function(id, status){
+    await sb.from('booking_requests').update({ status:status }).eq('id', id);
+    showToast('Updated');
+    load();
+  };
+  var shown = bookings.filter(function(b){ return filter === 'all' ? true : (b.status||'new') === filter; });
+  var newCount = bookings.filter(function(b){ return (b.status||'new') === 'new'; }).length;
+  var card = { background:'#fff', border:'1px solid #E5E7EB', borderRadius:12, padding:16, marginBottom:12 };
+  var btn = function(bg, col){ return { padding:'7px 12px', fontSize:12, fontWeight:700, borderRadius:8, border:'none', cursor:'pointer', background:bg, color:col, marginRight:6 }; };
+  return React.createElement('div', { style:{ maxWidth:760, margin:'0 auto' } },
+    React.createElement('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 } },
+      React.createElement('h2', { style:{ fontSize:20, fontWeight:800 } }, '\uD83D\uDCE5 Booking Requests', newCount > 0 ? React.createElement('span', { style:{ marginLeft:10, fontSize:13, fontWeight:700, background:'#DC2626', color:'#fff', padding:'3px 10px', borderRadius:20 } }, newCount + ' new') : null),
+      React.createElement('div', null,
+        React.createElement('span', { style:{ fontSize:12, color:'#6B7280', marginRight:8 } }, 'Public link:'),
+        React.createElement('a', { href:'https://samsoffice.github.io/Sams-rental/#/book', target:'_blank', style:{ fontSize:12, color:'#1D4ED8', fontWeight:700 } }, '/#/book')
+      )
+    ),
+    React.createElement('div', { style:{ display:'flex', gap:8, marginBottom:16 } },
+      ['new','contacted','converted','declined','all'].map(function(f){
+        return React.createElement('button', { key:f, onClick:function(){ setFilter(f); }, style:{ padding:'6px 12px', fontSize:12, fontWeight:700, borderRadius:20, border:'none', cursor:'pointer', background: filter===f ? '#1D4ED8' : '#F3F4F6', color: filter===f ? '#fff' : '#374151', textTransform:'capitalize' } }, f);
+      })
+    ),
+    loading ? React.createElement('div', { style:{ color:'#9CA3AF', textAlign:'center', padding:40 } }, 'Loading...') :
+    shown.length === 0 ? React.createElement('div', { style:{ color:'#9CA3AF', textAlign:'center', padding:40, background:'#fff', borderRadius:12 } }, 'No ' + (filter==='all'?'':filter+' ') + 'booking requests. Share your public booking link to start receiving them.') :
+    shown.map(function(b){
+      return React.createElement('div', { key:b.id, style:card },
+        React.createElement('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8 } },
+          React.createElement('div', null,
+            React.createElement('span', { style:{ fontSize:16, fontWeight:800 } }, b.client_name || 'Unknown'),
+            React.createElement('span', { style:{ marginLeft:8, fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20, background: b.service_type==='dump'?'#FEF3C7':'#DBEAFE', color: b.service_type==='dump'?'#92400E':'#1E40AF' } }, b.service_type==='dump'?'DUMPING':'RENTAL')
+          ),
+          React.createElement('span', { style:{ fontSize:11, fontWeight:700, padding:'3px 10px', borderRadius:20, background:'#F3F4F6', color:'#374151', textTransform:'capitalize' } }, b.status||'new')
+        ),
+        React.createElement('div', { style:{ fontSize:13, color:'#374151', lineHeight:1.8 } },
+          React.createElement('div', null, '\uD83D\uDCDE ', React.createElement('a', { href:'tel:'+(b.client_phone||'').replace(/[^0-9+]/g,''), style:{ color:'#1D4ED8' } }, b.client_phone||'-'), b.client_email ? (' \u00B7 ' + b.client_email) : ''),
+          b.client_address ? React.createElement('div', null, '\uD83D\uDCCD ' + b.client_address) : null,
+          b.service_type==='dump' ? React.createElement('div', null, '\uD83D\uDDD1\uFE0F ' + (b.container_size||'') + ' \u00B7 ' + (b.material_type||'')) : React.createElement('div', null, '\uD83D\uDEA7 ' + (b.equipment||'')),
+          b.preferred_date ? React.createElement('div', null, '\uD83D\uDCC5 ' + b.preferred_date) : null,
+          b.notes ? React.createElement('div', { style:{ marginTop:4, padding:'6px 10px', background:'#F9FAFB', borderRadius:6, fontSize:12, color:'#6B7280' } }, b.notes) : null
+        ),
+        React.createElement('div', { style:{ marginTop:12, display:'flex', flexWrap:'wrap' } },
+          React.createElement('a', { href:'tel:'+(b.client_phone||'').replace(/[^0-9+]/g,''), style:Object.assign({}, btn('#ECFDF5','#065F46'), { textDecoration:'none', display:'inline-block' }) }, '\uD83D\uDCDE Call'),
+          (b.status||'new')==='new' ? React.createElement('button', { onClick:function(){ setStatus(b.id,'contacted'); }, style:btn('#EFF6FF','#1D4ED8') }, 'Mark Contacted') : null,
+          React.createElement('button', { onClick:function(){ setStatus(b.id,'converted'); }, style:btn('#ECFDF5','#065F46') }, '\u2713 Converted'),
+          React.createElement('button', { onClick:function(){ setStatus(b.id,'declined'); }, style:btn('#FEF2F2','#DC2626') }, 'Decline')
+        )
+      );
+    })
+  );
+}
+
+
+function BookingPage() {
+  const [es, setEs] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({
+    service_type: 'dump', client_name: '', client_phone: '', client_email: '',
+    client_address: '', container_size: '20yd', material_type: 'Construction Debris',
+    equipment: '', preferred_date: '', notes: ''
+  });
+  const set = function(k, v){ setForm(function(f){ var n = Object.assign({}, f); n[k] = v; return n; }); };
+  var t = function(en, sp){ return es ? sp : en; };
+  var lbl = { display:'block', fontSize:13, fontWeight:700, color:'#374151', marginBottom:6, marginTop:14 };
+  var inp = { width:'100%', padding:'12px 14px', fontSize:15, border:'1px solid #D1D5DB', borderRadius:10, boxSizing:'border-box' };
+  var submit = async function(){
+    if (!form.client_name || !form.client_phone) { alert(t('Please enter your name and phone','Ingrese su nombre y telefono')); return; }
+    if (saving) return;
+    setSaving(true);
+    var payload = Object.assign({}, form);
+    if (!payload.preferred_date) payload.preferred_date = null;
+    var res = await sb.from('booking_requests').insert([payload]);
+    setSaving(false);
+    if (res && res.error) { alert('Error: ' + res.error.message); return; }
+    setSubmitted(true);
+  };
+  if (submitted) {
+    return React.createElement('div', { style:{ minHeight:'100vh', background:'#F0FDF4', display:'flex', alignItems:'center', justifyContent:'center', padding:20, fontFamily:'system-ui,sans-serif' } },
+      React.createElement('div', { style:{ background:'#fff', borderRadius:16, padding:'40px 32px', maxWidth:440, textAlign:'center', boxShadow:'0 10px 40px rgba(0,0,0,0.1)' } },
+        React.createElement('div', { style:{ fontSize:52, marginBottom:12 } }, '\u2705'),
+        React.createElement('h1', { style:{ fontSize:22, fontWeight:800, color:'#065F46', marginBottom:10 } }, t('Request Received!','Solicitud Recibida!')),
+        React.createElement('p', { style:{ fontSize:15, color:'#374151', lineHeight:1.5 } }, t('Thank you! Sams Construction Services will contact you shortly to confirm your booking.','Gracias! Sams Construction Services se comunicara con usted pronto para confirmar su reserva.')),
+        React.createElement('p', { style:{ fontSize:14, color:'#6B7280', marginTop:16 } }, '\ud83d\udcde +1 (917) 663-6369')
+      )
+    );
+  }
+  return React.createElement('div', { style:{ minHeight:'100vh', background:'#F9FAFB', padding:'0 0 40px', fontFamily:'system-ui,sans-serif' } },
+    React.createElement('div', { style:{ background:'#1D4ED8', color:'#fff', padding:'24px 20px', textAlign:'center', position:'relative' } },
+      React.createElement('button', { onClick:function(){ setEs(!es); }, style:{ position:'absolute', top:16, right:16, background:'rgba(255,255,255,0.2)', color:'#fff', border:'none', borderRadius:8, padding:'6px 12px', fontSize:13, fontWeight:700, cursor:'pointer' } }, es ? 'English' : 'Espanol'),
+      React.createElement('div', { style:{ fontSize:22, fontWeight:800, letterSpacing:0.5 } }, 'SAMS CONSTRUCTION SERVICES LTD'),
+      React.createElement('div', { style:{ fontSize:14, opacity:0.9, marginTop:4 } }, t('Request a Dumpster or Equipment Rental','Solicite un Contenedor o Alquiler de Equipo'))
+    ),
+    React.createElement('div', { style:{ maxWidth:520, margin:'0 auto', padding:'0 20px' } },
+      React.createElement('div', { style:{ background:'#fff', borderRadius:16, padding:'8px 22px 26px', marginTop:-12, boxShadow:'0 4px 20px rgba(0,0,0,0.06)' } },
+        React.createElement('label', { style:lbl }, t('What do you need?','Que necesita?')),
+        React.createElement('div', { style:{ display:'flex', gap:10 } },
+          ['dump','rental'].map(function(sv){
+            return React.createElement('button', { key:sv, onClick:function(){ set('service_type', sv); }, style:{ flex:1, padding:'12px', borderRadius:10, border: form.service_type===sv ? '2px solid #1D4ED8' : '1px solid #D1D5DB', background: form.service_type===sv ? '#EFF6FF' : '#fff', color: form.service_type===sv ? '#1D4ED8' : '#374151', fontWeight:700, fontSize:14, cursor:'pointer' } }, sv==='dump' ? t('Dumpster / Dumping','Contenedor / Descarga') : t('Equipment Rental','Alquiler de Equipo'));
+          })
+        ),
+        React.createElement('label', { style:lbl }, t('Full Name','Nombre Completo') + ' *'),
+        React.createElement('input', { style:inp, value:form.client_name, onChange:function(e){ set('client_name', e.target.value); } }),
+        React.createElement('label', { style:lbl }, t('Phone','Telefono') + ' *'),
+        React.createElement('input', { style:inp, type:'tel', value:form.client_phone, onChange:function(e){ set('client_phone', e.target.value); } }),
+        React.createElement('label', { style:lbl }, 'Email'),
+        React.createElement('input', { style:inp, type:'email', value:form.client_email, onChange:function(e){ set('client_email', e.target.value); } }),
+        React.createElement('label', { style:lbl }, t('Job Address','Direccion del Trabajo')),
+        React.createElement('input', { style:inp, value:form.client_address, onChange:function(e){ set('client_address', e.target.value); } }),
+        form.service_type==='dump' && React.createElement('div', null,
+          React.createElement('label', { style:lbl }, t('Container Size','Tamano del Contenedor')),
+          React.createElement('select', { style:inp, value:form.container_size, onChange:function(e){ set('container_size', e.target.value); } },
+            ['10yd','15yd','20yd','30yd'].map(function(s){ return React.createElement('option', { key:s, value:s }, s); })),
+          React.createElement('label', { style:lbl }, t('Material Type','Tipo de Material')),
+          React.createElement('select', { style:inp, value:form.material_type, onChange:function(e){ set('material_type', e.target.value); } },
+            ['Construction Debris','Clean Concrete','Brick-Soil-Rock','Asphalt & Brick','Household','Metal','Trees','Dirt','Mix','Garbage'].map(function(m){ return React.createElement('option', { key:m, value:m }, m); }))
+        ),
+        form.service_type==='rental' && React.createElement('div', null,
+          React.createElement('label', { style:lbl }, t('Equipment Needed','Equipo Necesario')),
+          React.createElement('input', { style:inp, value:form.equipment, onChange:function(e){ set('equipment', e.target.value); }, placeholder:t('e.g. Excavator, Skid Steer','ej. Excavadora') })
+        ),
+        React.createElement('label', { style:lbl }, t('Preferred Date','Fecha Preferida')),
+        React.createElement('input', { style:inp, type:'date', value:form.preferred_date, onChange:function(e){ set('preferred_date', e.target.value); } }),
+        React.createElement('label', { style:lbl }, t('Notes','Notas')),
+        React.createElement('textarea', { style:Object.assign({}, inp, { minHeight:70, resize:'vertical' }), value:form.notes, onChange:function(e){ set('notes', e.target.value); } }),
+        React.createElement('button', { onClick:submit, disabled:saving, style:{ width:'100%', marginTop:22, padding:16, borderRadius:12, border:'none', background: saving ? '#9CA3AF' : '#1D4ED8', color:'#fff', fontSize:17, fontWeight:800, cursor: saving ? 'default' : 'pointer' } }, saving ? t('Sending...','Enviando...') : t('Request Booking','Solicitar Reserva'))
+      ),
+      React.createElement('p', { style:{ textAlign:'center', fontSize:12, color:'#9CA3AF', marginTop:16 } }, t('We will contact you to confirm pricing and availability.','Nos comunicaremos para confirmar precio y disponibilidad.'))
+    )
+  );
+}
+
+
 function App() {
   const hash = window.location.hash.slice(1);
+  if (hash === '/book' || hash === '/book/') return /*#__PURE__*/React.createElement(BookingPage, null);
   const portalMatch = hash.match(/^\/portal\/(.+)$/);
   if (portalMatch) return /*#__PURE__*/React.createElement(ClientPortal, {token: portalMatch[1]});
   const dumpPortalMatch = hash.match(/^\/dump\/([^/]+)$/);
@@ -4632,6 +4777,9 @@ function App() {
   }, {
     id: 'clients',
     l: '\uD83D\uDC65 Clients'
+  }, {
+    id: 'bookings',
+    l: '\uD83D\uDCE5 Bookings'
   }, {
     id: 'drivers',
     l: '🚛 Drivers'
@@ -5604,7 +5752,7 @@ function App() {
     rentals: allRecords
   }), !loading && tab === 'schedule' && /*#__PURE__*/React.createElement(ScheduleTab, {
     rentals: rentals, dumpJobs: dumpJobs
-  }), !loading && tab === 'overview' && React.createElement(OverviewTab, {rentals: rentals, dumpJobs: dumpJobs, money: money, showToast: showToast}), tab === 'clients' && React.createElement(ClientsTab, {rentals: rentals, dumpJobs: dumpJobs, setClientPanel: setClientPanel}), tab === 'dumping' && React.createElement(DumpingTab, {showToast: showToast, dumpJobs: dumpJobs, reloadData: loadData, rentals: rentals, setClientPanel: setClientPanel, openDumpForm: openDumpForm, setOpenDumpForm: setOpenDumpForm, goToDashboard: function(){ setTab('dashboard'); }, editDumpJob: editDumpJob, setEditDumpJob: setEditDumpJob}),
+  }), !loading && tab === 'overview' && React.createElement(OverviewTab, {rentals: rentals, dumpJobs: dumpJobs, money: money, showToast: showToast}), tab === 'clients' && React.createElement(ClientsTab, {rentals: rentals, dumpJobs: dumpJobs, setClientPanel: setClientPanel}), tab === 'bookings' && React.createElement(BookingsInbox, {showToast: showToast}), tab === 'dumping' && React.createElement(DumpingTab, {showToast: showToast, dumpJobs: dumpJobs, reloadData: loadData, rentals: rentals, setClientPanel: setClientPanel, openDumpForm: openDumpForm, setOpenDumpForm: setOpenDumpForm, goToDashboard: function(){ setTab('dashboard'); }, editDumpJob: editDumpJob, setEditDumpJob: setEditDumpJob}),
         !loading && tab === 'confirmations' && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       background: '#fff',
