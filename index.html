@@ -3387,7 +3387,8 @@ function DumpingTab(_ref) {
             ),
               React.createElement('div', {style:{fontSize:12,color:'#6B7280'}}, j.material_type + ' • ' + j.assigned_driver + (j.weight_tons?' • '+j.weight_tons+'T':'')),
               React.createElement('div', {style:{fontSize:12,color:'#9CA3AF'}}, j.client_address),
-              j.permit_no && React.createElement('div', {style:{fontSize:11,color:'#6B7280',marginTop:2}}, '📋 Permit: ' + j.permit_no)
+              j.permit_no && React.createElement('div', {style:{fontSize:11,color:'#6B7280',marginTop:2}}, '📋 Permit: ' + j.permit_no),
+              j.driver_notes && React.createElement('div', {style:{fontSize:12,color:'#92400E',background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:8,padding:'6px 9px',marginTop:6}}, '📝 Chofer: ' + j.driver_notes)
             ),
             React.createElement('div', {style:{textAlign:'right'}},
               React.createElement('div', {style:{fontSize:18,fontWeight:800,color:'#111827'}}, '$' + (parseFloat(j.total_price)||0).toLocaleString()),
