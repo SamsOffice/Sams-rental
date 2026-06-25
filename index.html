@@ -3430,6 +3430,7 @@ function DumpClientPortal(_ref) {
   }, [token]);
 
   var logConfirmation = function() {
+    if (!window.confirm(es ? '¿Confirma que este trabajo es correcto y que debe este monto?' : 'Do you confirm this job is correct and that you owe this amount?')) return;
     setConfirmed(true);
     try { sb.from('dump_jobs').update({ portal_confirmed: true, portal_confirmed_at: new Date().toISOString() }).eq('portal_token', token).then(function(){}, function(){}); } catch(e){}
   };
@@ -4209,7 +4210,7 @@ function OverviewTab(props) {
   var machinesTotal = (function(){ var x = inv.find(function(i){return i.kind==='machine';}); return x?x.total_qty:10; })();
 
   var activeDumps = dumpJobs.filter(function(j){return j.driver_status!=='completed';});
-  var containersOut = dumpJobs.filter(function(j){return j.driver_status==='delivered'||j.driver_status==='arrived'||j.driver_status==='on_the_way';});
+  var containersOut = dumpJobs.filter(function(j){return j.driver_status!=='completed';});
   var pickedUpDumps = dumpJobs.filter(function(j){return j.driver_status==='completed';});
   var unpaidDumps = dumpJobs.filter(function(j){return j.payment_status==='unpaid';});
   var paidDumps = dumpJobs.filter(function(j){return j.payment_status==='paid';});
