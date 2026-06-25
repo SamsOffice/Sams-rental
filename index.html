@@ -3543,11 +3543,11 @@ function DumpClientPortal(_ref) {
           ),
           React.createElement('div', { style:{ background:'#F9FAFB', borderRadius:10, padding:16, marginBottom:20 } },
             React.createElement('div', { style:{ fontSize:12, fontWeight:700, color:'#6B7280', textTransform:'uppercase', marginBottom:10 } }, es?'TERMINOS Y CONDICIONES:':'TERMS & CONDITIONS:'),
-            React.createElement('ul', { style:{ fontSize:13, color:'#4B5563', lineHeight:2, paddingLeft:18, margin:0 } },
-              React.createElement('li', null, es?'El pago vence al completar el servicio.':'Full payment is due upon completion of service.'),
-              React.createElement('li', null, es?'Sobrepeso cobrado a $140 por tonelada adicional.':'Overweight charged at $140 per additional ton.'),
-              React.createElement('li', null, es?'No materiales peligrosos o prohibidos.':'No hazardous or prohibited materials.'),
-              React.createElement('li', null, es?'Todos los costos de cobro se anaden al saldo.':'All collection costs added to outstanding balance.')
+            React.createElement('div', { style:{ fontSize:13, color:'#4B5563', lineHeight:1.9 } },
+              es?'\u2022 El pago vence al completar el servicio.':'\u2022 Full payment is due upon completion of service.', React.createElement('br', null),
+              es?'\u2022 Sobrepeso cobrado a $140 por tonelada adicional.':'\u2022 Overweight charged at $140 per additional ton.', React.createElement('br', null),
+              es?'\u2022 No materiales peligrosos o prohibidos.':'\u2022 No hazardous or prohibited materials.', React.createElement('br', null),
+              es?'\u2022 Todos los costos de cobro se anaden al saldo.':'\u2022 All collection costs added to outstanding balance.'
             )
           ),
           React.createElement('button', { onClick:logConfirmation, style:{ width:'100%', padding:18, borderRadius:12, background:'#2563EB', color:'#fff', border:'none', fontSize:17, fontWeight:800, cursor:'pointer', marginBottom:12 } }, es?('CONFIRMO QUE DEBO '+money(total)):('I CONFIRM I OWE '+money(total))),
@@ -3990,11 +3990,26 @@ function CombinedPortal(props) {
         React.createElement('div',{style:{fontSize:12,color:'#9CA3AF'}},es?'TOTAL COMBINADO':'COMBINED TOTAL'),
         React.createElement('div',{style:{fontSize:30,fontWeight:900,color:'#111827'}},'$'+grand.toFixed(2))
       ),
-      React.createElement('button',{onClick:function(){setConfirmed(true);},style:{width:'100%',padding:14,borderRadius:10,background:'#111827',color:'#fff',border:'none',fontSize:15,fontWeight:800,cursor:'pointer',marginBottom:8}},
+      React.createElement('button',{onClick:function(){setConfirmed(true);},style:{width:'100%',padding:14,borderRadius:10,background:'#2563EB',color:'#fff',border:'none',fontSize:15,fontWeight:800,cursor:'pointer',marginBottom:8}},
         es?('CONFIRMO QUE DEBO $'+grand.toFixed(2)):('I CONFIRM I OWE $'+grand.toFixed(2))
       ),
-      React.createElement('button',{onClick:function(){setShowTerms(true);},style:{width:'100%',padding:8,borderRadius:8,background:'none',border:'1px solid #E5E7EB',color:'#2563EB',fontSize:12,cursor:'pointer'}},es?'Ver Terminos':'View Terms'),
-      showTerms&&React.createElement(TermsPopup,{onClose:function(){setShowTerms(false);},es:es})
+      React.createElement('div',{style:{background:'#F9FAFB',border:'1px solid #E5E7EB',borderRadius:12,padding:16,marginTop:14,textAlign:'left'}},
+        React.createElement('div',{style:{fontSize:12,fontWeight:700,color:'#6B7280',textTransform:'uppercase',marginBottom:8}},es?'TERMINOS DE ALQUILER:':'RENTAL TERMS:'),
+        React.createElement('div',{style:{fontSize:13,color:'#4B5563',lineHeight:1.9}},
+          es?'\u2022 El pago completo debe realizarse en o antes de la fecha de vencimiento.':'\u2022 Full payment is due on or before the due date.', React.createElement('br',null),
+          es?'\u2022 El incumplimiento resultara en el retiro inmediato del equipo.':'\u2022 Non-payment will result in immediate equipment repossession.', React.createElement('br',null),
+          es?'\u2022 Se presentara un gravamen mecanico sobre su propiedad.':'\u2022 A Mechanic Lien will be filed on your property for non-payment.', React.createElement('br',null),
+          es?'\u2022 No se otorgan extensiones sin aprobacion previa de la oficina.':'\u2022 No extensions granted without prior office approval.', React.createElement('br',null),
+          es?'\u2022 Todos los costos de cobro se anaden al saldo pendiente.':'\u2022 All collection costs added to outstanding balance.'
+        ),
+        React.createElement('div',{style:{fontSize:12,fontWeight:700,color:'#6B7280',textTransform:'uppercase',margin:'14px 0 8px'}},es?'TERMINOS DE VOLCADO:':'DUMPING TERMS:'),
+        React.createElement('div',{style:{fontSize:13,color:'#4B5563',lineHeight:1.9}},
+          es?'\u2022 El pago vence al completar el servicio.':'\u2022 Full payment is due upon completion of service.', React.createElement('br',null),
+          es?'\u2022 Sobrepeso cobrado a $140 por tonelada adicional.':'\u2022 Overweight charged at $140 per additional ton.', React.createElement('br',null),
+          es?'\u2022 No materiales peligrosos o prohibidos.':'\u2022 No hazardous or prohibited materials.', React.createElement('br',null),
+          es?'\u2022 Todos los costos de cobro se anaden al saldo.':'\u2022 All collection costs added to outstanding balance.'
+        )
+      ),
     )
   );
   return React.createElement('div',{style:{minHeight:'100vh',background:'#F9FAFB'}},
