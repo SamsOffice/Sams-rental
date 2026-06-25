@@ -4283,7 +4283,7 @@ function OverviewTab(props) {
   return React.createElement('div', null,
     React.createElement('div', { style:{ display:'flex', gap:8, marginBottom:18 } },
       React.createElement('button', { onClick:function(){ setOvTab('stats'); }, style:{ padding:'8px 16px', borderRadius:8, border:'none', cursor:'pointer', fontSize:13, fontWeight:700, background: ovTab==='stats'?'#111827':'#F3F4F6', color: ovTab==='stats'?'#fff':'#374151' } }, 'Live Stats'),
-      React.createElement('button', { onClick:function(){ setOvTab('history'); }, style:{ padding:'8px 16px', borderRadius:8, border:'none', cursor:'pointer', fontSize:13, fontWeight:700, background: ovTab==='history'?'#111827':'#F3F4F6', color: ovTab==='history'?'#fff':'#374151' } }, 'History')
+      React.createElement('span', null, '')
     ),
     ovTab==='stats' && React.createElement('div', null,
       section('Dumping', '#F59E0B', [
@@ -4307,8 +4307,7 @@ function OverviewTab(props) {
         card('This Month', money?money(revMonth):'$'+revMonth, '#1D4ED8', null),
         card('This Year', money?money(revYear):'$'+revYear, '#1D4ED8', null),
         card('All Revenue', money?money(revAll):'$'+revAll, '#1D4ED8', null)
-      ]),
-      React.createElement('button', { onClick:saveSnapshot, style:{ padding:'10px 18px', borderRadius:8, border:'none', background:'#1D4ED8', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' } }, 'Save This Week/Month to History')
+      ])
     ),
     ovTab==='history' && React.createElement('div', null,
       React.createElement('h3', { style:{ fontSize:14, fontWeight:800, marginBottom:12 } }, 'Saved Revenue History'),
@@ -4617,7 +4616,7 @@ function BookingPage() {
   }
   return React.createElement('div', { style:{ minHeight:'100vh', background:'#F9FAFB', padding:'0 0 40px', fontFamily:'system-ui,sans-serif' } },
     React.createElement('div', { style:{ background:'#1D4ED8', color:'#fff', padding:'24px 20px', textAlign:'center', position:'relative' } },
-      React.createElement('button', { onClick:function(){ setEs(!es); }, style:{ position:'absolute', top:16, right:16, background:'rgba(255,255,255,0.2)', color:'#fff', border:'none', borderRadius:8, padding:'6px 12px', fontSize:13, fontWeight:700, cursor:'pointer' } }, es ? 'English' : 'Espanol'),
+      React.createElement('button', { onClick:function(){ setEs(!es); }, style:{ position:'absolute', top:14, right:14, background:'#fff', color:'#1D4ED8', border:'3px solid #fff', borderRadius:14, padding:'14px 24px', fontSize:20, fontWeight:800, cursor:'pointer', boxShadow:'0 4px 14px rgba(0,0,0,0.25)', display:'flex', alignItems:'center', gap:8 } }, es ? '\uD83C\uDDFA\uD83C\uDDF8 English' : '\uD83C\uDDF2\uD83C\uDDFD Espanol'),
       React.createElement('div', { style:{ fontSize:22, fontWeight:800, letterSpacing:0.5 } }, 'SAMS CONSTRUCTION SERVICES LTD'),
       React.createElement('div', { style:{ fontSize:14, opacity:0.9, marginTop:4 } }, t('Request a Dumpster or Equipment Rental','Solicite un Contenedor o Alquiler de Equipo'))
     ),
