@@ -2037,16 +2037,20 @@ function ClientPanel({
     /*#__PURE__*/React.createElement("span", { style: { fontSize: 11, fontWeight: 600, background: '#FFF7ED', color: '#C2410C', padding: '4px 10px', borderRadius: 6 } }, dumpCount + ' dumps')
   ),
   /*#__PURE__*/React.createElement("button", { onClick: function(){
-    var lines = ['INVOICE HISTORY - ' + (client||''), 'Phone: ' + (r0 && r0.client_phone || ''), 'Generated: ' + new Date().toLocaleDateString(), '', 'DATE,TYPE,DESCRIPTION,AMOUNT,STATUS'];
-    allH.forEach(function(rec){
-      var d = rec._isDump ? (rec.date||'') : (rec.start_date||'');
-      var desc = (rec.asset||'').replace(/,/g,' ');
-      lines.push([d, rec._isDump?'DUMP':'RENTAL', desc, (parseFloat(rec.price)||0).toFixed(2), rec.payment_status||''].join(','));
-    });
-    lines.push('', 'TOTAL PAID,' + paid.toFixed(2), 'TOTAL OWED,' + owed.toFixed(2), 'LIFETIME,' + lifetime.toFixed(2));
-    var blob = new Blob([lines.join('\n')], { type: 'text/csv' });
-    var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-    a.download = (client||'client').replace(/[^a-zA-Z0-9]/g,'_') + '_invoices.csv'; a.click();
+    try {
+      var rows = [['INVOICE HISTORY - ' + (client||'')], ['Phone: ' + (r0 && r0.client_phone || '')], ['Generated: ' + new Date().toLocaleDateString()], [], ['Date','Type','Description','Amount','Status']];
+      allH.forEach(function(rec){
+        var d = rec._isDump ? (rec.date||'') : (rec.start_date||'');
+        var desc = (rec.asset||'');
+        rows.push([d, rec._isDump?'DUMP':'RENTAL', desc, parseFloat(rec.price)||0, rec.payment_status||'']);
+      });
+      rows.push([], ['Total Paid', '', '', paid], ['Total Owed', '', '', owed], ['Lifetime', '', '', lifetime]);
+      var ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [{wch:14},{wch:10},{wch:34},{wch:12},{wch:12}];
+      var wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Invoices');
+      XLSX.writeFile(wb, (client||'client').replace(/[^a-zA-Z0-9]/g,'_') + '_invoices.xlsx');
+    } catch(e){ alert('Could not export: ' + e.message); }
   }, style: { width: '100%', padding: 12, borderRadius: 8, border: 'none', background: '#065F46', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', marginBottom: 14 } }, "\u2B07 Download This Client's Invoice File"),
   /*#__PURE__*/React.createElement("h4", { style: { fontSize: 13, fontWeight: 700, marginBottom: 8 } }, "Invoices by Year (", allH.length, ")"),
   yearKeys.map(function(y){
@@ -7363,6 +7367,14 @@ function DriverApp({
     }
     load();
   };
+  const _dn = React.useState({}); const noteDraft = _dn[0]; const setNoteDraft = _dn[1];
+  const saveNote = async (id, isDump) => {
+    const txt = (noteDraft[id] || '').trim();
+    const _r = await sb.from(isDump ? 'dump_jobs' : 'rentals').update({ driver_notes: txt }).eq('id', id);
+    if (_r && _r.error) { alert('No se pudo guardar la nota: ' + _r.error.message); return; }
+    alert('Nota guardada \u2713');
+    load();
+  };
   const STEPS_ES = [{
     key: 'assigned',
     label: '📋 Asignado',
@@ -7594,7 +7606,7 @@ function DriverApp({
         fontWeight: 600,
         textAlign: 'center'
       }
-    }, "\uD83D\uDDFA Mapa")));
+    }, "\uD83D\uDDFA Mapa")), /*#__PURE__*/React.createElement("div", { style: { padding: '0 16px 14px' } }, /*#__PURE__*/React.createElement("textarea", { value: noteDraft[r.id] !== undefined ? noteDraft[r.id] : (r.driver_notes || ''), onChange: function(e){ var v = e.target.value; setNoteDraft(function(prev){ var n = Object.assign({}, prev); n[r.id] = v; return n; }); }, placeholder: 'Notas del trabajo...', style: { width: '100%', minHeight: 54, padding: 10, borderRadius: 9, border: '1px solid #D1D5DB', fontSize: 14, boxSizing: 'border-box' } }), /*#__PURE__*/React.createElement("button", { onClick: function(){ saveNote(r.id, r._isDump); }, style: { width: '100%', marginTop: 8, padding: 11, borderRadius: 9, border: 'none', background: '#374151', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' } }, "\uD83D\uDCDD Guardar Nota")));
   })), recentlyDone.length > 0 && /*#__PURE__*/React.createElement("div", { style: { padding: 16, borderTop: '8px solid #F3F4F6' } },
     /*#__PURE__*/React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: '#6B7280', marginBottom: 10 } }, "Completados Recientemente"),
     recentlyDone.map(function(r) {
