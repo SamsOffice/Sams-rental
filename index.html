@@ -1848,30 +1848,8 @@ function ClientPanel({
   const r0 = h[0] || dh[0];
   var openClientInvoice = function(r){
     try {
-      var isDump = !!r._isDump;
-      var rows = '';
-      var addRow = function(desc, date, amt){ rows += '<tr style="border-bottom:1px solid #BDD6E8"><td style="padding:10px 12px;font-style:italic">' + desc + '</td><td style="padding:10px 12px;text-align:center">' + (date||'') + '</td><td style="padding:10px 12px;text-align:right">$ ' + (parseFloat(amt)||0).toFixed(2) + '</td></tr>'; };
-      var ticket = isDump ? ('DMP-' + (r.ticket_no||'')) : ('INV-' + String(r.id).slice(0,6).toUpperCase());
-      var dt = isDump ? (r.date||'') : (r.start_date||'');
-      var total = parseFloat(r.price)||0;
-      if (isDump) {
-        addRow((r.job_type||'') + ' - ' + (r.material_type||'') + ' (' + (r.container_size||'') + ')', dt, total - (parseFloat(r.permit_fee)||0));
-        if (parseFloat(r.permit_fee) > 0) addRow('Permit Fee', '', r.permit_fee);
-      } else {
-        addRow(r.asset||'Equipment Rental', dt, total);
-      }
-      var fillers = ''; for (var k=0;k<6;k++){ fillers += '<tr style="height:34px;background:' + (k%2?'#EAF4FB':'#fff') + '"><td></td><td></td><td></td></tr>'; }
-      var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Invoice ' + ticket + '</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:28px 32px;max-width:700px;margin:0 auto;font-size:13px;color:#111}</style></head><body>' +
-        '<div style="font-size:20px;font-weight:800;color:#1D4ED8;border-bottom:3px solid #1D4ED8;padding-bottom:8px;margin-bottom:14px">SAMS CONSTRUCTION SERVICES LTD</div>' +
-        '<div style="display:flex;justify-content:space-between;margin-bottom:14px"><div style="color:#333;font-size:12px;line-height:1.6">188-16 WOODHULL AVE<br>Hollis NY 11423<br>+1 (917) 663-6369<br>BIC#4376</div>' +
-        '<div style="font-size:12px;line-height:1.8;text-align:right"><span style="color:#777">Invoice No.</span> <strong>' + ticket + '</strong><br><span style="color:#777">Invoice Date:</span> <strong>' + dt + '</strong></div></div>' +
-        '<div style="background:#DCECF8;border-radius:4px;padding:10px 12px;margin-bottom:14px;font-size:12px"><strong>Bill to :</strong> ' + (r.client_name||'') + '<br><span style="color:#555">Address:</span> ' + (r.client_address||'') + '<br><span style="color:#555">Phone:</span> ' + (r.client_phone||'') + '</div>' +
-        '<table style="width:100%;border-collapse:collapse;margin-bottom:0"><thead><tr style="background:#1D4ED8;color:#fff"><th style="padding:10px 12px;text-align:left">Description</th><th style="padding:10px 12px">Date</th><th style="padding:10px 12px;text-align:right">Amount</th></tr></thead><tbody>' + rows + fillers +
-        '<tr><td></td><td style="padding:8px 12px;text-align:right;color:#555">Sales Tax</td><td></td></tr>' +
-        '<tr><td></td><td style="padding:8px 12px;text-align:right;color:#555">Other</td><td></td></tr>' +
-        '<tr style="background:#DCECF8"><td></td><td style="padding:12px;text-align:right;font-weight:800;font-size:15px">TOTAL</td><td style="padding:12px;text-align:right;font-weight:800;font-size:15px">$ ' + total.toFixed(2) + '</td></tr>' +
-        '</tbody></table></body></html>';
-      var blob = new Blob([html], { type: 'text/html' });
+      var ticket = r._isDump ? ('DMP-' + (r.ticket_no||'')) : ('INV-' + String(r.id).slice(0,6).toUpperCase());
+      var blob = new Blob([invoiceDocHTML(invoiceDataFromRecord(r, ticket), 'Invoice ' + ticket)], { type: 'text/html' });
       window.open(URL.createObjectURL(blob), '_blank');
     } catch(e){ alert('Could not open invoice'); }
   };
@@ -2079,6 +2057,158 @@ function ClientPanel({
   }))));
 }
 
+// ── SHARED INVOICE LAYOUT (blue-header invoice, used by every invoice view) ──
+var INV_CO = { name: 'SAMS CONSTRUCTION SERVICES LTD', addr1: '188-16 WOODHULL AVE', addr2: 'Hollis NY 11423', phone: '+1 (917) 663-6369', bic: 'BIC#4376' };
+var INV_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function invEsc(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function invMoney(n) {
+  return (parseFloat(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function invParse(s) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})(?:[T ].*)?$/.exec(String(s || ''));
+  return m ? new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10)) : null;
+}
+function invLong(s) {
+  var d = invParse(s);
+  return d ? INV_MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear() : String(s || '');
+}
+function invShort(s) {
+  var d = invParse(s);
+  return d ? (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear() : String(s || '');
+}
+function invSplitAddr(a) {
+  a = String(a || '').trim();
+  var i = a.indexOf(',');
+  if (i < 0) return [a, ''];
+  return [a.slice(0, i).trim(), a.slice(i + 1).trim()];
+}
+// Builds the invoice data from a rental or a dump job, so the client name, address,
+// phone and line items fill in automatically from the record.
+function invoiceDataFromRecord(r, invNo) {
+  r = r || {};
+  var isDump = !!(r._isDump || r.ticket_no != null || r.job_type);
+  var items = [];
+  if (isDump) {
+    var ow = parseFloat(r.overweight_charge) || 0;
+    var pf = parseFloat(r.permit_fee) || 0;
+    var tp = parseFloat(r.total_price);
+    var base = (!isNaN(tp) && tp > 0) ? (tp - ow - pf) : (parseFloat(r.price) || 0);
+    if (base < 0) base = parseFloat(r.price) || 0;
+    items.push({ desc: (r.job_type || '') + ' - ' + (r.material_type || '') + ' (' + (r.container_size || '') + ')', date: r.date || '', amount: base });
+    if (ow > 0) items.push({ desc: 'Overweight Charge', date: '', amount: ow });
+    if (pf > 0) items.push({ desc: 'Permit Fee', date: '', amount: pf });
+  } else {
+    items.push({ desc: r.asset || 'Equipment Rental', date: r.start_date || '', amount: parseFloat(r.price) || 0 });
+    if (parseFloat(r.delivery_fee) > 0) items.push({ desc: 'Delivery Fee', date: '', amount: parseFloat(r.delivery_fee) });
+    if (parseFloat(r.pickup_fee) > 0) items.push({ desc: 'Pick-up Fee', date: '', amount: parseFloat(r.pickup_fee) });
+    if (parseFloat(r.trailer_fee) > 0) items.push({ desc: 'Trailer Fee', date: '', amount: parseFloat(r.trailer_fee) });
+    if (parseFloat(r.diesel_fee) > 0) items.push({ desc: 'Diesel Charge', date: '', amount: parseFloat(r.diesel_fee) });
+  }
+  var sp = invSplitAddr(r.client_address);
+  return {
+    invNo: invNo || '',
+    invDate: isDump ? (r.date || '') : (r.start_date || ''),
+    billTo: r.client_name || '',
+    addr1: sp[0],
+    addr2: sp[1],
+    phone: r.client_phone || '',
+    items: items,
+    tax: 0,
+    other: 0,
+    method: '',
+    paid: r.payment_status === 'paid'
+  };
+}
+function invoiceCss() {
+  return '' +
+    '.isheet{width:816px;box-sizing:border-box;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif;font-size:15px;padding:56px 31px 70px}' +
+    '.isheet *{box-sizing:border-box}' +
+    '.ico{font-size:30px;font-weight:700;color:#6A9AD0;padding-bottom:4px;border-bottom:3px solid #808080;line-height:1.15}' +
+    '.ihead{display:grid;grid-template-columns:36.8% 24% 39.2%}' +
+    '.ihead>div{min-height:22.5px;line-height:22.5px;overflow-wrap:anywhere}' +
+    '.icl{padding-left:3px}' +
+    '.icm{background:#CCECF8;border-bottom:1px solid #B4B8BC;padding-left:3px}' +
+    '.icr{padding-left:14px;display:flex}' +
+    '.ilab{width:147px;flex:none}' +
+    '.ilast{border-bottom:3px solid #489CD4}' +
+    '.itbl{margin-top:24px;border:1px solid #808080}' +
+    '.itr{display:grid;grid-template-columns:36.8% 24% 18.9% 20.3%}' +
+    '.itr+.itr{border-top:1px solid #808080}' +
+    '.itr>div{padding:0 6px;border-right:1px solid #808080;display:flex;align-items:center;min-width:0;overflow-wrap:anywhere}' +
+    '.itr>div:last-child{border-right:0}' +
+    '.ith{background:#CCECF8;height:44px;font-weight:700}' +
+    '.ith .ic{justify-content:center}' +
+    '.iit{background:#F0F0F0;font-style:italic}' +
+    '.itall{height:46px}.ishort{height:23px}' +
+    '.iit .ic{justify-content:center}' +
+    '.iit .iamt{justify-content:space-between;padding:0 9px 0 8px}' +
+    '.itail{display:grid;grid-template-columns:60.8% 18.9% 20.3%;height:250px}' +
+    '.ilabs{grid-column:2;padding-top:26px;text-align:right;padding-right:34px}' +
+    '.ilabs div{line-height:22.5px;margin-bottom:22.5px}' +
+    '.ivals{grid-column:3;grid-row:1;border-left:3px solid #489CD4;padding:8px 9px 0 0;text-align:right;line-height:22.5px}' +
+    '.ivals div{margin-bottom:22.5px}' +
+    '.itotal{display:grid;grid-template-columns:60.8% 18.9% 20.3%;background:#CCECF8;border-top:1px solid #808080;border-bottom:3px double #808080;height:32px;align-items:center;margin-top:23px}' +
+    '.itotal .il{grid-column:2;text-align:right;padding-right:34px}' +
+    '.itotal .iv{grid-column:3;text-align:right;padding-right:9px;font-size:21px;font-weight:700}' +
+    '.imeth{margin-top:12px;font-size:12px;color:#555}' +
+    '.ipaid{margin-top:12px;text-align:right;font-weight:700;color:#065F46;font-size:18px}' +
+    '.inum{font-variant-numeric:tabular-nums}';
+}
+function invoiceSheetHTML(d) {
+  var items = d.items || [];
+  var sub = 0, i, h = '';
+  for (i = 0; i < items.length; i++) { sub += parseFloat(items[i].amount) || 0; }
+  var tax = parseFloat(d.tax) || 0;
+  var other = parseFloat(d.other) || 0;
+  var total = sub + tax + other;
+  var L = ['', '', '', INV_CO.addr1, INV_CO.addr2, '', INV_CO.phone, '', INV_CO.bic];
+  var M = ['', '', '', 'Bill to :', '', '', 'Address:', '', ''];
+  var R = [
+    '<span class="ilab">Invoice No.</span><span>' + invEsc(d.invNo) + '</span>',
+    '<span class="ilab">Invoice Date:</span><span>' + invEsc(invLong(d.invDate)) + '</span>',
+    '',
+    invEsc(d.billTo), '', '',
+    invEsc(d.addr1),
+    invEsc(d.addr2),
+    '<span class="ilab">Phone</span><span>' + invEsc(d.phone) + '</span>'
+  ];
+  h += '<div class="ico">' + invEsc(INV_CO.name) + '</div><div class="ihead">';
+  for (i = 0; i < 9; i++) {
+    var last = i === 8 ? ' ilast' : '';
+    h += '<div class="icl' + last + '">' + invEsc(L[i]) + '</div>' +
+      '<div class="icm">' + M[i] + '</div>' +
+      '<div class="icr' + last + '">' + R[i] + '</div>';
+  }
+  h += '</div><div class="itbl">';
+  h += '<div class="itr ith"><div>Description</div><div></div><div class="ic">Date</div><div class="ic">Amount</div></div>';
+  var rows = Math.max(9, items.length + 2);
+  for (i = 0; i < rows; i++) {
+    var it = items[i];
+    var hasAmt = it && it.amount !== '' && it.amount != null && !isNaN(parseFloat(it.amount));
+    h += '<div class="itr iit ' + (i < 4 ? 'itall' : 'ishort') + '">' +
+      '<div>' + (it ? invEsc(it.desc) : '') + '</div><div></div>' +
+      '<div class="ic">' + (it ? invEsc(invShort(it.date)) : '') + '</div>' +
+      '<div class="iamt inum">' + (hasAmt ? '<span>$</span><span>' + invMoney(it.amount) + '</span>' : '') + '</div></div>';
+  }
+  h += '</div><div class="itail"><div class="ilabs"><div>Sales Tax</div><div>Other</div></div>' +
+    '<div class="ivals inum"><div>$' + invMoney(sub) + '</div><div>' + (tax > 0 ? '$' + invMoney(tax) : '') + '</div><div>' + (other > 0 ? '$' + invMoney(other) : '') + '</div></div></div>';
+  h += '<div class="itotal"><div class="il">TOTAL</div><div class="iv inum">$' + invMoney(total) + '</div></div>';
+  if (d.method) h += '<div class="imeth">Payment Method: <strong>' + invEsc(d.method) + '</strong></div>';
+  if (d.paid) h += '<div class="ipaid">PAID</div>';
+  return '<div class="isheet" id="isheet">' + h + '</div>';
+}
+// Full standalone page, for opening an invoice in its own tab.
+function invoiceDocHTML(d, title) {
+  return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + invEsc(title || 'Invoice') + '</title>' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<style>body{margin:0;background:#E6EBF1;padding:12px}.wrapi{max-width:816px;margin:0 auto}' + invoiceCss() + '@media print{body{background:#fff;padding:0}}</style></head><body><div class="wrapi">' +
+    invoiceSheetHTML(d) + '</div>' +
+    '<scr' + 'ipt>(function(){var s=document.getElementById("isheet");function f(){s.style.zoom=Math.min(1,(document.documentElement.clientWidth-24)/816);}f();window.addEventListener("resize",f);})();</scr' + 'ipt>' +
+    '</body></html>';
+}
+
 // ── INVOICE TAB ──
 function InvoiceTab({
   rentals
@@ -2214,279 +2344,13 @@ function InvoiceTab({
     document.body.removeChild(a);
     showToast(r ? 'Invoice saved to portal & email opened ✓' : 'Email opened ✓');
   };
-  const Doc = () => /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#fff',
-      border: '1px solid #ccc',
-      padding: '28px 32px',
-      fontFamily: 'Arial,sans-serif',
-      maxWidth: 680,
-      margin: '0 auto',
-      fontSize: 12,
-      color: '#111'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginBottom: 14
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 17,
-      fontWeight: 700,
-      color: '#1D4ED8'
-    }
-  }, "SAMS CONSTRUCTION SERVICES LTD"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      height: 3,
-      background: '#1D4ED8',
-      marginTop: 4
-    }
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'grid',
-      gridTemplateColumns: '1fr 1fr',
-      gap: 24,
-      marginBottom: 16
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      lineHeight: 2.1
-    }
-  }, /*#__PURE__*/React.createElement("div", null, "188-16 WOODHULL AVE"), /*#__PURE__*/React.createElement("div", null, "Hollis NY 11423"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 4
-    }
-  }, "+1 (917) 663-6369"), /*#__PURE__*/React.createElement("div", null, "BIC#4376")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("table", {
-    style: {
-      width: '100%',
-      borderCollapse: 'collapse',
-      fontSize: 11,
-      marginBottom: 8
-    }
-  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: '3px 6px',
-      color: '#555'
-    }
-  }, "Invoice No."), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: '3px 6px',
-      fontWeight: 700
-    }
-  }, invNo || '—')), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: '3px 6px',
-      color: '#555'
-    }
-  }, "Invoice Date:"), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: '3px 6px',
-      fontWeight: 700
-    }
-  }, fd(invDate) || '—')))), /*#__PURE__*/React.createElement("table", {
-    style: {
-      width: '100%',
-      borderCollapse: 'collapse',
-      border: '1px solid #90BEE0',
-      fontSize: 11
-    }
-  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", {
-    style: {
-      background: '#D6E8F7'
-    }
-  }, /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: '4px 8px',
-      fontWeight: 700,
-      width: 70
-    }
-  }, "Bill to :"), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: '4px 8px',
-      fontWeight: 700
-    }
-  }, billTo || '—')), /*#__PURE__*/React.createElement("tr", {
-    style: {
-      background: '#EAF4FB'
-    }
-  }, /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: '4px 8px',
-      color: '#555'
-    }
-  }, "Address:"), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: '4px 8px'
-    }
-  }, /*#__PURE__*/React.createElement("div", null, addr1), addr2 && /*#__PURE__*/React.createElement("div", null, addr2))), /*#__PURE__*/React.createElement("tr", {
-    style: {
-      background: '#D6E8F7'
-    }
-  }, /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: '4px 8px',
-      color: '#555'
-    }
-  }, "Phone"), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: '4px 8px',
-      color: '#1D4ED8'
-    }
-  }, phone)))))), /*#__PURE__*/React.createElement("table", {
-    style: {
-      width: '100%',
-      borderCollapse: 'collapse',
-      border: '1px solid #90BEE0'
-    }
-  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", {
-    style: {
-      background: '#1D4ED8'
-    }
-  }, /*#__PURE__*/React.createElement("th", {
-    style: {
-      padding: '7px 10px',
-      textAlign: 'left',
-      color: '#fff',
-      fontWeight: 700,
-      width: '55%'
-    }
-  }, "Description"), /*#__PURE__*/React.createElement("th", {
-    style: {
-      padding: '7px 10px',
-      textAlign: 'center',
-      color: '#fff',
-      fontWeight: 700,
-      width: '22%'
-    }
-  }, "Date"), /*#__PURE__*/React.createElement("th", {
-    style: {
-      padding: '7px 10px',
-      textAlign: 'right',
-      color: '#fff',
-      fontWeight: 700,
-      width: '23%'
-    }
-  }, "Amount"))), /*#__PURE__*/React.createElement("tbody", null, Array.from({
-    length: rows
-  }).map((_, idx) => {
-    const item = li[idx];
-    return /*#__PURE__*/React.createElement("tr", {
-      key: idx,
-      style: {
-        borderBottom: '1px solid #BDD6E8',
-        background: idx % 2 === 0 ? '#fff' : '#EAF4FB'
-      }
-    }, /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: '6px 10px',
-        fontStyle: item && item.desc ? 'italic' : 'normal'
-      }
-    }, item && item.desc ? item.desc : '\u00A0'), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: '6px 10px',
-        textAlign: 'center'
-      }
-    }, item && item.date ? fd(item.date) : ''), /*#__PURE__*/React.createElement("td", {
-      style: {
-        padding: '6px 10px',
-        textAlign: 'right'
-      }
-    }, item && item.amount ? fm(parseFloat(item.amount)) : ''));
-  }))), /*#__PURE__*/React.createElement("table", {
-    style: {
-      width: '100%',
-      borderCollapse: 'collapse',
-      borderLeft: '1px solid #90BEE0',
-      borderRight: '1px solid #90BEE0'
-    }
-  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", {
-    style: {
-      borderBottom: '1px solid #BDD6E8'
-    }
-  }, /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: '5px 10px',
-      width: '55%',
-      fontSize: 11,
-      fontStyle: 'italic',
-      color: '#555'
-    }
-  }, notes), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: '5px 10px',
-      textAlign: 'right',
-      color: '#555',
-      fontSize: 11
-    }
-  }, "Sales Tax"), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: '5px 10px',
-      textAlign: 'right',
-      borderLeft: '2px solid #1D4ED8',
-      width: '23%',
-      fontSize: 11
-    }
-  }, taxA > 0 ? fm(taxA) : '')), /*#__PURE__*/React.createElement("tr", {
-    style: {
-      borderBottom: '1px solid #BDD6E8'
-    }
-  }, /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: '5px 10px'
-    }
-  }), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: '5px 10px',
-      textAlign: 'right',
-      color: '#555',
-      fontSize: 11
-    }
-  }, "Other"), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: '5px 10px',
-      textAlign: 'right',
-      borderLeft: '2px solid #1D4ED8',
-      fontSize: 11
-    }
-  }, otherA > 0 ? fm(otherA) : '')))), /*#__PURE__*/React.createElement("table", {
-    style: {
-      width: '100%',
-      borderCollapse: 'collapse',
-      border: '1px solid #90BEE0'
-    }
-  }, /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", {
-    style: {
-      background: '#D6E8F7'
-    }
-  }, /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: '8px 10px',
-      fontWeight: 700,
-      textAlign: 'right',
-      width: '77%',
-      fontSize: 12
-    }
-  }, "TOTAL"), /*#__PURE__*/React.createElement("td", {
-    style: {
-      padding: '8px 14px',
-      fontWeight: 700,
-      textAlign: 'right',
-      fontSize: 14,
-      borderLeft: '2px solid #1D4ED8'
-    }
-  }, '$ ' + total.toLocaleString('en-US', {
-    minimumFractionDigits: 2
-  }))))), method && /*#__PURE__*/React.createElement("div", {
-    style: {
-      marginTop: 8,
-      fontSize: 10,
-      color: '#555'
-    }
-  }, "Payment Method: ", /*#__PURE__*/React.createElement("strong", null, method)));
+  const Doc = () => {
+    var invData = { invNo: invNo, invDate: invDate, billTo: billTo, addr1: addr1, addr2: addr2, phone: phone, items: li.map(function (i) { return { desc: i.desc, date: i.date, amount: i.amount }; }), tax: taxA, other: otherA, method: method };
+    return React.createElement("div", { style: { width: 816, margin: '0 auto', zoom: Math.min(1, (window.innerWidth - 40) / 816) }, dangerouslySetInnerHTML: { __html: '<style>' + invoiceCss() + '</style>' + invoiceSheetHTML(invData) } });
+  };
   if (preview) return /*#__PURE__*/React.createElement("div", {
     style: {
-      maxWidth: 720,
+      maxWidth: 860,
       margin: '0 auto'
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -3445,41 +3309,9 @@ function DumpClientPortal(_ref) {
 
   const openInvoice = () => {
     try {
-      var itemRows = [];
-      itemRows.push({ d: (job.job_type||'') + ' - ' + (job.material_type||'') + ' (' + (job.container_size||'') + ')', dt: job.date||'', a: total - (parseFloat(job.permit_fee)||0) });
-      if (parseFloat(job.permit_fee) > 0) itemRows.push({ d: 'Permit Fee', dt: '', a: parseFloat(job.permit_fee) });
-      if (parseFloat(job.overweight_charge) > 0) itemRows.push({ d: 'Overweight Charge', dt: '', a: parseFloat(job.overweight_charge) });
-      var rowsHtml = '';
-      var totalRows = Math.max(10, itemRows.length + 2);
-      for (var k = 0; k < totalRows; k++) {
-        var it = itemRows[k];
-        var bg = k % 2 === 0 ? '#fff' : '#EAF4FB';
-        rowsHtml += '<tr style=\"background:' + bg + '\"><td style=\"padding:10px 12px;font-style:italic;border:none\">' + (it ? it.d : '') + '</td><td style=\"padding:10px 12px;text-align:center;border:none\">' + (it ? it.dt : '') + '</td><td style=\"padding:10px 12px;text-align:right;border:none\">' + (it ? ('$ ' + (parseFloat(it.a)||0).toFixed(2)) : '') + '</td></tr>';
-      }
-      var html = '<!DOCTYPE html><html><head><meta charset=\"utf-8\"><title>Invoice DMP-' + (job.ticket_no||'') + '</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,Helvetica,sans-serif;padding:32px;max-width:760px;margin:0 auto;color:#1a1a1a}</style></head><body>' +
-        '<div style=\"font-size:22px;font-weight:800;color:#2563EB;letter-spacing:0.5px\">SAMS CONSTRUCTION SERVICES LTD</div>' +
-        '<div style=\"height:3px;background:#2563EB;margin:8px 0 20px\"></div>' +
-        '<div style=\"display:flex;justify-content:space-between;margin-bottom:24px\">' +
-          '<div style=\"font-size:13px;line-height:1.9;color:#333\">188-16 WOODHULL AVE<br>Hollis NY 11423<br>+1 (917) 663-6369<br>BIC#4376</div>' +
-          '<div style=\"min-width:300px\">' +
-            '<div style=\"display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px\"><span style=\"color:#666\">Invoice No.</span><strong>DMP-' + (job.ticket_no||'') + '</strong></div>' +
-            '<div style=\"display:flex;justify-content:space-between;font-size:13px;margin-bottom:12px\"><span style=\"color:#666\">Invoice Date:</span><strong>' + (job.date||'') + '</strong></div>' +
-            '<div style=\"background:#DCE9F7;border:1px solid #B8D4F0\">' +
-              '<div style=\"display:flex;padding:8px 12px;font-size:13px\"><span style=\"font-weight:700;width:90px\">Bill to :</span><strong>' + (job.client_name||'') + '</strong></div>' +
-              '<div style=\"display:flex;padding:8px 12px;font-size:13px;background:#E8F1FA\"><span style=\"color:#555;width:90px\">Address:</span><span>' + (job.client_address||'') + '</span></div>' +
-              '<div style=\"display:flex;padding:8px 12px;font-size:13px\"><span style=\"color:#555;width:90px\">Phone</span><span style=\"color:#2563EB\">' + (job.client_phone||'') + '</span></div>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-        '<table style=\"width:100%;border-collapse:collapse\"><thead><tr style=\"background:#2563EB;color:#fff\"><th style=\"padding:11px 12px;text-align:left;border:none\">Description</th><th style=\"padding:11px 12px;text-align:center;border:none\">Date</th><th style=\"padding:11px 12px;text-align:right;border:none\">Amount</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>' +
-        '<table style=\"width:100%;border-collapse:collapse;margin-top:0\">' +
-          '<tr><td style=\"padding:8px 12px;text-align:right;color:#555;font-size:13px\">Sales Tax</td><td style=\"width:160px;border-left:2px solid #2563EB;padding:8px 12px\"></td></tr>' +
-          '<tr><td style=\"padding:8px 12px;text-align:right;color:#555;font-size:13px\">Other</td><td style=\"border-left:2px solid #2563EB;padding:8px 12px\"></td></tr>' +
-          '<tr style=\"background:#DCE9F7\"><td style=\"padding:12px;text-align:right;font-weight:800;font-size:15px\">TOTAL</td><td style=\"border-left:2px solid #2563EB;padding:12px;text-align:right;font-weight:800;font-size:15px\">$ ' + total.toFixed(2) + '</td></tr>' +
-        '</table>' +
-        (isPaid ? '<div style=\"text-align:right;color:#065F46;font-weight:700;margin-top:10px\">PAID</div>' : '') +
-        '</body></html>';
-      var blob = new Blob([html], { type: 'text/html' });
+      var d = invoiceDataFromRecord(job, 'DMP-' + (job.ticket_no||''));
+      d.paid = isPaid;
+      var blob = new Blob([invoiceDocHTML(d, 'Invoice DMP-' + (job.ticket_no||''))], { type: 'text/html' });
       window.open(URL.createObjectURL(blob), '_blank');
     } catch (e) {
       alert('Could not open invoice');
@@ -3945,28 +3777,12 @@ function CombinedPortal(props) {
   var dT=dump?(parseFloat(dump.total_price)||0):0;
   var grand=rT+dT;
   var openCombinedInvoice=function(){
-    var rows='';
-    var addRow=function(desc,date,amt){ rows+='<tr style=\"border-bottom:1px solid #BDD6E8\"><td style=\"padding:8px 10px;font-style:italic\">'+desc+'</td><td style=\"padding:8px 10px;text-align:center\">'+(date||'')+'</td><td style=\"padding:8px 10px;text-align:right\">$ '+(parseFloat(amt)||0).toFixed(2)+'</td></tr>'; };
-    if(rental){ addRow((rental.asset||'Equipment Rental'), rental.start_date||'', rental.price||0);
-      if(parseFloat(rental.delivery_fee)>0) addRow('Delivery Fee','',rental.delivery_fee);
-      if(parseFloat(rental.pickup_fee)>0) addRow('Pick-up Fee','',rental.pickup_fee);
-      if(parseFloat(rental.trailer_fee)>0) addRow('Trailer Fee','',rental.trailer_fee);
-      if(parseFloat(rental.diesel_fee)>0) addRow('Diesel Charge','',rental.diesel_fee);
-    }
-    if(dump){ addRow((dump.job_type||'')+' - '+(dump.material_type||'')+' ('+(dump.container_size||'')+')', dump.date||'', dump.price||dump.total_price||0);
-      if(parseFloat(dump.overweight_charge)>0) addRow('Overweight Charge','',dump.overweight_charge);
-      if(parseFloat(dump.permit_fee)>0) addRow('Permit Fee','',dump.permit_fee);
-    }
-    var cust=rental||dump||{};
-    var html='<!DOCTYPE html><html><head><title>Combined Invoice</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;padding:28px 32px;max-width:680px;margin:0 auto;font-size:12px;color:#111}</style></head><body>'+
-      '<div style=\"font-size:17px;font-weight:700;color:#1D4ED8;margin-bottom:4px\">SAMS CONSTRUCTION SERVICES LTD</div>'+
-      '<div style=\"color:#555;margin-bottom:16px\">188-16 Woodhull Ave, Hollis NY 11423 &nbsp;|&nbsp; +1 (917) 663-6369 &nbsp;|&nbsp; BIC#4376</div>'+
-      '<div style=\"margin-bottom:14px\"><strong>Bill To:</strong> '+(cust.client_name||'')+'<br>'+(cust.client_address||'')+'<br>'+(cust.client_phone||'')+'</div>'+
-      '<table style=\"width:100%;border-collapse:collapse;margin-bottom:14px\"><thead><tr style=\"background:#1D4ED8;color:#fff\"><th style=\"padding:8px 10px;text-align:left\">Description</th><th style=\"padding:8px 10px\">Date</th><th style=\"padding:8px 10px;text-align:right\">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'+
-      '<div style=\"text-align:right;font-size:16px;font-weight:800\">TOTAL: $ '+grand.toFixed(2)+'</div>'+
-      '<div style=\"margin-top:8px;color:#888;font-size:10px;text-align:right\">Combined rental + dumping invoice</div>'+
-      '</body></html>';
-    var blob=new Blob([html],{type:'text/html'});
+    var rd = rental ? invoiceDataFromRecord(rental, '') : null;
+    var dd = dump ? invoiceDataFromRecord(dump, '') : null;
+    var b0 = rd || dd || {};
+    var d = { invNo: '', invDate: new Date().toISOString().slice(0,10), billTo: b0.billTo || '', addr1: b0.addr1 || '', addr2: b0.addr2 || '', phone: b0.phone || '',
+      items: (rd ? rd.items : []).concat(dd ? dd.items : []), tax: 0, other: 0 };
+    var blob=new Blob([invoiceDocHTML(d,'Combined Invoice')],{type:'text/html'});
     window.open(URL.createObjectURL(blob),'_blank');
   };
   var allPaid=(!rental||rental.payment_status==='paid')&&(!dump||dump.payment_status==='paid');
@@ -4067,18 +3883,13 @@ function DumpInvoiceTab(props) {
   var lbl={fontSize:11,fontWeight:700,color:'#6B7280',textTransform:'uppercase',display:'block',marginBottom:4};
   var preview=function(){
     if(!job)return;
-    var w=window.open('','_blank');
-    var rows='<tr style="background:#EAF4FB"><td style="padding:6px 10px">'+job.job_type+' — '+job.material_type+' ('+job.container_size+')</td><td style="text-align:center;padding:6px">'+(job.date||'')+'</td><td style="text-align:right;padding:6px">$'+base.toFixed(2)+'</td></tr>';
-    if(ow>0)rows+='<tr style="background:#FEF9C3"><td style="padding:6px 10px">Overweight Charge</td><td></td><td style="text-align:right;padding:6px">$'+ow.toFixed(2)+'</td></tr>';
-    if(rental)rows+='<tr style="background:#EAF4FB"><td style="padding:6px 10px">'+rental.asset+' Rental</td><td style="text-align:center;padding:6px">'+(rental.start_date||'')+'–'+(rental.due_date||'')+'</td><td style="text-align:right;padding:6px">$'+rp.toFixed(2)+'</td></tr>';
-    var html='<!DOCTYPE html><html><head><title>Invoice '+invNo+'</title><style>body{font-family:Arial,sans-serif;padding:32px;max-width:680px;margin:0 auto;font-size:12px;}h2{color:#1D4ED8;}hr{border:3px solid #1D4ED8;}table{width:100%;border-collapse:collapse;border:1px solid #90BEE0;}th{background:#1D4ED8;color:#fff;padding:7px 10px;text-align:left;}td{border-bottom:1px solid #BDD6E8;}.tot{background:#D6E8F7;font-weight:700;}</style></head><body>';
-    html+='<h2>SAMS CONSTRUCTION SERVICES LTD</h2><hr><p style="font-size:11px">188-16 Woodhull Ave, Hollis NY 11423 | +1 (917) 663-6369 | BIC#4376</p>';
-    html+='<p><strong>Invoice:</strong> '+invNo+' &nbsp; <strong>Date:</strong> '+invDate+'</p>';
-    html+='<p><strong>Bill To:</strong> '+(job.client_name||'')+' | '+(job.client_phone||'')+' | '+(job.client_address||'')+'</p>';
-    html+='<table><thead><tr><th>Description</th><th style="text-align:center">Date</th><th style="text-align:right">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>';
-    html+='<table style="margin-top:0"><tr class="tot"><td style="padding:8px 10px;width:75%;font-size:13px">TOTAL DUE</td><td style="padding:8px 14px;text-align:right;border-left:2px solid #1D4ED8;font-size:16px">$'+total.toFixed(2)+'</td></tr></table>';
-    html+='</body></html>';
-    w.document.write(html);w.document.close();
+    var items=[{desc:(job.job_type||'')+' - '+(job.material_type||'')+' ('+(job.container_size||'')+')',date:job.date||'',amount:base}];
+    if(ow>0)items.push({desc:'Overweight Charge',date:'',amount:ow});
+    if(rental)items.push({desc:(rental.asset||'Rental')+' Rental',date:invShort(rental.start_date||'')+' - '+invShort(rental.due_date||''),amount:rp});
+    var sp=invSplitAddr(job.client_address);
+    var d={invNo:invNo,invDate:new Date().toISOString().slice(0,10),billTo:job.client_name||'',addr1:sp[0],addr2:sp[1],phone:job.client_phone||'',items:items,tax:0,other:0};
+    var blob=new Blob([invoiceDocHTML(d,'Invoice '+invNo)],{type:'text/html'});
+    window.open(URL.createObjectURL(blob),'_blank');
   };
   var saveAndSend=function(){
     if(!job){showToast('Select a dump job first');return;}
