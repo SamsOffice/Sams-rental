@@ -3293,7 +3293,7 @@ function DumpClientPortal(_ref) {
           ),
           React.createElement('button', { onClick:logConfirmation, style:{ width:'100%', padding:18, borderRadius:12, background:'#2563EB', color:'#fff', border:'none', fontSize:17, fontWeight:800, cursor:'pointer', marginBottom:12 } }, es?('CONFIRMO QUE DEBO '+money(total)):('I CONFIRM I OWE '+money(total))),
           React.createElement('button', { onClick:function(){ setShowTerms(true); }, style:{ width:'100%', padding:12, borderRadius:10, background:'#fff', border:'1px solid #E5E7EB', color:'#2563EB', fontSize:13, fontWeight:600, cursor:'pointer' } }, es?'Ver Terminos y Condiciones':'View Terms & Conditions'),
-          React.createElement('div', { style:{ fontSize:11, color:'#9CA3AF', textAlign:'center', marginTop:12 } }, es?'Al confirmar, se registrara su direccion IP y la hora.':'By confirming, your IP address and timestamp will be recorded.')
+          React.createElement('div', { style:{ fontSize:11, color:'#9CA3AF', textAlign:'center', marginTop:12 } }, es?'Al confirmar, se registrara la hora de su confirmacion.':'By confirming, the time of your confirmation will be recorded.')
         ),
         showTerms && React.createElement(TermsPopup, { onClose:function(){ setShowTerms(false); }, es:es })
       )
@@ -6167,7 +6167,7 @@ function ClientPortal({
       color: '#9CA3AF',
       textAlign: 'center'
     }
-  }, es ? 'Al confirmar, su IP y la hora seran registradas.' : 'By confirming, your IP address and timestamp will be recorded.')), /*#__PURE__*/React.createElement("div", {
+  }, es ? 'Al confirmar, se registrara la hora de su confirmacion.' : 'By confirming, the time of your confirmation will be recorded.')), /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: 'center'
     }
