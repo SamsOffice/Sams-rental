@@ -231,6 +231,8 @@ function Login({
   const [load, setLoad] = useState(false);
   const [forgot, setForgot] = useState(false);
   const [es, setEs] = useState(false);
+  const [show, setShow] = useState(false);
+  const [focus, setFocus] = useState('');
   const t = (en, sp) => es ? sp : en;
   const go = async e => {
     e.preventDefault();
@@ -242,29 +244,43 @@ function Login({
     if (!pr || (pr.role !== 'owner' && pr.role !== 'secretary')) { await sb.auth.signOut(); setErr(t('This account is not set up for the office.', 'Esta cuenta no es de la oficina.')); setLoad(false); return; }
     onLogin({ name: pr.full_name, role: pr.role });
   };
-  const box = { border: '1.5px solid #E5E7EB', borderRadius: 12, padding: '10px 14px', marginTop: 14, textAlign: 'left', background: '#fff' };
-  const lab = { fontSize: 11, color: '#6B7280', fontWeight: 600, marginBottom: 2, display: 'block' };
+  const ic = (d, c) => React.createElement('svg', { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: c || '#9CA3AF', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', style: { flexShrink: 0 } }, d.map((x, i) => React.createElement('path', { key: i, d: x })));
+  const ICON_USER = ['M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2', 'M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z'];
+  const ICON_LOCK = ['M5 11h14v10H5z', 'M8 11V7a4 4 0 0 1 8 0v4'];
+  const ICON_EYE = ['M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z', 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z'];
+  const ICON_EYE_OFF = ['M17.94 17.94A10.9 10.9 0 0 1 12 19c-7 0-11-7-11-7a19.8 19.8 0 0 1 5.06-5.94', 'M9.9 4.24A10.4 10.4 0 0 1 12 5c7 0 11 7 11 7a19.9 19.9 0 0 1-3.17 4.19', 'M1 1l22 22', 'M14.12 14.12A3 3 0 1 1 9.88 9.88'];
+  const box = f => ({ display: 'flex', alignItems: 'center', gap: 10, border: '1.5px solid ' + (focus === f ? '#2563EB' : '#E5E7EB'), boxShadow: focus === f ? '0 0 0 3px rgba(37,99,235,0.12)' : 'none', borderRadius: 14, padding: '9px 14px', marginTop: 14, textAlign: 'left', background: '#fff', transition: 'all .15s' });
+  const lab = { fontSize: 11, color: '#6B7280', fontWeight: 600, display: 'block', marginBottom: 1, letterSpacing: '0.02em' };
   const inp = { width: '100%', border: 'none', outline: 'none', fontSize: 16, color: '#111827', background: 'transparent', padding: '2px 0' };
   const pill = on => ({ border: '1px solid ' + (on ? '#2563EB' : '#E5E7EB'), background: on ? '#2563EB' : '#F9FAFB', color: on ? '#fff' : '#4B5563', fontSize: 12, fontWeight: 600, padding: '5px 14px', borderRadius: 20, cursor: 'pointer' });
-  return React.createElement('div', { style: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: '#F9FAFB' } },
-    React.createElement('div', { style: { width: '100%', maxWidth: 400, background: '#fff', borderRadius: 18, border: '1px solid #E5E7EB', boxShadow: '0 4px 24px rgba(0,0,0,0.07)', overflow: 'hidden' } },
-      React.createElement('div', { style: { padding: '28px 26px 24px', textAlign: 'center' } },
-        React.createElement('img', { src: 'logo.png', alt: 'Sams Office', style: { width: 84, height: 84, display: 'block', margin: '0 auto 12px' } }),
-        React.createElement('div', { style: { fontSize: 20, fontWeight: 700, color: '#111827' } }, 'Sams Office'),
-        React.createElement('div', { style: { fontSize: 12, color: '#6B7280', marginTop: 3, marginBottom: 8 } }, t('Staff sign in', 'Entrada del personal')),
-        forgot ? React.createElement('div', { style: { marginTop: 18 } },
-          React.createElement('div', { style: { fontSize: 15, fontWeight: 700, marginBottom: 8 } }, t('Forgot your password?', '¿Olvidó su contraseña?')),
-          React.createElement('p', { style: { fontSize: 13, color: '#6B7280', lineHeight: 1.5, marginBottom: 18 } }, t('Ask the owner to reset it for you, then sign in again.', 'Pida al dueño que la cambie y entre otra vez.')),
+  const chip = (txt) => React.createElement('span', { key: txt, style: { fontSize: 11, fontWeight: 600, color: '#DBEAFE', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.18)', padding: '4px 10px', borderRadius: 20 } }, txt);
+  return React.createElement('div', { style: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'linear-gradient(160deg,#0D1B2E 0%,#16325C 55%,#1D4ED8 130%)' } },
+    React.createElement('div', { style: { width: '100%', maxWidth: 410, background: '#fff', borderRadius: 22, boxShadow: '0 24px 70px rgba(0,0,0,0.38)', overflow: 'hidden' } },
+      React.createElement('div', { style: { background: 'linear-gradient(135deg,#0D1B2E,#1E3A6E)', padding: '26px 24px 54px', textAlign: 'center', position: 'relative' } },
+        React.createElement('div', { style: { fontSize: 11, fontWeight: 700, letterSpacing: '0.16em', color: '#93C5FD', marginBottom: 10 } }, 'SAMS CONSTRUCTION SERVICES LTD'),
+        React.createElement('div', { style: { display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' } }, [t('Rentals', 'Alquileres'), t('Dumping', 'Descargas'), t('Dispatch', 'Despacho'), t('Invoices', 'Facturas')].map(chip))
+      ),
+      React.createElement('div', { style: { padding: '0 26px 24px', textAlign: 'center', marginTop: -44, position: 'relative', zIndex: 1 } },
+        React.createElement('img', { src: 'logo.png', alt: 'Sams Office', style: { width: 88, height: 88, display: 'block', margin: '0 auto 10px', background: '#fff', borderRadius: '50%', border: '4px solid #fff', boxShadow: '0 6px 20px rgba(0,0,0,0.25)' } }),
+        React.createElement('div', { style: { fontSize: 22, fontWeight: 700, color: '#111827' } }, forgot ? t('Forgot your password?', '¿Olvidó su contraseña?') : t('Welcome back', 'Bienvenido')),
+        React.createElement('div', { style: { fontSize: 13, color: '#6B7280', marginTop: 3 } }, forgot ? '' : t('Sign in to Sams Office', 'Entre a Sams Office')),
+        forgot ? React.createElement('div', { style: { marginTop: 14 } },
+          React.createElement('p', { style: { fontSize: 14, color: '#6B7280', lineHeight: 1.5, marginBottom: 20 } }, t('Ask the owner to reset it for you, then sign in again.', 'Pida al dueño que la cambie y entre otra vez.')),
           React.createElement('button', { type: 'button', onClick: () => setForgot(false), style: { width: '100%', padding: 14, borderRadius: 999, border: '1.5px solid #E5E7EB', background: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer', color: '#111827' } }, t('Back to sign in', 'Volver'))
         ) : React.createElement('form', { onSubmit: go },
-          React.createElement('div', { style: box },
-            React.createElement('label', { style: lab, htmlFor: 'si-email' }, t('Username', 'Usuario')),
-            React.createElement('input', { id: 'si-email', style: inp, type: 'text', autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false, value: u, onChange: e => setU(e.target.value), required: true, autoComplete: 'username' })),
-          React.createElement('div', { style: box },
-            React.createElement('label', { style: lab, htmlFor: 'si-pass' }, t('Password', 'Contraseña')),
-            React.createElement('input', { id: 'si-pass', style: inp, type: 'password', value: p, onChange: e => setP(e.target.value), required: true, autoComplete: 'current-password' })),
+          React.createElement('div', { style: box('u') },
+            ic(ICON_USER, focus === 'u' ? '#2563EB' : '#9CA3AF'),
+            React.createElement('div', { style: { flex: 1, minWidth: 0 } },
+              React.createElement('label', { style: lab, htmlFor: 'si-email' }, t('Username', 'Usuario')),
+              React.createElement('input', { id: 'si-email', style: inp, type: 'text', autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false, value: u, onChange: e => setU(e.target.value), onFocus: () => setFocus('u'), onBlur: () => setFocus(''), required: true, autoComplete: 'username' }))),
+          React.createElement('div', { style: box('p') },
+            ic(ICON_LOCK, focus === 'p' ? '#2563EB' : '#9CA3AF'),
+            React.createElement('div', { style: { flex: 1, minWidth: 0 } },
+              React.createElement('label', { style: lab, htmlFor: 'si-pass' }, t('Password', 'Contraseña')),
+              React.createElement('input', { id: 'si-pass', style: inp, type: show ? 'text' : 'password', value: p, onChange: e => setP(e.target.value), onFocus: () => setFocus('p'), onBlur: () => setFocus(''), required: true, autoComplete: 'current-password' })),
+            React.createElement('button', { type: 'button', 'aria-label': show ? t('Hide password', 'Ocultar contraseña') : t('Show password', 'Mostrar contraseña'), onClick: () => setShow(!show), style: { background: 'none', border: 'none', cursor: 'pointer', padding: 6, display: 'flex' } }, ic(show ? ICON_EYE_OFF : ICON_EYE, '#6B7280'))),
           err && React.createElement('div', { style: { marginTop: 14, background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 10, padding: '9px 12px', fontSize: 13, color: '#B91C1C', textAlign: 'left' } }, err),
-          React.createElement('button', { type: 'submit', disabled: load, style: { width: '100%', marginTop: 20, padding: 15, borderRadius: 999, border: 'none', background: '#2563EB', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer', opacity: load ? 0.7 : 1 } }, load ? t('Signing in...', 'Entrando...') : t('Sign in', 'Entrar')),
+          React.createElement('button', { type: 'submit', disabled: load, style: { width: '100%', marginTop: 20, padding: 15, borderRadius: 999, border: 'none', background: 'linear-gradient(135deg,#2563EB,#1D4ED8)', color: '#fff', fontSize: 16, fontWeight: 700, cursor: 'pointer', opacity: load ? 0.7 : 1, boxShadow: '0 6px 16px rgba(37,99,235,0.35)' } }, load ? t('Signing in...', 'Entrando...') : t('Sign in', 'Entrar')),
           React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, fontSize: 13, color: '#6B7280' } },
             React.createElement('span', null, t('Stays signed in on this device', 'Se mantiene abierta en este aparato')),
             React.createElement('a', { href: '#', onClick: e => { e.preventDefault(); setForgot(true); }, style: { color: '#2563EB', fontWeight: 600, textDecoration: 'none' } }, t('Forgot?', '¿Olvidó?')))
@@ -274,7 +290,7 @@ function Login({
           React.createElement('button', { type: 'button', onClick: () => setEs(true), style: pill(es) }, 'Español'))
       ),
       React.createElement('div', { style: { background: '#0D1B2E', color: '#9AA4AB', textAlign: 'center', fontSize: 11, padding: 12, borderTop: '3px solid #2563EB', letterSpacing: '0.02em' } },
-        React.createElement('b', { style: { color: '#fff' } }, 'Sams Office'), ' · Rental & Dumping Management')
+        React.createElement('b', { style: { color: '#fff' } }, '188-16 Woodhull Ave, Hollis NY'), ' · ', t('Staff only', 'Solo personal'))
     )
   );
 }
