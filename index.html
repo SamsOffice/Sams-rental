@@ -3668,15 +3668,25 @@ body.drvmode .app{display:none!important}
     er.hidden = true; bt.disabled = true; bt.textContent = 'Checking...';
     var si = await SB.auth.signInWithPassword({ email: u + STAFF_SUFFIX, password: p });
     if (si.error) { si = await SB.auth.signInWithPassword({ email: u + '@drivers.sams-office.app', password: p }); }
-    if (si.error) { er.textContent = 'Wrong username or password.'; er.hidden = false; bt.disabled = false; bt.textContent = 'Continue'; return; }
+    if (si.error) { gMark('gPok', false); er.textContent = 'Wrong username or password.'; er.hidden = false; bt.disabled = false; bt.textContent = 'Continue'; return; }
     var me = await getMe();
     if (!me || (me.role !== 'owner' && me.role !== 'secretary' && me.role !== 'driver')) { await SB.auth.signOut(); er.textContent = 'This account is not set up for the office.'; er.hidden = false; bt.disabled = false; bt.textContent = 'Continue'; return; }
-    bt.disabled = false; bt.textContent = 'Continue'; document.getElementById('gP').value = '';
+    gMark('gPok', true); bt.disabled = false; bt.textContent = 'Continue'; document.getElementById('gP').value = '';
     enter(me);
   }
+  var GCHK = 0;
+  function gMark(id, ok) { var e = document.getElementById(id); e.hidden = false; e.textContent = ok ? '\u2713' : '\u2717'; e.style.color = ok ? '#16A34A' : '#DC2626'; }
   function gateCheck() {
-    var u = document.getElementById('gU').value.trim(), p = document.getElementById('gP').value, b = document.getElementById('gB');
-    b.disabled = !(u && p); document.getElementById('gUok').hidden = !(u.length >= 3 && !/[^A-Za-z0-9._-]/.test(u)); document.getElementById('gPok').hidden = !(p.length >= 6);
+    var u = document.getElementById('gU').value.trim(), p = document.getElementById('gP').value, b = document.getElementById('gB'), ue = document.getElementById('gUok');
+    b.disabled = !(u && p); document.getElementById('gPok').hidden = true;
+    var ok = u.length >= 3 && !/[^A-Za-z0-9._ -]/.test(u), my = ++GCHK;
+    if (!ok) { ue.hidden = true; return; }
+    ue.hidden = true;
+    setTimeout(function () {
+      if (my !== GCHK) return;
+      var name = u.toLowerCase().replace(/\s+/g, '-');
+      SB.rpc('username_exists', { p_u: name }).then(function (r) { if (my !== GCHK) return; if (r.error) { ue.hidden = true; return; } gMark('gUok', r.data === true); });
+    }, 400);
   }
   document.getElementById('gF').addEventListener('submit', gateGo);
   document.getElementById('gU').addEventListener('input', gateCheck); document.getElementById('gP').addEventListener('input', gateCheck);
