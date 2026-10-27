@@ -15,6 +15,7 @@
   setInterval(function () {
     if (document.body.className.indexOf('drvmode') < 0 || !ME) return;
     if (WACT || DAPP.scan || document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
+    if (SYNC_FAIL || NQ.length) { if (!NET_OFF) syncSoon(); return; }
     loadAll().then(function () { paintAll(); drawDrv(); });
   }, 60000);
 

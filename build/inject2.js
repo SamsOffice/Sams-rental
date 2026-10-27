@@ -72,7 +72,7 @@
       for (var rid in SNAP.rent) { if (SNAP.rent.hasOwnProperty(rid) && !seenR[rid]) { res = await SB.from('rentals').update({ deleted: true }).eq('id', rid); if (res.error) err = res.error.message; else delete SNAP.rent[rid]; } }
       for (k = 0; k < INBOX.length; k++) { var b = INBOX[k]; if (b._id && SNAP.book[b._id] !== b.s) { res = await SB.from('booking_requests').update({ status: b.s }).eq('id', b._id); if (res.error) err = res.error.message; else SNAP.book[b._id] = b.s; } }
     } catch (e) { err = String(e && e.message || e); }
-    SYNCING = false;
+    SYNCING = false; SYNC_FAIL = !!err;
     if (err) { toast('Could not save: ' + err); }
     if (reload) { await loadAll(); paintAll(); toast('Saved'); }
     if (SYNC_AGAIN) { SYNC_AGAIN = false; syncSoon(); }

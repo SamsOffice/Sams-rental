@@ -35,7 +35,7 @@ s=s.replace('src="logo.png"','src="/Sams-rental/logo.png"')
 # kill simulated trucks
 rep('function liveInner() {','function liveInner() {\n    return \'<div class="card"><div class="sub" style="padding:20px">Live truck tracking is not connected yet. Dispatch shows the real stops below.</div></div>\';\n  }\n  function liveInnerDemo() {')
 s=s.replace("f: { site: smp.site, ticket: smp.ticket, lb: smp.lb, fee: smp.fee }","f: { site: '', ticket: '', lb: 0, fee: 0 }")
-inj=open('inject.js').read()+open('inject2.js').read()+open('inject3.js').read()+open('inject4.js').read()+open('inject5.js').read()+open('inject6.js').read()
+inj=open('inject.js').read()+open('inject2.js').read()+open('inject3.js').read()+open('inject4.js').read()+open('inject5.js').read()+open('inject6.js').read()+open('inject7.js').read()
 inj=inj.replace('    mapAll(); takeSnap();\n  }','    mapAll(); takeSnap(); await loadRecs();\n  }',1)
 assert 'await loadRecs' in inj
 inj=inj.replace('    SYNCING = false;\n    if (err) {','    try { var e2 = await syncRecs(); if (e2) err = e2; } catch (e) { err = String(e && e.message || e); }\n    SYNCING = false;\n    if (err) {',1)
