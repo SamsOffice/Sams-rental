@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>(function(){var h=location.hash;if(/^#\/(book|portal|dump|combined|driver)(\/|$)/.test(h)){location.replace('/Sams-rental/legacy.html'+h);}})();</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <title>Sams Office Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -738,7 +739,7 @@ body.drvmode .app{display:none!important}
       <div class="seg" id="langSeg" role="group" aria-label="Screen language"><button data-lang="en" aria-pressed="true">EN</button><button data-lang="es" aria-pressed="false">ES</button></div>
       <button class="btn theme" id="themeBtn" aria-label="Switch light or dark"><span data-i="moon"></span></button>
       <span id="topActions" class="topact"><span class="pill bad">3 overdue</span><button class="btn tbtn" data-form="equip"><span data-i="gear"></span>Equipment</button><button class="btn primary tbtn" data-form="rental"><span data-i="plus"></span>New Rental</button><button class="btn primary tbtn" data-form="dump"><span data-i="plus"></span>New Dumping</button></span>
-      <button class="btn tbtn" id="signBtn" data-msg="Example only. You would be signed out.">Sign out</button>
+      <button class="btn tbtn" id="signBtn" data-msg="">Sign out</button>
     </div>
 
     <div id="v-overview" class="view">
@@ -786,7 +787,7 @@ body.drvmode .app{display:none!important}
 <div class="portal" id="portal" hidden role="dialog" aria-modal="true" aria-label="Client portal"></div>
 <div class="bookapp" id="bookApp" hidden role="dialog" aria-modal="true" aria-label="Online booking page"><div class="dabar"><span>Booking page preview (what your clients see)</span><button class="btn sm" id="bookClose">Close preview</button></div><div id="bookBody"></div></div>
 <div class="modal sc" id="scanModal" hidden role="dialog" aria-modal="true" aria-label="Scan machine"><div class="mbar"><b id="scTitle">Scan machine</b><button class="btn" id="scClose">Close</button></div><div class="fbody"><div class="fcard" id="scBody"></div></div></div>
-<div class="drvapp" id="drvApp" hidden role="dialog" aria-modal="true" aria-label="Driver app"><div class="dabar"><span>Sams Office</span><button class="btn sm" id="drvNet">Demo: offline</button><button class="btn sm" id="drvClose">Close preview</button></div><div class="dawrap" id="drvBody"></div></div>
+<div class="drvapp" id="drvApp" hidden role="dialog" aria-modal="true" aria-label="Driver app"><div class="dabar"><span>Sams Office</span><button class="btn sm" id="drvNet">Test: no signal</button><button class="btn sm" id="drvClose">Close preview</button></div><div class="dawrap" id="drvBody"></div></div>
 <div class="trkapp" id="trackApp" hidden role="dialog" aria-modal="true" aria-label="Client tracking page"><div id="trkBody"></div></div>
 <div class="modal fm" id="formModal" hidden role="dialog" aria-modal="true" aria-label="Form">
   <div class="mbar"><b id="fTitle">Form</b><button class="btn" id="fClose">Close</button></div>
@@ -1268,7 +1269,7 @@ body.drvmode .app{display:none!important}
   /* ---- Equipment: machines, nameplate scan, history ---- */
   var ASSETS = [];
   var ASEL = '', ACNT = 5, SC = { stage: 'start', mode: 'new', n: 0, photo: '', f: null }, ADEL = false;
-  var SAMPLES = [{ make: 'Caterpillar', model: '305.5E2', serial: 'CAT3055E2-K6B08842', year: 2021 }, { make: 'John Deere', model: '35G', serial: '1FF035GXKJK277431', year: 2019 }, { make: 'JLG', model: '1930ES', serial: '0200231845', year: 2022 }];
+  var SAMPLES = [{ make: '', model: '', serial: '', year: '' }];
   function assetById(id) { for (var k = 0; k < ASSETS.length; k++) { if (ASSETS[k].id === id) return ASSETS[k]; } return null; }
   function assetLabel(id) { var a = assetById(id); return a ? a.make + ' ' + a.model + ' (' + a.serial + ')' : ''; }
   function assetStatus(a) {
@@ -1473,7 +1474,7 @@ body.drvmode .app{display:none!important}
     var h = '';
     for (var k = 0; k < DOCS.length; k++) {
       var d = DOCS[k];
-      h += '<div class="li"><span class="ic2">' + icon(d.ic) + '</span><div class="grow"><b>' + d.f + '</b><span class="sub">Ticket ' + d.tk + ' &middot; ' + d.by + ' &middot; ' + d.d + '</span></div><button class="btn sm" data-act="toast" data-msg="Example only. This opens the file.">' + icon('download') + 'Open</button></div>';
+      h += '<div class="li"><span class="ic2">' + icon(d.ic) + '</span><div class="grow"><b>' + d.f + '</b><span class="sub">Ticket ' + d.tk + ' &middot; ' + d.by + ' &middot; ' + d.d + '</span></div><button class="btn sm" data-act="toast" data-msg="This receipt photo is saved on the Receipts screen.">' + icon('download') + 'Open</button></div>';
     }
     return head('Receipts, permits and agreements, filed by ticket.', 'Scan receipt', 'scan', '') .replace('data-act="toast"', 'data-act="goscan"') + '<div class="card">' + h + '</div>';
   }
@@ -1501,8 +1502,8 @@ body.drvmode .app{display:none!important}
       r += '<tr data-act="inv" data-no="' + v.no + '" aria-selected="' + (v.no === invSel) + '"><td>#' + v.no + '</td><td>' + v.client + '</td><td>' + v.date + '</td><td>' + pillH(v.st, v.tone) + '</td><td class="num">' + money(v.amt) + '</td></tr>';
     }
     var moreI = INVS.length > 5 ? '<button class="btn sm iconbtn" data-act="viewall" data-v="allinv" aria-label="View all invoices" title="View all invoices">' + icon('list') + '</button>' : '';
-    return head('Tap an invoice to preview it, then open it full size.', 'New invoice', 'plus', 'Example only. This opens the invoice builder.') + '<div class="sechead"><h2 class="sect">Recent invoices (' + INVS.length + ')</h2>' + moreI + '</div>' + monBar('inv', INVS) + (r ? tbl(['Invoice', 'Client', 'Date', 'Status', '$Amount'], r) : monEmpty('inv')) + invPaper(cur) +
-      '<div class="actions"><button class="btn primary" data-act="openinv">' + icon('receipt') + 'Open invoice</button><button class="btn" data-act="toast" data-msg="Example only. Downloads the Excel invoice.">' + icon('download') + 'Download Excel</button><button class="btn" data-act="toast" data-msg="Example only. Nothing was sent.">' + icon('mail') + 'Send to client</button></div>';
+    return head('Tap an invoice to preview it, then open it full size.', 'New invoice', 'plus', '').replace('data-act="toast"', 'data-act="form" data-f="newinv"') + '<div class="sechead"><h2 class="sect">Recent invoices (' + INVS.length + ')</h2>' + moreI + '</div>' + monBar('inv', INVS) + (r ? tbl(['Invoice', 'Client', 'Date', 'Status', '$Amount'], r) : monEmpty('inv')) + invPaper(cur) +
+      '<div class="actions"><button class="btn primary" data-act="openinv">' + icon('receipt') + 'Open invoice</button><button class="btn" data-act="xlsinv">' + icon('download') + 'Download Excel</button><button class="btn" data-act="sendinv">' + icon('mail') + 'Send to client</button>' + (cur && cur.no >= 900 ? '<button class="btn" data-act="xinvpaid">' + icon('check') + 'Mark paid or unpaid</button>' : '') + '</div>';
   }
   function vCenter() {
     var late = [['Hollis Demo Corp', 1980, 13], ['Delgado Roofing', 2724, 9], ['Stallion Construction', 1496, 2], ['Parkview Builders', 640, 0]], h = '', tot = 0;
@@ -1538,7 +1539,7 @@ body.drvmode .app{display:none!important}
       '<div class="stat alert"><div class="row">Outstanding<span class="ic">' + icon('alert') + '</span></div><b>$6,840</b><small>4 invoices past due</small></div></section>' +
       '<div class="card"><header><h2>Top clients this month</h2></header>' + h + '</div>';
   }
-  var CAL = { y: 2026, m: 9 };
+  var CAL = { y: new Date().getFullYear(), m: new Date().getMonth() };
   var CAL_EV = [];
   var EVC = { rdel: ['#BFDBFE', '#1D4ED8'], rpick: ['#DDD6FE', '#6D28D9'], drop: ['#FDE68A', '#92400E'], cpick: ['#FED7AA', '#92400E'], due: ['#FECACA', '#991B1B'], cu: ['#D6E4FF', '#1557C0'] };
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
@@ -1597,7 +1598,7 @@ body.drvmode .app{display:none!important}
   function esWhen(t) {
     var m = /^([A-Za-z]{3})\s+(\d{1,2})(?:,?\s*(\d{1,2}):(\d{2})\s*([AaPp][Mm]))?/.exec(String(t || '')), mi = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'].indexOf(m ? m[1] : '');
     if (!m || mi < 0) return null;
-    var dt = new Date(2026, mi, parseInt(m[2], 10)), diff = Math.round((dt - TODAY) / 86400000), dow = ES_DOW[dt.getDay()], mins = -1;
+    var dt = new Date(TODAY.getFullYear(), mi, parseInt(m[2], 10)), diff = Math.round((dt - TODAY) / 86400000), dow = ES_DOW[dt.getDay()], mins = -1;
     if (m[3]) mins = (parseInt(m[3], 10) % 12) * 60 + parseInt(m[4], 10) + (/p/i.test(m[5]) ? 720 : 0);
     return { day: diff === 0 ? 'Hoy' : (diff === 1 ? 'Ma&ntilde;ana' : (diff === -1 ? 'Ayer' : dow.charAt(0).toUpperCase() + dow.slice(1))), long: dow + ' ' + dt.getDate() + ' de ' + ES_MONA[mi], mins: mins, tm: mins < 0 ? '' : fmtMin(mins) };
   }
@@ -1851,9 +1852,7 @@ body.drvmode .app{display:none!important}
   }
   function closeInv() { document.getElementById('invModal').hidden = true; }
   document.getElementById('invClose').addEventListener('click', closeInv);
-  document.getElementById('invXls').addEventListener('click', function () { toast('Example only. Downloads the Excel invoice.'); });
-  document.getElementById('invSend').addEventListener('click', function () { toast('Example only. Nothing was sent.'); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeInv(); });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeInv(); });
   window.addEventListener('resize', fitInv);
 
   /* ---- Client portal (what the client sees from their link) ---- */
@@ -2015,7 +2014,7 @@ body.drvmode .app{display:none!important}
     var f = document.getElementById('theForm'), h = '', t = '';
     if (kind === 'rental') {
       var R0 = id ? rentalById(id) : null; ERID = R0 ? R0.id : '';
-      var d0 = R0 || { asset: EQUIP[0].n, client: '', phone: '', email: '', addr: '', tag: 'New Client', si: TODAYISO(), di: '2026-10-25', price: EQUIP[0].p, del: '', pick: '', trailer: '', diesel: '', ptype: 'delivery', pay: 'Unpaid', method: '', status: 'Active', driver: 'Sams', notes: '', sd: '', sdt: '', sp: '', spt: '' };
+      var d0 = R0 || { asset: EQUIP[0].n, client: '', phone: '', email: '', addr: '', tag: 'New Client', si: TODAYISO(), di: addDays(TODAYISO(), 1), price: EQUIP[0].p, del: '', pick: '', trailer: '', diesel: '', ptype: 'delivery', pay: 'Unpaid', method: '', status: 'Active', driver: 'Sams', notes: '', sd: '', sdt: '', sp: '', spt: '' };
       var days0 = Math.max(1, Math.round((invParse(d0.di) - invParse(d0.si)) / 86400000));
       t = R0 ? 'Edit Rental' : 'New Rental';
       var opts = '<optgroup label="Your equipment">', seen = {}, kq;
@@ -2047,7 +2046,7 @@ body.drvmode .app{display:none!important}
       var J0 = id ? find(id) : null; EDID = J0 ? J0.id : 0;
       var dx = J0 ? dExtra(J0) : { ow: 0, pf: 0 };
       var e0 = J0 || { client: '', phone: '', addr: '', jt: 'DROP', mat: MATS[0], size: '20 yd', driver: 'Unassigned', email: '', notes: '', pay: 'Unpaid', method: '' };
-      var dIso = J0 ? (ISO[J0.id] || TOMOISO()) : TOMOISO(), pIso = J0 ? (J0.dueIso || addDays(dIso, 2)) : '2026-10-16', base0 = J0 ? J0.total - dx.ow - dx.pf : 650;
+      var dIso = J0 ? (ISO[J0.id] || TOMOISO()) : TOMOISO(), pIso = J0 ? (J0.dueIso || addDays(dIso, 2)) : addDays(TODAYISO(), 3), base0 = J0 ? J0.total - dx.ow - dx.pf : 650;
       t = J0 ? 'Edit Dumping' : 'New Dumping';
       h = '<div class="fgrid">' + fld('fClient', 'Client name', 'text', e0.client, 'Who is the job for', true) + fld('fPhone', 'Phone', 'tel', e0.phone === '-' ? '' : e0.phone, '+1 (718) 555-0100') + fld('fEmail', 'Email', 'email', e0.email, 'name@email.com') + fld('fAddr', 'Job address', 'text', e0.addr, 'Street, City', true) +
         selF('fType', 'Job type', ['DROP', 'PULL', 'SWAP'], e0.jt || 'DROP') + selF('fMat', 'Material', MATS, e0.mat) + selF('fSize', 'Container size', ['10 yd', '20 yd', '30 yd'], e0.size) +
@@ -2060,7 +2059,7 @@ body.drvmode .app{display:none!important}
     } else if (kind === 'rattach') {
       t = 'Attach receipt'; RFILE = '';
       var jo = [], sj9 = dumpSorted(JOBS); for (var q8 = 0; q8 < sj9.length; q8++) jo.push('#' + sj9[q8].id + ' ' + sj9[q8].client);
-      h = selF('fRJob', 'Which job is this receipt for?', jo, jo[0]) + '<div class="fld wide"><label for="fRFile">Receipt photo</label><input id="fRFile" type="file" accept="image/*"></div><p class="note">No photo handy? Leave it empty and the demo reads a sample receipt. The receipt then shows up in Receipts, already read.</p>' +
+      h = selF('fRJob', 'Which job is this receipt for?', jo, jo[0]) + '<div class="fld wide"><label for="fRFile">Receipt photo</label><input id="fRFile" type="file" accept="image/*"></div><p class="note">Attach the photo. The receipt then shows up in Receipts and you type in the numbers from the ticket.</p>' +
         '<div class="actions"><button type="submit" class="btn primary">' + icon('check') + 'Attach and read</button><button type="button" class="btn" data-fa="close">Cancel</button></div>';
     } else if (kind === 'permit') {
       t = 'Add permit';
@@ -2131,13 +2130,23 @@ body.drvmode .app{display:none!important}
       h = '<div><b>' + invEsc(REMC.name) + '</b><div class="sub">' + money(REMC.amt) + (REMC.days > 0 ? ' &middot; ' + REMC.days + ' days late' : ' &middot; not due yet') + ' &middot; ' + REMSTEPS[remStage(REMC.days)][1] + '</div></div>' + selF('fSL', 'Language', ['English', 'Espanol'], 'English') +
         '<div class="fld sendbox"><label for="fMsg">Message with the invoice link</label><textarea id="fMsg"></textarea></div>' +
         '<div class="acts"><button type="button" class="btn primary" data-fa="remsent">' + icon('check') + 'Mark as sent</button><button type="button" class="btn" data-fa="copymsg">' + icon('clipboard') + 'Copy message</button><a class="btn" id="fSms" href="#">' + icon('phone') + 'Text</a></div>' +
-        '<p class="note">Edit the message if you want. Demo only: Mark as sent just logs it, nothing is really sent.</p>';
+        '<p class="note">Edit the message if you want. Tap Text or open your message app to send it, then tap Mark as sent to log it.</p>';
+    } else if (kind === 'newinv') {
+      t = 'New invoice';
+      var ncl = ['Type a new client below'], nq; for (nq = 0; nq < CLIENTS.length; nq++) ncl.push(CLIENTS[nq].n);
+      h = '<div class="fgrid">' + selF('fXCl', 'Existing client', ncl, ncl.length > 1 ? ncl[1] : ncl[0]) + fld('fXNew', 'Or type a new client name', 'text', '', '', false) + fld('fXPh', 'Phone', 'tel', '', '', false) + fld('fXEm', 'Email', 'email', '', '', false) + fld('fXAd', 'Address (street, city state zip)', 'text', '', '', false) + fld('fXDate', 'Invoice date', 'date', TODAYISO()) + '</div>' +
+        '<div class="fgrid">' + fld('fXD1', 'What is it for (line 1)', 'text', '', 'Example: Dump fee', true) + fld('fXA1', 'Amount ($)', 'number', '') + fld('fXD2', 'Line 2 (optional)', 'text', '', '', false) + fld('fXA2', 'Amount ($)', 'number', '') + fld('fXD3', 'Line 3 (optional)', 'text', '', '', false) + fld('fXA3', 'Amount ($)', 'number', '') + '</div>' +
+        selF('fXPaid', 'Payment', ['Unpaid', 'Paid'], 'Unpaid') + '<p class="ferr" id="fErr"></p><div class="actions"><button type="submit" class="btn primary">' + icon('check') + 'Create invoice</button><button type="button" class="btn" data-fa="close">Cancel</button></div>';
+    } else if (kind === 'newclient') {
+      t = 'Add client';
+      h = '<div class="fgrid">' + fld('fCName', 'Client name', 'text', '', '', true) + fld('fCPh', 'Phone', 'tel', '', '', false) + fld('fCEm', 'Email', 'email', '', '', false) + fld('fCAd', 'Address', 'text', '', '', false) + '</div><p class="ferr" id="fErr"></p>' +
+        '<div class="actions"><button type="submit" class="btn primary">' + icon('check') + 'Save client</button><button type="button" class="btn" data-fa="close">Cancel</button></div>';
     } else if (kind === 'send') {
       SEND = ctx; t = 'Send to client';
       h = '<div><b>' + invEsc(SEND.name) + '</b><div class="sub">' + invEsc(SEND.ph || '') + (SEND.email ? ' - ' + invEsc(SEND.email) : '') + '</div></div>' + selF('fSL', 'Language', ['English', 'Espanol'], 'English') +
         '<div class="fld sendbox"><label for="fMsg">Message with the portal link</label><textarea id="fMsg"></textarea></div>' +
         '<div class="acts"><button type="button" class="btn primary" data-fa="copymsg">' + icon('clipboard') + 'Copy message</button><a class="btn" id="fSms" href="#">' + icon('phone') + 'Text</a><a class="btn" id="fMail" href="#">' + icon('mail') + 'Email</a></div>' +
-        '<p class="note">Example only. This demo does not send anything. In the live app the link goes to the client portal.</p>';
+        '<p class="note">Tap Text or Email to send it from your own phone. The link opens the client portal.</p>';
     } else {
       t = 'Equipment';
       var list = '';
@@ -2160,7 +2169,7 @@ body.drvmode .app{display:none!important}
     var b = e.target.closest('[data-fa]'); if (!b) return; var a = b.getAttribute('data-fa');
     if (a === 'close') closeForm();
     else if (a === 'copymsg') { var mv = fv('fMsg'); try { navigator.clipboard.writeText(mv).then(function () { toast('Message copied'); }, function () { toast('Select the text and copy it'); }); } catch (er) { toast('Select the text and copy it'); } }
-    else if (a === 'remsent') { if (REMC) REM.log[REMC.name] = 'Reminder sent today ' + nowT(); closeForm(); if (curView === 'collections') setView('collections'); toast('Logged as sent. Demo only, nothing was really sent.'); }
+    else if (a === 'remsent') { if (REMC) REM.log[REMC.name] = 'Reminder sent today ' + nowT(); closeForm(); if (curView === 'collections') setView('collections'); toast('Logged as sent.'); }
     else if (a === 'calrm2') { calRemove(b.getAttribute('data-id')); closeForm(); setView('schedule'); toast('Removed from the calendar'); }
     else if (a === 'mfcopy') { copyText(fv('fMBody')); toast('Message copied'); }
     else if (a === 'mfto') { copyText(fv('fMTo')); toast('Copied'); }
@@ -2233,6 +2242,24 @@ body.drvmode .app{display:none!important}
       for (dw = 0; dw < SRATES.length; dw++) { if (SRATES[dw].site + ' - ' + SRATES[dw].what === dsv) drid = SRATES[dw].id; }
       DLN++; DLOG.push({ id: DLN, d: fv('fDDate') || TODAYISO(), client: dcl, mat: fv('fDMat'), size: fv('fDSize'), rid: drid, tons: fn('fDTons'), billed: dbl, paid: fv('fDPaid') });
       closeForm(); setView('dumpcost'); toast('Dump saved'); return;
+    }
+    if (FKIND === 'newinv') {
+      var xcl = fv('fXCl'), xn = fv('fXNew').trim() || (xcl === 'Type a new client below' ? '' : xcl); if (!xn) { err.textContent = 'Pick the client or type a new name.'; return; }
+      var xit = [], xi, xs = 0, xd, xa, xph = fv('fXPh').trim(), xq;
+      for (xi = 1; xi <= 3; xi++) { xd = fv('fXD' + xi).trim(); xa = fn('fXA' + xi); if (xd || xa) { xit.push([xd || 'Service', xa]); xs += xa; } }
+      if (!xit.length || !xs) { err.textContent = 'Type what it is for and the amount.'; return; }
+      if (!xph) { for (xq = 0; xq < CLIENTS.length; xq++) { if (CLIENTS[xq].n === xn) xph = CLIENTS[xq].ph; } }
+      makeXInv({ client: xn, ph: xph, em: fv('fXEm').trim(), addr: fv('fXAd').trim(), date: fv('fXDate') || TODAYISO(), items: xit, amt: xs, paid: fv('fXPaid') === 'Paid' });
+      closeForm(); setView('invoice'); toast('Invoice created'); return;
+    }
+    if (FKIND === 'newclient') {
+      var cn = fv('fCName').trim(); if (!cn) { err.textContent = 'Type the client name.'; return; }
+      for (var cq = 0; cq < CLIENTS.length; cq++) { if (CLIENTS[cq].n === cn) { err.textContent = 'That client is already in the list.'; return; } }
+      makeXCli({ name: cn, ph: fv('fCPh').trim(), em: fv('fCEm').trim(), addr: fv('fCAd').trim() }); closeForm(); setView('clients'); toast('Client added'); return;
+    }
+    if (FKIND === 'chgpw') {
+      var p1 = fv('fPw1'), p2 = fv('fPw2'); if (p1.length < 8) { err.textContent = 'Use at least 8 characters.'; return; } if (p1 !== p2) { err.textContent = 'The two passwords do not match.'; return; }
+      SB.auth.updateUser({ password: p1 }).then(function (r) { if (r.error) { err.textContent = r.error.message; } else { closeForm(); toast('Password changed'); } }); return;
     }
     if (FKIND === 'permit') {
       var pm = /^#(\d+)/.exec(fv('fPJob')); if (!pm) return; var pdays = parseInt(fv('fPDays'), 10), pjid = parseInt(pm[1], 10);
@@ -2483,7 +2510,7 @@ body.drvmode .app{display:none!important}
     else if (a === 'drvapp') openDrv(b.getAttribute('data-n'));
     else if (a === 'dadv') { drvMove(b.getAttribute('data-key'), 1); refreshAll(); toast('Status updated. The office and client see it right away.'); }
     else if (a === 'adv') { var id3 = parseInt(b.getAttribute('data-id'), 10); var nx = { 'Scheduled': 'On the way', 'On the way': 'Arrived', 'Arrived': 'Delivered' }; for (var k3 = 0; k3 < DISP.length; k3++) { if (DISP[k3].id === id3) DISP[k3].st = nx[DISP[k3].st]; } setView('drivers'); toast('Status updated. The office and client see it right away.'); }
-    else if (a === 'cal') { var dd = parseInt(b.getAttribute('data-d'), 10); if (dd === 0) { CAL.y = 2026; CAL.m = 9; } else { CAL.m += dd; if (CAL.m < 0) { CAL.m = 11; CAL.y--; } if (CAL.m > 11) { CAL.m = 0; CAL.y++; } } setView('schedule'); }
+    else if (a === 'cal') { var dd = parseInt(b.getAttribute('data-d'), 10); if (dd === 0) { CAL.y = TODAY.getFullYear(); CAL.m = TODAY.getMonth(); } else { CAL.m += dd; if (CAL.m < 0) { CAL.m = 11; CAL.y--; } if (CAL.m > 11) { CAL.m = 0; CAL.y++; } } setView('schedule'); }
     else if (a === 'form') openForm(b.getAttribute('data-f'));
     else if (a === 'portal') { var rr0 = b.getAttribute('data-r'); if (rr0) openPortal(rentalAsJob(rentalById(rr0))); else openPortal(jobByClient(b.getAttribute('data-c'))); }
     else if (a === 'inv') { invSel = parseInt(b.getAttribute('data-no'), 10); setView('invoice'); }
@@ -2537,7 +2564,7 @@ body.drvmode .app{display:none!important}
       var x = PAYLOG[k]; n++;
       rows += '<div class="li"><div class="grow"><b>' + invEsc(x.client) + '</b><span class="sub">' + x.ref + ' &middot; ' + x.method + ' &middot; ' + invEsc(x.driver) + ' &middot; ' + x.t + '</span></div>' + (x.pend ? pillH('Waiting for bank', 'warn') : pillH('Paid', 'good')) + '<b class="num">' + money(x.amt) + '</b>' + (x.pend ? '<button class="btn sm" data-act="bankok" data-i="' + k + '">Bank confirmed</button>' : '') + '</div>';
     }
-    return '<div class="card"><header><h2>Collected by drivers</h2>' + pillH(PAYLOG.length + (PAYLOG.length === 1 ? ' payment' : ' payments'), 'info') + '</header>' + hr + rows + '<p class="note" style="padding:0 14px 14px">Drivers can take cash, check, Zelle or a bank transfer link. Card is left out for now because of the fee. Demo only: nothing is really charged.</p></div>';
+    return '<div class="card"><header><h2>Collected by drivers</h2>' + pillH(PAYLOG.length + (PAYLOG.length === 1 ? ' payment' : ' payments'), 'info') + '</header>' + hr + rows + '<p class="note" style="padding:0 14px 14px">Drivers can take cash, check, Zelle or a bank transfer link. Card is left out for now because of the fee. The driver marks the money collected and the invoice shows paid.</p></div>';
   }
   /* reminders */
   var REM = { on: true, log: {} }, REMC = null;
@@ -2567,7 +2594,7 @@ body.drvmode .app{display:none!important}
     var r = '', k;
     for (k = 0; k < REMSTEPS.length; k++) r += '<div class="li"><span class="ic2">' + icon('clock') + '</span><div class="grow"><b>' + REMSTEPS[k][0] + '</b><span class="sub">' + REMSTEPS[k][1] + '</span></div>' + pillH(REM.on ? 'On' : 'Off', REM.on ? 'good' : 'warn') + '</div>';
     return '<div class="card"><header><h2>Late payment reminders</h2><button class="btn sm" data-act="remtoggle">' + (REM.on ? 'Turn off' : 'Turn on') + '</button></header>' + r +
-      '<p class="note" style="padding:0 14px 14px">Each client gets a text in their language with their invoice link. Demo only: nothing is sent yet. Real automatic sending needs Supabase Pro. You can still tap Remind on any client below.</p></div>';
+      '<p class="note" style="padding:0 14px 14px">Each client gets a text in their language with their invoice link. Automatic sending is not turned on yet. Tap Remind on any client below and send it from your own phone.</p></div>';
   }
   function colRow(x) {
     var days = /^(\d+) days/.exec(x[2]); days = days ? parseInt(days[1], 10) : -1;
@@ -3212,7 +3239,7 @@ body.drvmode .app{display:none!important}
   function monDates(t, out) {
     var dm = /^(january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sept|sep|october|oct|november|nov|december|dec)\.?\s*(\d{1,2})?(?:,?\s*(\d{4}))?$/.exec(t);
     if (!dm) return;
-    var mi = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'].indexOf(dm[1].slice(0, 3)), yr = dm[3] ? parseInt(dm[3], 10) : 2026, dd = dm[2] ? parseInt(dm[2], 10) : 0;
+    var mi = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'].indexOf(dm[1].slice(0, 3)), yr = dm[3] ? parseInt(dm[3], 10) : TODAY.getFullYear(), dd = dm[2] ? parseInt(dm[2], 10) : 0;
     if (dd && (dd < 1 || dd > 31)) return;
     var key = yr + '-' + pad2(mi + 1) + (dd ? '-' + pad2(dd) : ''), kinds = [['dump', 'Dumping', 'truck', 'job', JOBS], ['rent', 'Rentals', 'box', 'rental', RENTALS], ['inv', 'Invoices', 'receipt', 'invoice', INVS]], q, k;
     for (q = 0; q < kinds.length; q++) {
@@ -3291,7 +3318,7 @@ body.drvmode .app{display:none!important}
     var r = dlRate(x.rid), p = dlPrice(x.mat, x.size), exp = r.unit === 'ton' ? Math.round(r.rate * x.tons * 100) / 100 : r.rate, rev = p ? p[2] : 0;
     return { r: r, rev: rev, inc: p ? p[3] : 0, exp: exp, extra: Math.round((x.billed - exp) * 100) / 100, profit: Math.round((rev - x.billed) * 100) / 100 };
   }
-  function dlMonth() { return DLOG.filter(function (x) { return x.d.indexOf('2026-10') === 0; }); }
+  function dlMonth() { return DLOG.filter(function (x) { return x.d.indexOf(TODAYISO().slice(0, 7)) === 0; }); }
   function vDumpCost() {
     var k, h = '', flags = '', all = DLOG.slice().sort(function (a, b) { return a.d < b.d ? 1 : (a.d > b.d ? -1 : b.id - a.id); }), nf = 0, rev = 0, cost = 0, bySize = {}, order = [];
     for (k = 0; k < all.length; k++) {
@@ -3315,9 +3342,9 @@ body.drvmode .app{display:none!important}
     for (k = 0; k < PRICES.length; k++) pm += '<div class="formrow"><span>' + PRICES[k][1] + ' ' + PRICES[k][0] + (PRICES[k][3] ? ' (' + PRICES[k][3] + ' tons incl.)' : '') + '</span><b>' + money(PRICES[k][2]) + '</b></div>';
     for (k = 0; k < SRATES.length; k++) rt += '<div class="formrow"><span>' + invEsc(SRATES[k].site) + ' &middot; ' + invEsc(SRATES[k].what) + '</span><b>' + money(SRATES[k].rate) + ' / ' + SRATES[k].unit + '</b></div>';
     return '<div class="vhead"><p>What each dump costs you, what you billed the client, and what is left. If a dump site charges more than your rate, it shows up below.</p><button class="btn primary" data-act="dladd">' + icon('plus') + 'Log a dump</button></div>' +
-      '<section class="stats"><div class="stat"><div class="row">Profit in October<span class="ic">' + icon('check') + '</span></div><b>' + money(rev - cost) + '</b><small>' + mo.length + ' dumps, ' + money(rev) + ' billed</small></div>' +
+      '<section class="stats"><div class="stat"><div class="row">Profit in ' + INV_MONTHS[TODAY.getMonth()] + '<span class="ic">' + icon('check') + '</span></div><b>' + money(rev - cost) + '</b><small>' + mo.length + ' dumps, ' + money(rev) + ' billed</small></div>' +
       '<div class="stat' + (nf ? ' alert' : '') + '"><div class="row">Overcharges<span class="ic">' + icon('alert') + '</span></div><b>' + nf + (nf === 1 ? ' bill' : ' bills') + '</b><small>' + (nf ? 'Charged more than your rate' : 'All bills match your rates') + '</small></div>' +
-      '<div class="stat"><div class="row">Dump costs in October<span class="ic">' + icon('truck') + '</span></div><b>' + money(cost) + '</b><small>Paid to dump sites</small></div></section>' +
+      '<div class="stat"><div class="row">Dump costs in ' + INV_MONTHS[TODAY.getMonth()] + '<span class="ic">' + icon('truck') + '</span></div><b>' + money(cost) + '</b><small>Paid to dump sites</small></div></section>' +
       (nf ? '<div class="card"><header><h2>Check these bills</h2>' + pillH(nf + ' flagged', 'bad') + '</header>' + flags + '</div>' : '') +
       '<div class="card"><header><h2>Profit per container</h2></header><div class="tablewrap"><table><thead><tr><th>Container</th><th>Dumps</th><th>Profit</th></tr></thead><tbody>' + rows + '</tbody></table></div></div>' +
       '<div class="card"><header><h2>Dump log</h2>' + pillH(all.length + ' dumps', 'info') + '</header>' + h + '</div>' +
@@ -3347,7 +3374,7 @@ body.drvmode .app{display:none!important}
   }, true);
   /* ---- Dispatch by day ---- */
   var DDAY = TODAYISO(), ES_DOWEN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'], MAB = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  function dispISO(d) { var m = /^([A-Za-z]{3})\s+(\d{1,2})/.exec(String(d.time || '')), mi = m ? MAB.indexOf(m[1]) : -1; return mi < 0 ? '' : '2026-' + pad2(mi + 1) + '-' + pad2(parseInt(m[2], 10)); }
+  function dispISO(d) { var m = /^([A-Za-z]{3})\s+(\d{1,2})/.exec(String(d.time || '')), mi = m ? MAB.indexOf(m[1]) : -1; return mi < 0 ? '' : TODAY.getFullYear() + '-' + pad2(mi + 1) + '-' + pad2(parseInt(m[2], 10)); }
   function dKey(t) {
     var m = /^([A-Za-z]{3})\s+(\d{1,2})(?:,?\s*(\d{1,2}):(\d{2})\s*([AaPp][Mm]))?/.exec(String(t || '')), mi = m ? MAB.indexOf(m[1]) : -1; if (mi < 0) return 1e9;
     var mins = m[3] ? (parseInt(m[3], 10) % 12) * 60 + parseInt(m[4], 10) + (/p/i.test(m[5]) ? 720 : 0) : 0; return (mi * 100 + parseInt(m[2], 10)) * 10000 + mins;
@@ -3497,7 +3524,7 @@ body.drvmode .app{display:none!important}
     if (!NET_OFF || DAPP.name !== name) return '';
     return '<span class="pill warn" style="display:inline-block;margin-bottom:8px">Last seen ' + NET_SINCE + ' &middot; no signal' + (NQ.length ? ' &middot; ' + NQ.length + (NQ.length === 1 ? ' update waiting' : ' updates waiting') : '') + '</span>';
   }
-  function updNetBtn() { var b = document.getElementById('drvNet'); if (b) b.textContent = NET_OFF ? 'Demo: online' : 'Demo: offline'; }
+  function updNetBtn() { var b = document.getElementById('drvNet'); if (b) b.textContent = NET_OFF ? 'Test: signal back' : 'Test: no signal'; }
   function flushNQ() {
     var q = NQ.slice(), k, m, e, o; NQ = [];
     for (k = 0; k < q.length; k++) {
@@ -3738,52 +3765,101 @@ body.drvmode .app{display:none!important}
   }
   function syncSoon() { if (!ME) return; clearTimeout(SYNC_TIMER); SYNC_TIMER = setTimeout(syncNow, 600); }
   ['click', 'change', 'submit'].forEach(function (ev) { document.addEventListener(ev, function () { if (document.getElementById('gate').hidden) syncSoon(); }, false); });
-  /* ---- Stage 2b: records saved in app_records ---- */
+  /* ---- Records saved in app_records ---- */
+  var XINVS = [], XCLIS = [], XN = 0, XC = 0, LOCS = {}, SEEDED = false;
+  function dmFlat() {
+    var o = [], n, k, a;
+    for (n in DMSG) { if (DMSG.hasOwnProperty(n)) { a = DMSG[n]; for (k = 0; k < a.length; k++) { a[k].who = n; if (!a[k].ts) a[k].ts = Date.now() - k; o.push(a[k]); } } }
+    return o;
+  }
+  function cfgList() { return [{ id: 'prices', rows: PRICES }, { id: 'rem', on: REM.on, log: REM.log }]; }
   var RECS = [
-    { k: 'wait', arr: function () { return WAITS; } },
-    { k: 'rcpt', arr: function () { return RCPTS; } },
+    { k: 'wait', arr: function () { return WAITS; }, drv: 1 },
+    { k: 'rcpt', arr: function () { return RCPTS; }, drv: 1 },
     { k: 'permit', arr: function () { return PERMITS; } },
     { k: 'dlog', arr: function () { return DLOG; } },
-    { k: 'calx', arr: function () { return CALX; } }
+    { k: 'calx', arr: function () { return CALX; } },
+    { k: 'xinv', arr: function () { return XINVS; } },
+    { k: 'xcli', arr: function () { return XCLIS; } },
+    { k: 'site', arr: function () { return SITES; }, seed: 1 },
+    { k: 'srate', arr: function () { return SRATES; }, seed: 1 },
+    { k: 'pay', arr: function () { return PAYLOG; }, ts: 1, drv: 1 },
+    { k: 'txt', arr: function () { return TXTLOG; }, ts: 1, drv: 1 },
+    { k: 'dmsg', arr: dmFlat, drv: 1, custom: 1 },
+    { k: 'cfg', arr: cfgList, custom: 1 }
   ];
   var RSNAP = {};
   function numTail(id) { var m = /(\d+)$/.exec(String(id)); return m ? parseInt(m[1], 10) : 0; }
+  function isDrv() { return ME && ME.role === 'driver'; }
   async function loadRecs() {
     var r = await SB.from('app_records').select('kind,id,data');
     if (r.error) { toast('Could not load saved records: ' + r.error.message); return; }
-    var by = {}, i, k, a, mx;
+    var by = {}, i, k, a, mx, rk, rows, drv = isDrv();
     for (i = 0; i < r.data.length; i++) { (by[r.data[i].kind] = by[r.data[i].kind] || []).push(r.data[i].data); }
+    LOCS = {}; var lr = by.loc || []; for (i = 0; i < lr.length; i++) LOCS[lr[i].who] = lr[i];
+    SEEDED = false; var cf = by.cfg || []; for (i = 0; i < cf.length; i++) { if (cf[i].id === 'seeded') SEEDED = true; }
     RSNAP = {};
     for (k = 0; k < RECS.length; k++) {
-      a = RECS[k].arr(); a.length = 0; mx = 0;
-      var rows = by[RECS[k].k] || [];
-      for (i = 0; i < rows.length; i++) { a.push(rows[i]); mx = Math.max(mx, numTail(rows[i].id)); RSNAP[RECS[k].k + '|' + rows[i].id] = JSON.stringify(rows[i]); }
-      if (RECS[k].k === 'wait') { a.sort(function (x, y) { return numTail(x.id) - numTail(y.id); }); WN = Math.max(WN, mx); }
-      if (RECS[k].k === 'rcpt') { a.sort(function (x, y) { return numTail(y.id) - numTail(x.id); }); RCN = Math.max(RCN, mx); }
-      if (RECS[k].k === 'permit') PCNT = Math.max(PCNT, mx);
-      if (RECS[k].k === 'dlog') DLN = Math.max(DLN, mx);
-      if (RECS[k].k === 'calx') { CXN = Math.max(CXN, mx); for (i = 0; i < a.length; i++) { CAL_EV.push([a[i].iso, (a[i].tm ? t12(a[i].tm) + ' ' : '') + a[i].title, 'cu', a[i].id]); } }
+      rk = RECS[k]; if (drv && !rk.drv) continue;
+      rows = by[rk.k] || [];
+      if (rk.k === 'cfg') {
+        for (i = 0; i < rows.length; i++) {
+          if (rows[i].id === 'prices' && rows[i].rows) { PRICES.length = 0; for (mx = 0; mx < rows[i].rows.length; mx++) PRICES.push(rows[i].rows[mx]); }
+          if (rows[i].id === 'rem') { REM.on = rows[i].on !== false; REM.log = rows[i].log || {}; }
+          RSNAP['cfg|' + rows[i].id] = JSON.stringify(rows[i]);
+        }
+        continue;
+      }
+      if (rk.k === 'dmsg') {
+        var nm; for (nm in DMSG) { if (DMSG.hasOwnProperty(nm)) DMSG[nm].length = 0; }
+        rows.sort(function (x, y) { return (y.ts || 0) - (x.ts || 0); }); mx = 0;
+        for (i = 0; i < rows.length; i++) { if (!DMSG[rows[i].who]) DMSG[rows[i].who] = []; DMSG[rows[i].who].push(rows[i]); mx = Math.max(mx, numTail(rows[i].id)); RSNAP['dmsg|' + rows[i].id] = JSON.stringify(rows[i]); }
+        DMN = Math.max(DMN, mx); continue;
+      }
+      a = rk.arr();
+      if (rk.seed && !SEEDED && !rows.length) { continue; }
+      a.length = 0; mx = 0;
+      if (rk.ts) rows.sort(function (x, y) { return (y.ts || 0) - (x.ts || 0); });
+      for (i = 0; i < rows.length; i++) { a.push(rows[i]); mx = Math.max(mx, numTail(rows[i].id)); RSNAP[rk.k + '|' + rows[i].id] = JSON.stringify(rows[i]); }
+      if (rk.k === 'wait') { a.sort(function (x, y) { return numTail(x.id) - numTail(y.id); }); WN = Math.max(WN, mx); }
+      if (rk.k === 'rcpt') { a.sort(function (x, y) { return numTail(y.id) - numTail(x.id); }); RCN = Math.max(RCN, mx); }
+      if (rk.k === 'permit') PCNT = Math.max(PCNT, mx);
+      if (rk.k === 'dlog') DLN = Math.max(DLN, mx);
+      if (rk.k === 'site') SCN = Math.max(SCN, mx);
+      if (rk.k === 'xinv') XN = Math.max(XN, mx);
+      if (rk.k === 'xcli') XC = Math.max(XC, mx);
+      if (rk.k === 'calx') { CXN = Math.max(CXN, mx); for (i = 0; i < a.length; i++) { CAL_EV.push([a[i].iso, (a[i].tm ? t12(a[i].tm) + ' ' : '') + a[i].title, 'cu', a[i].id]); } }
     }
-    updRBadge();
+    applyExtras(); buildConfs(); updRBadge();
   }
   async function syncRecs() {
-    var k, i, a, key, js, seen = {}, res, err = '';
+    var k, i, a, key, js, seen = {}, res, err = '', rk, drv = isDrv();
     for (k = 0; k < RECS.length; k++) {
-      a = RECS[k].arr();
+      rk = RECS[k]; if (drv && !rk.drv) continue;
+      a = rk.arr();
       for (i = 0; i < a.length; i++) {
-        key = RECS[k].k + '|' + a[i].id; seen[key] = 1; js = JSON.stringify(a[i]);
+        if (a[i].id == null) a[i].id = rk.k + Date.now().toString(36) + i;
+        if (rk.ts && !a[i].ts) a[i].ts = Date.now() - i;
+        if (rk.k === 'txt' && !a[i].who) a[i].who = a[i].driver;
+        if (drv && rk.k === 'dmsg') { /* drivers only change the read flag */ }
+        key = rk.k + '|' + a[i].id; seen[key] = 1; js = JSON.stringify(a[i]);
         if (RSNAP[key] !== js) {
-          res = await SB.from('app_records').upsert({ kind: RECS[k].k, id: String(a[i].id), data: a[i], updated_at: new Date().toISOString() });
+          res = await SB.from('app_records').upsert({ kind: rk.k, id: String(a[i].id), data: a[i], updated_at: new Date().toISOString() });
           if (res.error) err = res.error.message; else RSNAP[key] = js;
         }
       }
     }
     for (key in RSNAP) {
       if (RSNAP.hasOwnProperty(key) && !seen[key]) {
-        var p = key.split('|');
+        var p = key.split('|'); if (drv && p[0] !== 'wait' && p[0] !== 'rcpt') continue;
+        if (p[0] === 'cfg') continue;
         res = await SB.from('app_records').delete().eq('kind', p[0]).eq('id', p[1]);
         if (res.error) err = res.error.message; else delete RSNAP[key];
       }
+    }
+    if (!drv && !SEEDED) {
+      res = await SB.from('app_records').upsert({ kind: 'cfg', id: 'seeded', data: { id: 'seeded', at: new Date().toISOString() } });
+      if (!res.error) SEEDED = true;
     }
     return err;
   }
@@ -3794,6 +3870,7 @@ body.drvmode .app{display:none!important}
     openDrv(nm);
     var bar = document.querySelector('#drvApp .dabar span'); if (bar) bar.textContent = 'Sams Office';
     var nb = document.getElementById('drvNet'); if (nb) nb.hidden = true;
+    sendLoc(); if (navigator.onLine === false) goOffline();
     var cb = document.getElementById('drvClose'); if (cb) cb.textContent = 'Salir';
   }
   document.getElementById('drvClose').addEventListener('click', async function (e) {
@@ -3804,6 +3881,248 @@ body.drvmode .app{display:none!important}
     if (document.body.className.indexOf('drvmode') < 0 || !ME) return;
     if (WACT || DAPP.scan || document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
     loadAll().then(function () { paintAll(); drawDrv(); });
+  }, 60000);
+
+  function sendLoc() {
+    if (!navigator.geolocation || !ME || NET_OFF || document.body.className.indexOf('drvmode') < 0) return;
+    navigator.geolocation.getCurrentPosition(function (p) {
+      var w = ME.driver_name || ME.full_name;
+      SB.from('app_records').upsert({ kind: 'loc', id: w, data: { id: w, who: w, lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy, at: new Date().toISOString() } });
+    }, function () {}, { enableHighAccuracy: true, maximumAge: 30000, timeout: 15000 });
+  }
+  setInterval(sendLoc, 45000);
+  window.addEventListener('offline', function () { if (document.body.className.indexOf('drvmode') >= 0) goOffline(); });
+  window.addEventListener('online', function () { if (document.body.className.indexOf('drvmode') >= 0) { goOnline(); setTimeout(syncSoon, 2200); } });
+  /* ---- Real numbers, invoices, clients, settings, sending ---- */
+  function monthOf(iso) { return iso && String(iso).slice(0, 7) === TODAYISO().slice(0, 7); }
+  function liveJobs() { var o = [], k; for (k = 0; k < JOBS.length; k++) { if (JOBS[k].status !== 'Cancelled') o.push(JOBS[k]); } return o; }
+  function liveRentals() { var o = [], k; for (k = 0; k < RENTALS.length; k++) { if (RENTALS[k].status !== 'Cancelled') o.push(RENTALS[k]); } return o; }
+  function acctList() {
+    var m = {}, ord = [], out = [], k, e;
+    function add(nm, amt, due) {
+      if (!nm || !(amt > 0)) return;
+      var d = invParse(due), days = d ? Math.round((TODAY - d) / 86400000) : 0;
+      e = m[nm]; if (!e) { e = m[nm] = { n: nm, amt: 0, days: -9999, due: due }; ord.push(nm); }
+      e.amt += amt; if (days > e.days) { e.days = days; e.due = due; }
+    }
+    var lj = liveJobs(), lr = liveRentals();
+    for (k = 0; k < lj.length; k++) { if (lj[k].pay !== 'Paid') add(lj[k].client, lj[k].total, lj[k].dueIso || ISO[lj[k].id]); }
+    for (k = 0; k < lr.length; k++) { if (lr[k].pay !== 'Paid') add(lr[k].client, rTotal(lr[k]), lr[k].di); }
+    for (k = 0; k < XINVS.length; k++) { if (!XINVS[k].paid) add(XINVS[k].client, XINVS[k].amt, XINVS[k].date); }
+    for (k = 0; k < ord.length; k++) out.push(m[ord[k]]);
+    out.sort(function (a, b) { return b.days - a.days; });
+    return out;
+  }
+  function acctTxt(e) { return e.days > 0 ? e.days + ' days past due' : 'Due ' + (e.due ? longD(e.due) : 'soon'); }
+  function paidMonthTotal() {
+    var t = 0, n = 0, k, lj = liveJobs(), lr = liveRentals();
+    for (k = 0; k < lj.length; k++) { if (lj[k].pay === 'Paid' && monthOf(ISO[lj[k].id])) { t += lj[k].total; n++; } }
+    for (k = 0; k < lr.length; k++) { if (lr[k].pay === 'Paid' && monthOf(lr[k].si)) { t += rTotal(lr[k]); n++; } }
+    for (k = 0; k < XINVS.length; k++) { if (XINVS[k].paid && monthOf(XINVS[k].date)) { t += XINVS[k].amt; n++; } }
+    return [t, n];
+  }
+  function vCenter() {
+    var L = acctList(), h = '', tot = 0, k, e, pm = paidMonthTotal();
+    for (k = 0; k < L.length; k++) {
+      e = L[k]; tot += e.amt;
+      h += '<div class="li"><span class="ic2">' + icon('wallet') + '</span><div class="grow"><b>' + invEsc(e.n) + '</b><span class="sub">' + acctTxt(e) + '</span></div>' + pillH(e.days > 7 ? 'Past due' : 'Unpaid', e.days > 7 ? 'bad' : 'warn') + '<b class="num">' + money(e.amt) + '</b><button class="btn sm" data-act="remind" data-n="' + invEsc(e.n) + '" data-amt="' + e.amt + '" data-days="' + Math.max(e.days, 0) + '">' + icon('mail') + 'Remind</button></div>';
+    }
+    if (!h) h = '<p class="note" style="padding:14px">Nobody owes you anything right now.</p>';
+    return '<section class="stats"><div class="stat alert"><div class="row">Total unpaid<span class="ic">' + icon('alert') + '</span></div><b>' + money(tot) + '</b><small>' + L.length + (L.length === 1 ? ' client' : ' clients') + '</small></div>' +
+      '<div class="stat"><div class="row">Collected this month<span class="ic">' + icon('check') + '</span></div><b>' + money(pm[0]) + '</b><small>' + pm[1] + (pm[1] === 1 ? ' invoice paid' : ' invoices paid') + '</small></div></section>' +
+      '<div class="card"><header><h2>Who owes you</h2></header>' + h + '</div>';
+  }
+  function vOverview() {
+    var lj = liveJobs(), lr = liveRentals(), k, dumpRev = 0, dumpN = 0, rentRev = 0, actR = 0, xr = 0, byc = {}, ord = [], L = acctList(), out = 0, late = 0, h = '', top = [];
+    function addc(n, v) { if (!byc[n]) { byc[n] = 0; ord.push(n); } byc[n] += v; }
+    for (k = 0; k < lj.length; k++) { if (monthOf(ISO[lj[k].id])) { dumpRev += lj[k].total; dumpN++; addc(lj[k].client, lj[k].total); } }
+    for (k = 0; k < lr.length; k++) { if (monthOf(lr[k].si)) { rentRev += rTotal(lr[k]); addc(lr[k].client, rTotal(lr[k])); } if (lr[k].status !== 'Returned') actR++; }
+    for (k = 0; k < XINVS.length; k++) { if (monthOf(XINVS[k].date)) { xr += XINVS[k].amt; addc(XINVS[k].client, XINVS[k].amt); } }
+    for (k = 0; k < L.length; k++) { out += L[k].amt; if (L[k].days > 0) late++; }
+    for (k = 0; k < ord.length; k++) top.push([ord[k], byc[ord[k]]]);
+    top.sort(function (a, b) { return b[1] - a[1]; }); top = top.slice(0, 5);
+    for (k = 0; k < top.length; k++) h += '<div class="li"><span class="avatar">' + initials(top[k][0]) + '</span><div class="grow"><b>' + invEsc(top[k][0]) + '</b></div><b class="num">' + money(top[k][1]) + '</b></div>';
+    if (!h) h = '<p class="note" style="padding:14px">No jobs this month yet.</p>';
+    return '<section class="stats"><div class="stat"><div class="row">Revenue this month<span class="ic">' + icon('dollar') + '</span></div><b>' + money(dumpRev + rentRev + xr) + '</b><small>All rentals and dumping</small></div>' +
+      '<div class="stat"><div class="row">Rental revenue<span class="ic">' + icon('box') + '</span></div><b>' + money(rentRev) + '</b><small>' + actR + ' active rentals</small></div>' +
+      '<div class="stat"><div class="row">Dumping revenue<span class="ic">' + icon('truck') + '</span></div><b>' + money(dumpRev) + '</b><small>' + dumpN + (dumpN === 1 ? ' job' : ' jobs') + '</small></div>' +
+      '<div class="stat alert"><div class="row">Outstanding<span class="ic">' + icon('alert') + '</span></div><b>' + money(out) + '</b><small>' + late + (late === 1 ? ' client' : ' clients') + ' past due</small></div></section>' +
+      '<div class="card"><header><h2>Top clients this month</h2></header>' + h + '</div>';
+  }
+  function vCollections() {
+    var L = acctList(), B = [['Not due', 'info', []], ['Overdue', 'warn', []], ['Final notice', 'bad', []], ['Lien stage', 'bad', []]], k, h = '', rows, m;
+    for (k = 0; k < L.length; k++) { B[remStage(L[k].days)][2].push([L[k].n, L[k].amt, L[k].days > 0 ? L[k].days + ' days' : 'Due ' + (L[k].due ? longD(L[k].due) : 'soon')]); }
+    for (k = 0; k < B.length; k++) {
+      rows = ''; for (m = 0; m < B[k][2].length; m++) rows += colRow(B[k][2][m]);
+      if (!rows) rows = '<p class="note" style="padding:14px">Nobody here.</p>';
+      h += '<div class="card"><header><h2>' + B[k][0] + '</h2>' + pillH(B[k][2].length + (B[k][2].length === 1 ? ' client' : ' clients'), B[k][1]) + '</header>' + rows + '</div>';
+    }
+    return '<div class="vhead"><p>Unpaid accounts sorted by how late they are.</p></div>' + payCard() + remCard() + h;
+  }
+  function buildConfs() {
+    CONFS.length = 0; var k, j, r, row, at, mk = function (c, ph, eq, rid, amt, due, ok, at2) {
+      return { c: c, ph: String(ph || '').replace(/[^0-9]/g, ''), eq: eq, rid: rid, amt: amt, due: due ? longD(due) : '', ok: ok, d: at2 ? at2.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '', t: at2 ? at2.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '' };
+    }, w = [], c2 = [], i;
+    function dbRow(list, id) { for (var q = 0; q < list.length; q++) { if (list[q].id === id) return list[q]; } return null; }
+    for (k = 0; k < JOBS.length; k++) {
+      j = JOBS[k]; if (j.status === 'Cancelled' || (!j.conf && j.pay === 'Paid')) continue;
+      row = dbRow(DBROWS.dump, j._id); at = row && row.portal_confirmed_at ? new Date(row.portal_confirmed_at) : null;
+      (j.conf ? c2 : w).push(mk(j.client, j.phone, (j.jt || 'DROP') + ' - ' + j.mat + (j.size ? ' (' + j.size + ')' : ''), '', j.total, j.dueIso || ISO[j.id], !!j.conf, at));
+    }
+    for (k = 0; k < RENTALS.length; k++) {
+      r = RENTALS[k]; if (r.status === 'Cancelled' || r.status === 'Returned' || (!r.conf && r.pay === 'Paid')) continue;
+      row = dbRow(DBROWS.rent, r.id); at = row && row.portal_confirmed_at ? new Date(row.portal_confirmed_at) : null;
+      (r.conf ? c2 : w).push(mk(r.client, r.phone, r.asset, r.id, rTotal(r), r.di, !!r.conf, at));
+    }
+    for (i = 0; i < w.length; i++) CONFS.push(w[i]);
+    for (i = 0; i < c2.length; i++) CONFS.push(c2[i]);
+  }
+  function vConfirms() {
+    var r = '', k, c;
+    for (k = 0; k < CONFS.length; k++) {
+      c = CONFS[k];
+      r += '<tr data-act="portal" data-c="' + invEsc(c.c) + '"' + (c.rid ? ' data-r="' + c.rid + '"' : '') + '><td><b>' + invEsc(c.c) + '</b><span class="sub">' + c.ph + '</span></td><td style="white-space:normal;min-width:140px">' + invEsc(c.eq) + '</td><td class="mono">' + money(c.amt) + '</td><td style="white-space:normal">' + c.due + '</td>' +
+        '<td>' + (c.ok ? '<span class="pill good ic">' + icon('check') + 'Confirmed</span>' : '<span class="pill warn ic">' + icon('clock') + 'Waiting</span>') + '</td>' +
+        '<td>' + (c.ok ? '<span class="okat">' + c.d + '</span><span class="sub">' + c.t + '</span>' : '<span class="sub">-</span>') + '</td></tr>';
+    }
+    if (!r) r = '<tr><td colspan="6" class="sub" style="padding:18px">Nothing waiting. When a client confirms from their link, it shows here.</td></tr>';
+    return '<div class="vhead"><p>Only the client can confirm, from their own link. Tap a row to see that client portal.</p></div>' +
+      '<div class="card dkt"><div class="tablewrap"><table style="min-width:640px"><thead><tr><th>CLIENT</th><th>EQUIPMENT</th><th>AMOUNT</th><th>DUE DATE</th><th>STATUS</th><th>CONFIRMED AT</th></tr></thead><tbody>' + r + '</tbody></table></div></div>';
+  }
+  /* custom invoices and clients */
+  function applyExtras() {
+    var k, x, i, have;
+    for (k = 0; k < XINVS.length; k++) {
+      x = XINVS[k]; ISO[x.no] = x.date;
+      INVS.push({ no: x.no, client: x.client, date: longD(x.date), amt: x.amt, st: x.paid ? 'Paid' : 'Unpaid', tone: x.paid ? 'good' : 'warn', items: x.items, addr: x.addr, ph: x.ph });
+    }
+    for (k = 0; k < XCLIS.length; k++) {
+      x = XCLIS[k]; have = false;
+      for (i = 0; i < CLIENTS.length; i++) { if (CLIENTS[i].n === x.name) { have = true; if (!CLIENTS[i].ph) CLIENTS[i].ph = x.ph; } }
+      if (!have) CLIENTS.push({ n: x.name, ph: x.ph, jobs: 0, bal: 0 });
+    }
+    if (!invSel || !INVS.length) invSel = INVS.length ? INVS[0].no : 0;
+  }
+  function makeXInv(o) {
+    XN++; var rec = { id: 'X' + XN, no: 900 + XN, client: o.client, ph: o.ph, em: o.em, addr: o.addr, date: o.date, items: o.items, amt: o.amt, paid: o.paid };
+    XINVS.push(rec);
+    ISO[rec.no] = rec.date;
+    INVS.push({ no: rec.no, client: rec.client, date: longD(rec.date), amt: rec.amt, st: rec.paid ? 'Paid' : 'Unpaid', tone: rec.paid ? 'good' : 'warn', items: rec.items, addr: rec.addr, ph: rec.ph });
+    var have = false, i; for (i = 0; i < CLIENTS.length; i++) { if (CLIENTS[i].n === rec.client) have = true; }
+    if (!have) { XC++; XCLIS.push({ id: 'C' + XC, name: rec.client, ph: rec.ph, em: rec.em, addr: rec.addr }); CLIENTS.push({ n: rec.client, ph: rec.ph, jobs: 0, bal: 0 }); }
+    invSel = rec.no;
+  }
+  function makeXCli(o) { XC++; XCLIS.push({ id: 'C' + XC, name: o.name, ph: o.ph, em: o.em, addr: o.addr }); CLIENTS.push({ n: o.name, ph: o.ph, jobs: 0, bal: 0 }); }
+  function vClients() {
+    var h = '', k, c;
+    for (k = 0; k < CLIENTS.length; k++) {
+      c = CLIENTS[k];
+      h += '<div class="person" data-act="client" data-n="' + invEsc(c.n) + '" tabindex="0" style="cursor:pointer"><div class="top2"><span class="avatar">' + initials(c.n) + '</span><div><b>' + invEsc(c.n) + ' ' + (c.jobs ? gradePill(c.n) : '') + '</b><span class="sub">' + invEsc(c.ph) + '</span></div></div>' +
+        '<div class="vhead"><span class="sub">' + c.jobs + ' jobs</span>' + (c.bal > 0 ? pillH(money(c.bal) + ' due', 'warn') : pillH('Paid up', 'good')) + '</div>' +
+        (c.jobs ? '<div class="actions"><button class="btn sm" data-act="portal" data-c="' + invEsc(c.n) + '">' + icon('link') + 'Open portal</button></div>' : '') + '</div>';
+    }
+    if (!h) h = '<p class="note">No clients yet. They appear when you add a job, or tap Add client.</p>';
+    return '<div class="vhead"><p>Everyone you rent to or dump for.</p><button class="btn primary" data-act="form" data-f="newclient">' + icon('plus') + 'Add client</button></div><div class="cards">' + h + '</div>';
+  }
+  function vSettings() {
+    function row(a, b) { return '<div class="formrow"><span>' + a + '</span><b>' + b + '</b></div>'; }
+    var pr = '', k, seen = {};
+    for (k = 0; k < PRICES.length; k++) { var key = PRICES[k][1]; if (!seen[key] || PRICES[k][2] < seen[key]) seen[key] = PRICES[k][2]; }
+    for (k in seen) { if (seen.hasOwnProperty(k)) pr += row('Dump container ' + k, money(seen[k]) + ' and up'); }
+    return '<div class="card"><header><h2>Company</h2></header>' + row('Name', 'Sams Construction Services LTD') + row('Address', '188-16 Woodhull Ave, Hollis NY 11423') + row('Phone', '+1 (917) 663-6369') + row('BIC', 'BIC#4376') + '</div>' +
+      '<div class="card"><header><h2>Equipment and prices</h2><button class="btn sm" data-act="form" data-f="equip">' + icon('gear') + 'Edit</button></header>' + eqRows() + pr + '</div>' +
+      '<div class="card"><header><h2>People</h2></header>' + row('Keilah', 'Owner') + row('Office', 'Secretary') + row('Sams, Gustavo, Jose Luis', 'Drivers') + '</div>' +
+      '<div class="card"><header><h2>Your account</h2></header><div style="padding:14px"><button class="btn" id="chgPw">' + icon('gear') + 'Change my password</button></div></div>';
+  }
+  /* Excel, send invoice */
+  var CURINV = null;
+  function openInv(d) {
+    CURINV = d;
+    document.getElementById('invTitle').textContent = 'Invoice #' + d.invNo + ' - ' + d.billTo;
+    document.getElementById('invWrap').innerHTML = invSheet(d);
+    document.getElementById('invModal').hidden = false;
+    fitInv();
+    document.getElementById('invClose').focus();
+  }
+  function downloadXls(d) {
+    if (!d) return;
+    var rows = [[INV_CO.name], [INV_CO.addr1], [INV_CO.addr2], [INV_CO.phone], [INV_CO.bic], [], ['Invoice No.', d.invNo], ['Invoice Date', invLong(d.invDate)], [], ['Bill to', d.billTo], ['Address', d.addr1], ['', d.addr2], ['Phone', d.phone], [], ['Description', 'Date', 'Amount']], k, sub = 0;
+    for (k = 0; k < (d.items || []).length; k++) { var it = d.items[k]; rows.push([it.desc, it.date ? invLong(it.date) : '', parseFloat(it.amount) || 0]); sub += parseFloat(it.amount) || 0; }
+    rows.push([]); rows.push(['TOTAL', '', sub]); if (d.paid) rows.push(['PAID', '', '']);
+    if (!window.XLSX) { var csv = '', q2, c2; for (q2 = 0; q2 < rows.length; q2++) { var line = []; for (c2 = 0; c2 < rows[q2].length; c2++) line.push('"' + String(rows[q2][c2]).replace(/"/g, '""') + '"'); csv += line.join(',') + '\r\n'; } var bl = new Blob([csv], { type: 'text/csv' }), an = document.createElement('a'); an.href = URL.createObjectURL(bl); an.download = 'Invoice-' + d.invNo + '.csv'; document.body.appendChild(an); an.click(); setTimeout(function () { document.body.removeChild(an); }, 500); toast('Downloaded (opens in Excel)'); return; }
+    var ws = XLSX.utils.aoa_to_sheet(rows); ws['!cols'] = [{ wch: 44 }, { wch: 20 }, { wch: 14 }];
+    var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Invoice');
+    XLSX.writeFile(wb, 'Invoice-' + d.invNo + '.xlsx'); toast('Excel invoice downloaded');
+  }
+  function curInvData() { var k; for (k = 0; k < INVS.length; k++) { if (INVS[k].no === invSel) return dataFromInv(INVS[k]); } return null; }
+  function sendInvoice(d) {
+    if (!d) return; closeInv();
+    var no = parseInt(d.invNo, 10), link = BASEURL, email = '', ph = d.phone, k, j, r;
+    for (k = 0; k < JOBS.length; k++) { if (JOBS[k].id - 710 === no) { j = JOBS[k]; link = BASEURL + '#/dump/' + (j.token || ''); email = j.email; } }
+    for (k = 0; k < RENTALS.length; k++) { if (RENTALS[k].inv === no) { r = RENTALS[k]; link = BASEURL + '#/portal/' + (r.token || ''); email = r.email; } }
+    for (k = 0; k < XINVS.length; k++) { if (XINVS[k].no === no) email = XINVS[k].em; }
+    openForm('send', null, { name: d.billTo, ph: ph, email: email, what: 'invoice #' + d.invNo, es: 'factura #' + d.invNo, link: link });
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-act="xlsinv"],[data-act="sendinv"],[data-act="xinvpaid"],#invXls,#invSend,#chgPw,#signBtn');
+    if (!b) return;
+    var a = b.getAttribute('data-act') || b.id;
+    if (a === 'xlsinv') downloadXls(curInvData());
+    else if (a === 'invXls') downloadXls(CURINV);
+    else if (a === 'sendinv') sendInvoice(curInvData());
+    else if (a === 'invSend') sendInvoice(CURINV);
+    else if (a === 'xinvpaid') {
+      var k, x; for (k = 0; k < XINVS.length; k++) { if (XINVS[k].no === invSel) x = XINVS[k]; }
+      if (x) { x.paid = !x.paid; for (k = 0; k < INVS.length; k++) { if (INVS[k].no === x.no) { INVS[k].st = x.paid ? 'Paid' : 'Unpaid'; INVS[k].tone = x.paid ? 'good' : 'warn'; } } setView('invoice'); toast(x.paid ? 'Marked paid' : 'Marked unpaid'); }
+    } else if (a === 'signBtn') { SB.auth.signOut().then(function () { location.reload(); }); }
+    else if (a === 'chgPw') { changePw(); }
+  }, false);
+  function changePw() {
+    var f = document.getElementById('theForm'); FKIND = 'chgpw';
+    f.innerHTML = '<div><b>Change my password</b></div><div class="fgrid">' + fld('fPw1', 'New password (at least 8 characters)', 'password', '', '', true) + fld('fPw2', 'Type it again', 'password', '', '', true) + '</div><p class="ferr" id="fErr"></p><div class="actions"><button type="submit" class="btn primary">' + icon('check') + 'Save password</button><button type="button" class="btn" data-fa="close">Cancel</button></div>';
+    document.getElementById('formModal').hidden = false;
+  }
+  /* driver collects money for real */
+  function payNow(key, m) {
+    var its = drvItems(DAPP.name, false), d = null, k; for (k = 0; k < its.length; k++) { if (its[k].key === key) d = its[k]; }
+    if (!d || !m) return;
+    var pend = m === 'ACH', tbl2 = d.jid ? 'dump_jobs' : 'rentals', pid = '', mm = { Efectivo: 'cash', Cheque: 'check', Zelle: 'zelle', ACH: 'ach' };
+    if (d.jid) { for (k = 0; k < JOBS.length; k++) { if (JOBS[k].id === d.jid) pid = JOBS[k]._id; } } else { pid = String(key).slice(1); }
+    PAYLOG.unshift({ tk: key, ref: d.jid ? '#' + d.jid : 'Rental', client: d.client, amt: d.amt, method: m, driver: DAPP.name, who: DAPP.name, t: 'Today, ' + nowT(), turned: m !== 'Efectivo', pend: pend });
+    if (!pend) {
+      markPaidByKey(key);
+      if (ME && ME.role === 'driver' && pid) { SB.rpc('driver_collect', { p_table: tbl2, p_id: String(pid), p_method: mm[m] || String(m).toLowerCase() }).then(function (r) { if (r.error) toast('No se pudo guardar el pago: ' + r.error.message); }); }
+    }
+    DAPP.pay = null; drawDrv(); refreshAll();
+    toast(pend ? 'Enlace enviado al cliente. Se marca pagado cuando el banco confirme.' : 'Pago guardado. La oficina lo ve ahora.');
+  }
+  function dmSend(name, text) { DMN++; if (!DMSG[name]) DMSG[name] = []; DMSG[name].unshift({ id: 'M' + Date.now().toString(36) + DMN, text: text, t: 'Ahora', read: false, who: name, ts: Date.now() }); }
+  /* on-the-way texts: the office taps Text to send */
+  function otwMsg(x, es) {
+    var eta = 10 + (hashS(x.addr) % 18);
+    return es ? 'Hola ' + x.name + ', le habla Sams Construction. ' + x.driver + ' va en camino a ' + x.addr + '. Llega en aprox. ' + eta + ' minutos.'
+      : 'Hi ' + x.name + ', this is Sams Construction. ' + x.driver + ' is on the way to ' + x.addr + '. Arriving in about ' + eta + ' minutes.';
+  }
+  function otwCard() {
+    var rows = '', k, x;
+    for (k = 0; k < TXTLOG.length; k++) { x = TXTLOG[k]; rows += '<div class="li"><span class="ic2">' + icon('phone') + '</span><div class="grow"><b>' + invEsc(x.name) + '</b><span class="sub">' + x.t + ' &middot; from ' + invEsc(x.driver) + '</span><span class="sub" style="white-space:normal">' + invEsc(otwMsg(x, true)) + '</span></div><a class="btn sm" href="sms:' + String(x.ph || '').replace(/[^0-9]/g, '') + '&body=' + encodeURIComponent(otwMsg(x, true)) + '">' + icon('phone') + 'Text client</a></div>'; }
+    if (!rows) rows = '<p class="note" style="padding:14px">Nothing yet. A line shows here when a driver taps On the way.</p>';
+    return '<div class="card"><header><h2>On-the-way texts</h2>' + pillH(TXTLOG.length + (TXTLOG.length === 1 ? ' driver' : ' drivers') + ' on the way', 'info') + '</header>' + rows + '<p class="note" style="padding:0 14px 14px">When a driver taps On the way, it shows here. Tap Text client to send the message from your phone. Automatic texting is not turned on.</p></div>';
+  }
+  /* where the drivers are (from their phones) */
+  function liveInner() {
+    var rows = '', k, n, l, mins, any = false;
+    for (k = 0; k < LNAMES.length; k++) {
+      n = LNAMES[k]; l = LOCS[n];
+      if (l) { any = true; mins = Math.max(0, Math.round((Date.now() - new Date(l.at).getTime()) / 60000)); }
+      rows += '<div class="lvrow"><span class="lvdot" style="background:' + DCOL[n] + '"></span><div class="grow"><b>' + invEsc(n) + '</b><span class="sub">' + (l ? (mins < 1 ? 'Just now' : mins + ' min ago') : 'Not sharing yet') + '</span></div>' + (l ? '<a class="btn sm" target="_blank" rel="noopener" href="https://maps.apple.com/?ll=' + l.lat + ',' + l.lng + '&q=' + encodeURIComponent(n) + '">' + icon('map') + 'Open map</a>' : '') + '</div>';
+    }
+    return '<header><h2>Where the drivers are</h2>' + pillH(any ? 'From their phones' : 'Waiting', any ? 'good' : 'warn') + '</header>' + rows + '<p class="note" style="padding:10px 14px">Each driver shares their place while the driver app is open on their phone.</p>';
+  }
+  setInterval(function () {
+    if (!ME || isDrv() || curView !== 'dispatch') return;
+    var ae = document.activeElement; if (ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;
+    loadRecs().then(function () { setView('dispatch'); });
   }, 60000);
 </script>
 
