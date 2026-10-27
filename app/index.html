@@ -1396,7 +1396,7 @@
   function updRBadge() { updPBadge(); }
   function addReceipt(o) {
     var smp = SAMPR[RPOS % SAMPR.length]; RPOS++; RCN++;
-    var r = { id: 'RC' + RCN, jid: o.jid, from: o.from, who: o.who, photo: o.photo || '', f: { site: smp.site, ticket: smp.ticket, lb: smp.lb, fee: smp.fee }, st: 'new', at: 'Today, ' + nowT(), note: '' };
+    var r = { id: 'RC' + RCN, jid: o.jid, from: o.from, who: o.who, photo: o.photo || '', f: { site: '', ticket: '', lb: 0, fee: 0 }, st: 'new', at: 'Today, ' + nowT(), note: '' };
     RCPTS.unshift(r); updRBadge(); return r;
   }
   function recPaper(f) { return '<div class="paper"><div style="text-align:center"><b>' + invEsc(String(f.site).toUpperCase()) + '</b></div><hr>TICKET ' + invEsc(f.ticket) + '<br>MAT: C&amp;D<hr>NET ' + Number(f.lb).toLocaleString('en-US') + ' LB<br>= ' + tonsOf(f.lb) + ' TON<hr>TOTAL $ ' + invMoney(f.fee) + '</div>'; }
@@ -3222,7 +3222,7 @@
     ]);
     for (var i = 0; i < q.length; i++) { if (q[i].error) { toast('Could not load data: ' + q[i].error.message); } }
     DBROWS.dump = q[0].data || []; DBROWS.rent = q[1].data || []; DBROWS.book = q[2].data || []; DBROWS.ext = q[3].data || []; DBROWS.assets = q[4].data || []; DBROWS.inv = q[5].data || [];
-    mapAll(); takeSnap();
+    mapAll(); takeSnap(); await loadRecs();
   }
   function paintAll() { updateStats(); paintIcons(); drawRows(); drawPane(); drawRentals(); paintIcons(document.getElementById('invModal')); updPBadge(); if (curView && curView !== 'dashboard') setView(curView); }
   async function getMe() {
@@ -3328,6 +3328,7 @@
       for (var rid in SNAP.rent) { if (SNAP.rent.hasOwnProperty(rid) && !seenR[rid]) { res = await SB.from('rentals').update({ deleted: true }).eq('id', rid); if (res.error) err = res.error.message; else delete SNAP.rent[rid]; } }
       for (k = 0; k < INBOX.length; k++) { var b = INBOX[k]; if (b._id && SNAP.book[b._id] !== b.s) { res = await SB.from('booking_requests').update({ status: b.s }).eq('id', b._id); if (res.error) err = res.error.message; else SNAP.book[b._id] = b.s; } }
     } catch (e) { err = String(e && e.message || e); }
+    try { var e2 = await syncRecs(); if (e2) err = e2; } catch (e) { err = String(e && e.message || e); }
     SYNCING = false;
     if (err) { toast('Could not save: ' + err); }
     if (reload) { await loadAll(); paintAll(); toast('Saved'); }
@@ -3335,6 +3336,55 @@
   }
   function syncSoon() { if (!ME) return; clearTimeout(SYNC_TIMER); SYNC_TIMER = setTimeout(syncNow, 600); }
   ['click', 'change', 'submit'].forEach(function (ev) { document.addEventListener(ev, function () { if (document.getElementById('gate').hidden) syncSoon(); }, false); });
+  /* ---- Stage 2b: records saved in app_records ---- */
+  var RECS = [
+    { k: 'wait', arr: function () { return WAITS; } },
+    { k: 'rcpt', arr: function () { return RCPTS; } },
+    { k: 'permit', arr: function () { return PERMITS; } },
+    { k: 'dlog', arr: function () { return DLOG; } },
+    { k: 'calx', arr: function () { return CALX; } }
+  ];
+  var RSNAP = {};
+  function numTail(id) { var m = /(\d+)$/.exec(String(id)); return m ? parseInt(m[1], 10) : 0; }
+  async function loadRecs() {
+    var r = await SB.from('app_records').select('kind,id,data');
+    if (r.error) { toast('Could not load saved records: ' + r.error.message); return; }
+    var by = {}, i, k, a, mx;
+    for (i = 0; i < r.data.length; i++) { (by[r.data[i].kind] = by[r.data[i].kind] || []).push(r.data[i].data); }
+    RSNAP = {};
+    for (k = 0; k < RECS.length; k++) {
+      a = RECS[k].arr(); a.length = 0; mx = 0;
+      var rows = by[RECS[k].k] || [];
+      for (i = 0; i < rows.length; i++) { a.push(rows[i]); mx = Math.max(mx, numTail(rows[i].id)); RSNAP[RECS[k].k + '|' + rows[i].id] = JSON.stringify(rows[i]); }
+      if (RECS[k].k === 'wait') { a.sort(function (x, y) { return numTail(x.id) - numTail(y.id); }); WN = Math.max(WN, mx); }
+      if (RECS[k].k === 'rcpt') { a.sort(function (x, y) { return numTail(y.id) - numTail(x.id); }); RCN = Math.max(RCN, mx); }
+      if (RECS[k].k === 'permit') PCNT = Math.max(PCNT, mx);
+      if (RECS[k].k === 'dlog') DLN = Math.max(DLN, mx);
+      if (RECS[k].k === 'calx') { CXN = Math.max(CXN, mx); for (i = 0; i < a.length; i++) { CAL_EV.push([a[i].iso, (a[i].tm ? t12(a[i].tm) + ' ' : '') + a[i].title, 'cu', a[i].id]); } }
+    }
+    updRBadge();
+  }
+  async function syncRecs() {
+    var k, i, a, key, js, seen = {}, res, err = '';
+    for (k = 0; k < RECS.length; k++) {
+      a = RECS[k].arr();
+      for (i = 0; i < a.length; i++) {
+        key = RECS[k].k + '|' + a[i].id; seen[key] = 1; js = JSON.stringify(a[i]);
+        if (RSNAP[key] !== js) {
+          res = await SB.from('app_records').upsert({ kind: RECS[k].k, id: String(a[i].id), data: a[i], updated_at: new Date().toISOString() });
+          if (res.error) err = res.error.message; else RSNAP[key] = js;
+        }
+      }
+    }
+    for (key in RSNAP) {
+      if (RSNAP.hasOwnProperty(key) && !seen[key]) {
+        var p = key.split('|');
+        res = await SB.from('app_records').delete().eq('kind', p[0]).eq('id', p[1]);
+        if (res.error) err = res.error.message; else delete RSNAP[key];
+      }
+    }
+    return err;
+  }
 </script>
 
 </body></html>
