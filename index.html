@@ -26,7 +26,9 @@ const {
   useState,
   useEffect
 } = React;
-const sb = supabase.createClient('https://bxrqnisgplsgnzxzugbd.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ4cnFuaXNncGxzZ256eHp1Z2JkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1ODkwNzYsImV4cCI6MjA5NjE2NTA3Nn0.xtaxorZdkFBn-RkUGnPg9MU6bkIW1fEionyxFVxO1VI');
+const sb = supabase.createClient('https://ecflvidsdjccfhcbdvvr.supabase.co', 'sb_publishable_IU8KNsEwa7mMbsZzfdXpQQ_szIUAcce', {auth:{persistSession:true,autoRefreshToken:true}});
+const driverEmail = n => String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') + '@drivers.sams-office.app';
+const getProfile = async () => { const g = await sb.auth.getSession(); const ss = g && g.data && g.data.session; if (!ss) return null; const p = await sb.from('profiles').select('full_name,role,driver_name').eq('id', ss.user.id).single(); return p && p.data ? p.data : null; };
 const APP = 'https://samsoffice.github.io/Sams-rental';
 
   function exportCSV(filename, rows){
@@ -227,165 +229,72 @@ function Login({
   const [p, setP] = useState('');
   const [err, setErr] = useState('');
   const [load, setLoad] = useState(false);
-  const [forgot, setForgot] = useState(false);
+  const [help, setHelp] = useState(false);
+  const [es, setEs] = useState(false);
+  const [show, setShow] = useState(false);
+  const [focus, setFocus] = useState('');
+  const t = (en, sp) => es ? sp : en;
+  const uClean = u.trim();
+  const uBad = uClean.length > 0 && /[^A-Za-z0-9._-]/.test(uClean);
+  const uOk = uClean.length >= 3 && !uBad;
+  const pOk = p.length >= 6;
+  const tick = React.createElement('svg', { width: 24, height: 24, viewBox: '0 0 24 24', fill: 'none', stroke: '#16A34A', strokeWidth: 2.4, strokeLinecap: 'round', strokeLinejoin: 'round', style: { flexShrink: 0, marginLeft: 6 } }, React.createElement('path', { d: 'M4 12.5l5 5L20 6.5' }));
+  const hint = (txt, col) => React.createElement('div', { style: { fontSize: 13, color: col, marginTop: 6 } }, txt);
+  const ready = u.trim().length > 0 && p.length > 0 && !load;
   const go = async e => {
     e.preventDefault();
+    if (!ready) return;
     setLoad(true);
     setErr('');
-    await new Promise(r => setTimeout(r, 400));
-    if (u === 'samsoffice2020' && p === 'samsconsDRIVES2020') onLogin({
-      name: 'Secretary'
-    });else {
-      setErr('Invalid username or password.');
-      setLoad(false);
-    }
+    const si = await sb.auth.signInWithPassword({ email: u.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '') + '@staff.sams-office.app', password: p });
+    if (si.error) { setErr(t('Wrong username or password.', 'Usuario o contraseña incorrectos.')); setLoad(false); return; }
+    const pr = await getProfile();
+    if (!pr || (pr.role !== 'owner' && pr.role !== 'secretary')) { await sb.auth.signOut(); setErr(t('This account is not set up for the office.', 'Esta cuenta no es de la oficina.')); setLoad(false); return; }
+    onLogin({ name: pr.full_name, role: pr.role });
   };
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 20
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: '100%',
-      maxWidth: 400
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: 'center',
-      marginBottom: 28
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 22,
-      fontWeight: 700
-    }
-  }, "Sams Construction Services LTD"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: '#9CA3AF',
-      marginTop: 4
-    }
-  }, "Private Internal System \u2014 Staff Only")), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#fff',
-      borderRadius: 14,
-      padding: '32px 28px',
-      boxShadow: '0 4px 24px rgba(0,0,0,0.07)',
-      border: '1px solid #F3F4F6'
-    }
-  }, forgot ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      textAlign: 'center'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 32,
-      marginBottom: 12
-    }
-  }, "\uD83D\uDD10"), /*#__PURE__*/React.createElement("h2", {
-    style: {
-      fontSize: 16,
-      fontWeight: 700,
-      marginBottom: 8
-    }
-  }, "Forgot Password?"), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 13,
-      color: '#6B7280',
-      marginBottom: 20
-    }
-  }, "Contact the office to reset your access."), /*#__PURE__*/React.createElement("a", {
-    href: 'mailto:' + EMAIL,
-    style: {
-      display: 'block',
-      padding: '12px',
-      borderRadius: 9,
-      background: '#2563EB',
-      color: '#fff',
-      textDecoration: 'none',
-      fontSize: 14,
-      fontWeight: 700,
-      marginBottom: 10
-    }
-  }, "\u2709 ", EMAIL), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setForgot(false),
-    style: {
-      fontSize: 13,
-      color: '#9CA3AF',
-      background: 'none',
-      border: 'none',
-      cursor: 'pointer'
-    }
-  }, "\u2190 Back")) : /*#__PURE__*/React.createElement("form", {
-    onSubmit: go,
-    style: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 16
-    }
-  }, /*#__PURE__*/React.createElement("h1", {
-    style: {
-      fontSize: 18,
-      fontWeight: 700
-    }
-  }, "Sign In"), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: lbl
-  }, "Username"), /*#__PURE__*/React.createElement("input", {
-    style: inp,
-    type: "text",
-    value: u,
-    onChange: e => setU(e.target.value),
-    required: true,
-    autoComplete: "username"
-  })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("label", {
-    style: lbl
-  }, "Password"), /*#__PURE__*/React.createElement("input", {
-    style: inp,
-    type: "password",
-    value: p,
-    onChange: e => setP(e.target.value),
-    required: true
-  })), err && /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: '#FEF2F2',
-      border: '1px solid #FCA5A5',
-      borderRadius: 8,
-      padding: '10px 14px',
-      fontSize: 13,
-      color: '#991B1B'
-    }
-  }, err), /*#__PURE__*/React.createElement("button", {
-    type: "submit",
-    disabled: load,
-    style: {
-      padding: 12,
-      borderRadius: 9,
-      background: load ? '#9CA3AF' : '#2563EB',
-      color: '#fff',
-      border: 'none',
-      fontSize: 14,
-      fontWeight: 700,
-      cursor: 'pointer'
-    }
-  }, load ? 'Signing in...' : 'Sign In'), /*#__PURE__*/React.createElement("button", {
-    type: "button",
-    onClick: () => setForgot(true),
-    style: {
-      fontSize: 12,
-      color: '#9CA3AF',
-      background: 'none',
-      border: 'none',
-      cursor: 'pointer',
-      textDecoration: 'underline'
-    }
-  }, "Forgot password?")))));
+  const eye = (off) => React.createElement('svg', { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: '#4B5563', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }, (off ? ['M17.94 17.94A10.9 10.9 0 0 1 12 19c-7 0-11-7-11-7a19.8 19.8 0 0 1 5.06-5.94', 'M9.9 4.24A10.4 10.4 0 0 1 12 5c7 0 11 7 11 7a19.9 19.9 0 0 1-3.17 4.19', 'M1 1l22 22', 'M14.12 14.12A3 3 0 1 1 9.88 9.88'] : ['M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z', 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z']).map((d, i) => React.createElement('path', { key: i, d: d })));
+  const lab = { display: 'block', fontSize: 'clamp(14px,1.7vw,16px)', fontWeight: 600, color: '#111827', marginBottom: 8 };
+  const wrap = f => ({ display: 'flex', alignItems: 'center', height: 'clamp(50px,5.5vw,56px)', border: '1.5px solid ' + (err ? '#DC2626' : (f === 'u' && uBad) ? '#DC2626' : focus === f ? '#111827' : '#9CA3AF'), borderRadius: 8, padding: '0 18px', background: '#fff' });
+  const inp = { flex: 1, minWidth: 0, border: 'none', outline: 'none', fontSize: 'clamp(16px,2vw,18px)', color: '#111827', background: 'transparent', height: '100%' };
+  const pill = on => ({ border: 'none', background: on ? '#111827' : '#F3F4F6', color: on ? '#fff' : '#4B5563', fontSize: 13, fontWeight: 600, padding: '7px 16px', borderRadius: 20, cursor: 'pointer' });
+  const h1 = { fontSize: 'clamp(24px,3vw,30px)', fontWeight: 700, color: '#111827', lineHeight: 1.15, marginBottom: 8 };
+  const sub = { fontSize: 'clamp(15px,1.9vw,17px)', color: '#4B5563', lineHeight: 1.45, marginBottom: 'clamp(22px,3vw,30px)' };
+  return React.createElement('div', { style: { minHeight: '100vh', background: '#fff', display: 'flex', flexDirection: 'column' } },
+    React.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 18px', borderBottom: '1px solid #E5E7EB', minHeight: 60 } },
+      React.createElement('div', { style: { width: 90 } }),
+      React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 12 } },
+        React.createElement('img', { src: 'logo.png', alt: '', style: { width: 36, height: 36, borderRadius: '50%' } }),
+        React.createElement('span', { style: { fontSize: 'clamp(18px,2.2vw,20px)', fontWeight: 700, color: '#111827', letterSpacing: '-0.01em' } }, 'Sams Office')),
+      React.createElement('div', { style: { width: 90, display: 'flex', justifyContent: 'flex-end' } },
+        React.createElement('button', { type: 'button', onClick: () => setHelp(!help), style: { background: '#F3F4F6', border: 'none', borderRadius: 10, padding: '9px 16px', fontSize: 15, fontWeight: 600, color: '#111827', cursor: 'pointer' } }, help ? t('Back', 'Volver') : t('Help', 'Ayuda')))),
+    React.createElement('div', { style: { flex: 1, width: '100%', maxWidth: 520, margin: '0 auto', padding: 'clamp(28px,5vw,44px) 22px 40px' } },
+      help ? React.createElement('div', null,
+        React.createElement('div', { style: h1 }, t('Need help signing in?', '¿Necesita ayuda para entrar?')),
+        React.createElement('div', { style: sub }, t('Forgot your password or username? Ask the owner to reset it for you, then sign in again. Drivers use their own link and PIN.', '¿Olvidó su contraseña o usuario? Pida al dueño que lo cambie y entre otra vez. Los choferes usan su propio enlace y PIN.')),
+        React.createElement('button', { type: 'button', onClick: () => setHelp(false), style: { width: '100%', height: 'clamp(52px,5.8vw,58px)', border: 'none', borderRadius: 8, background: '#2563EB', color: '#fff', fontSize: 'clamp(16px,2vw,18px)', fontWeight: 700, cursor: 'pointer' } }, t('Back to sign in', 'Volver a entrar'))
+      ) : React.createElement('form', { onSubmit: go },
+        React.createElement('div', { style: h1 }, t('Welcome to Sams Office', 'Bienvenido a Sams Office')),
+        React.createElement('div', { style: sub }, t('Enter your username and password to log in.', 'Escriba su usuario y contraseña para entrar.')),
+        React.createElement('label', { style: lab, htmlFor: 'si-email' }, t('Username', 'Usuario')),
+        React.createElement('div', { style: wrap('u') },
+          React.createElement('input', { id: 'si-email', style: inp, type: 'text', autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false, value: u, onChange: e => { setU(e.target.value); setErr(''); }, onFocus: () => setFocus('u'), onBlur: () => setFocus(''), autoComplete: 'username' }), uOk && tick),
+        uBad && hint(t('Type just your username. No spaces, no @ or email.', 'Escriba solo su usuario. Sin espacios ni @.'), '#DC2626'),
+        React.createElement('label', { style: Object.assign({}, lab, { marginTop: 20 }), htmlFor: 'si-pass' }, t('Password', 'Contraseña')),
+        React.createElement('div', { style: wrap('p') },
+          React.createElement('input', { id: 'si-pass', style: inp, type: show ? 'text' : 'password', value: p, onChange: e => { setP(e.target.value); setErr(''); }, onFocus: () => setFocus('p'), onBlur: () => setFocus(''), autoComplete: 'current-password' }),
+          pOk && tick,
+          React.createElement('button', { type: 'button', 'aria-label': show ? t('Hide password', 'Ocultar contraseña') : t('Show password', 'Mostrar contraseña'), onClick: () => setShow(!show), style: { background: 'none', border: 'none', cursor: 'pointer', padding: 8, display: 'flex' } }, eye(show))),
+        p.length > 0 && !pOk && hint(t('Password is at least 6 characters.', 'La contraseña tiene al menos 6 caracteres.'), '#6B7280'),
+        err && React.createElement('div', { style: { marginTop: 18, background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 8, padding: '14px 16px', fontSize: 14, color: '#B91C1C' } }, '✕  ' + err),
+        React.createElement('button', { type: 'submit', disabled: !ready, style: { width: '100%', height: 'clamp(52px,5.8vw,58px)', marginTop: 'clamp(22px,3vw,28px)', border: 'none', borderRadius: 8, background: ready ? '#2563EB' : '#F3F4F6', color: ready ? '#fff' : '#B6BCC4', fontSize: 'clamp(16px,2vw,18px)', fontWeight: 700, cursor: ready ? 'pointer' : 'default' } }, load ? t('Checking...', 'Verificando...') : t('Continue', 'Continuar')),
+        React.createElement('div', { style: { marginTop: 'clamp(22px,3vw,30px)', fontSize: 'clamp(13px,1.6vw,15px)', color: '#4B5563', lineHeight: 1.55 } }, t('This system is for Sams Construction Services LTD staff only. Your account stays signed in on this device until you tap Sign out.', 'Este sistema es solo para el personal de Sams Construction Services LTD. Su cuenta se mantiene abierta en este aparato hasta que toque Salir.')),
+        React.createElement('div', { style: { display: 'flex', gap: 8, marginTop: 28 } },
+          React.createElement('button', { type: 'button', onClick: () => setEs(false), style: pill(!es) }, 'English'),
+          React.createElement('button', { type: 'button', onClick: () => setEs(true), style: pill(es) }, 'Español'))
+      )
+    )
+  );
 }
-
-// ── SCHEDULE TAB ──
 
 function MonthCalendar(props) {
   var rentals = props.rentals || [];
@@ -3292,7 +3201,7 @@ function DumpClientPortal(_ref) {
   var es = lang === 'es';
 
   React.useEffect(function() {
-    sb.from('dump_jobs').select('*').eq('portal_token', token).single().then(function(res) {
+    sb.rpc('portal_dump', { p_token: token }).then(function(res) {
       if (res.data) setJob(res.data); else setJob(null);
       setLoading(false);
     });
@@ -3301,7 +3210,7 @@ function DumpClientPortal(_ref) {
   var logConfirmation = function() {
     if (!window.confirm(es ? '¿Confirma que este trabajo es correcto y que debe este monto?' : 'Do you confirm this job is correct and that you owe this amount?')) return;
     setConfirmed(true);
-    try { sb.from('dump_jobs').update({ portal_confirmed: true, portal_confirmed_at: new Date().toISOString() }).eq('portal_token', token).then(function(){}, function(){}); } catch(e){}
+    try { sb.rpc('portal_confirm_dump', { p_token: token }).then(function(){}, function(){}); } catch(e){}
   };
 
   function money(n){ return '$' + Number(n||0).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 }); }
@@ -3768,7 +3677,7 @@ function CombinedPortal(props) {
   var _f=React.useState(false),confirmed=_f[0],setConfirmed=_f[1];
   var es=lang==='es';
   React.useEffect(function(){
-    Promise.all([sb.from('rentals').select('*').eq('portal_token',rentalToken).single(),sb.from('dump_jobs').select('*').eq('portal_token',dumpToken).single()]).then(function(r){
+    Promise.all([sb.rpc('portal_rental',{p_token:rentalToken}),sb.rpc('portal_dump',{p_token:dumpToken})]).then(function(r){
       if(r[0].data)setRental(r[0].data); if(r[1].data)setDump(r[1].data); setLoading(false);
     });
   },[]);
@@ -4429,7 +4338,7 @@ function BookingPage() {
     if (!form.client_name || !form.client_phone) { alert(t('Please enter your name and phone','Ingrese su nombre y telefono')); return; }
     if (saving) return;
     setSaving(true);
-    var payload = Object.assign({}, form);
+    var payload = Object.assign({}, form, { status: 'new' });
     if (!payload.preferred_date) payload.preferred_date = null;
     var res = await sb.from('booking_requests').insert([payload]);
     setSaving(false);
@@ -4527,8 +4436,7 @@ function App() {
   const [deleted, setDeleted] = useState([]);
   const [showDeleted, setShowDeleted] = useState(false);
   useEffect(() => {
-    const u = localStorage.getItem('sams_user');
-    if (u) setUser(JSON.parse(u));
+    getProfile().then(pr => { if (pr && (pr.role === 'owner' || pr.role === 'secretary')) setUser({ name: pr.full_name, role: pr.role }); });
   }, []);
   useEffect(() => {
     if (user) loadData();
@@ -4637,7 +4545,6 @@ function App() {
   };
   if (!user) return /*#__PURE__*/React.createElement(Login, {
     onLogin: u => {
-      localStorage.setItem('sams_user', JSON.stringify(u));
       setUser(u);
     }
   });
@@ -4883,8 +4790,17 @@ function App() {
     onClick: () => { setOpenDumpForm(true); setTab('dumping'); },
     style: { padding: '6px 12px', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: 'none', background: '#F59E0B', color: '#fff' }
   }, "+ New Dumping")), /*#__PURE__*/React.createElement("button", {
+    onClick: async () => {
+      const np = window.prompt('Type your new password (at least 10 characters)');
+      if (!np) return;
+      if (np.length < 10) { alert('Too short. Use at least 10 characters.'); return; }
+      const r = await sb.auth.updateUser({ password: np });
+      alert(r.error ? 'Could not change: ' + r.error.message : 'Password changed. Use it next time you sign in.');
+    },
+    style: { padding: '5px 10px', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1px solid #D1D5DB', background: '#fff', color: '#374151', marginRight: 6 }
+  }, "Change password"), /*#__PURE__*/React.createElement("button", {
     onClick: () => {
-      localStorage.removeItem('sams_user');
+      sb.auth.signOut();
       setUser(null);
     },
     style: {
@@ -6000,7 +5916,7 @@ function ClientPortal({
   const [showTerms, setShowTerms] = useState(false);
   const es = lang === 'es';
   useEffect(() => {
-    sb.from('rentals').select('*').eq('portal_token', token).single().then(({
+    sb.rpc('portal_rental', { p_token: token }).then(({
       data,
       error
     }) => {
@@ -6012,10 +5928,7 @@ function ClientPortal({
     // Always set confirmed immediately for good UX
     setConfirmed(true);
     // Save to DB in background
-    sb.from('rentals').update({
-      portal_confirmed: true,
-      portal_confirmed_at: new Date().toISOString()
-    }).eq('portal_token', token).catch(() => {});
+    sb.rpc('portal_confirm_rental', { p_token: token }).then(function(){}, function(){});
   };
   if (loading) return /*#__PURE__*/React.createElement("div", {
     style: {
@@ -7137,7 +7050,37 @@ function ClientPortal({
 }
 
 // ── DRIVER APP ──
-function DriverApp({
+function DriverApp(props) {
+  var name = props.name;
+  var _a = React.useState('checking'), st = _a[0], setSt = _a[1];
+  var _b = React.useState(''), pin = _b[0], setPin = _b[1];
+  var _c = React.useState(''), er = _c[0], setEr = _c[1];
+  React.useEffect(function(){
+    getProfile().then(function(pr){
+      if (pr && pr.role === 'driver' && String(pr.driver_name||'').toLowerCase() === String(name).toLowerCase()) setSt('in'); else setSt('out');
+    });
+  }, []);
+  var go = async function(e){
+    e.preventDefault(); setEr('');
+    var si = await sb.auth.signInWithPassword({ email: driverEmail(name), password: pin });
+    if (si.error) { setEr('PIN incorrecto'); return; }
+    var pr = await getProfile();
+    if (pr && pr.role === 'driver') setSt('in'); else { await sb.auth.signOut(); setEr('Cuenta no autorizada'); }
+  };
+  if (st === 'checking') return React.createElement('div', { style: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' } }, React.createElement('div', { className: 'spinner' }));
+  if (st === 'in') return React.createElement(DriverAppInner, { name: name });
+  return React.createElement('div', { style: { minHeight: '100vh', background: '#F9FAFB', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 } },
+    React.createElement('form', { onSubmit: go, style: { background: '#fff', borderRadius: 14, padding: 28, width: '100%', maxWidth: 340, textAlign: 'center', border: '1px solid #E5E7EB' } },
+      React.createElement('div', { style: { fontSize: 20, fontWeight: 800, marginBottom: 4 } }, 'Hola, ' + name),
+      React.createElement('div', { style: { fontSize: 14, color: '#6B7280', marginBottom: 16 } }, 'Escriba su PIN de 6 numeros'),
+      React.createElement('input', { type: 'password', inputMode: 'numeric', pattern: '[0-9]*', maxLength: 6, value: pin, onChange: function(e){ setPin(e.target.value); }, autoComplete: 'current-password', style: { width: '100%', boxSizing: 'border-box', padding: 14, fontSize: 24, textAlign: 'center', letterSpacing: 8, border: '1px solid #D1D5DB', borderRadius: 10 } }),
+      er && React.createElement('div', { style: { color: '#B91C1C', fontSize: 14, marginTop: 10 } }, er),
+      React.createElement('button', { type: 'submit', style: { marginTop: 16, width: '100%', padding: 14, fontSize: 16, fontWeight: 700, borderRadius: 10, border: 'none', background: '#2563EB', color: '#fff', cursor: 'pointer' } }, 'Entrar')
+    )
+  );
+}
+
+function DriverAppInner({
   name
 }) {
   const [jobs, setJobs] = useState([]);
