@@ -673,6 +673,22 @@
   .sortbar { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 14px 0 12px; }
   .sortbar button { border: 1px solid var(--line); background: var(--surface); color: var(--muted); font: inherit; font-size: 14px; font-weight: 600; padding: 7px 13px; border-radius: 99px; cursor: pointer; }
   .sortbar button.on { background: var(--tint); color: var(--blue); border-color: var(--blue); }
+  .bcpad { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .bcstep { display: flex; gap: 12px; align-items: flex-start; padding: 12px 16px; border-top: 1px solid var(--line); cursor: pointer; }
+  .bcstep input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--blue); flex: none; }
+  .bcstep:has(input:checked) span { color: var(--muted); text-decoration: line-through; }
+  .bcnote { margin: 0; color: var(--muted); }
+  .bcbtns { display: flex; gap: 8px; flex-wrap: wrap; }
+  .bcpaper { background: #fff; color: #111; font-family: 'Times New Roman', Times, Georgia, serif; font-size: 15px; line-height: 1.55; border: 1px solid var(--line); border-radius: 6px; padding: 28px 26px; max-width: 680px; width: 100%; align-self: center; user-select: text; }
+  .bcpaper p { margin: 0 0 12px; overflow-wrap: anywhere; }
+  .bchead { text-align: center; border-bottom: 3px double #111; padding-bottom: 10px; margin-bottom: 18px; }
+  .bcco { font-size: 20px; font-weight: 700; letter-spacing: 1px; line-height: 1.25; }
+  .bcaddr { font-size: 13px; margin-top: 4px; }
+  .bcpaper .bcto b { display: block; font-size: 19px; line-height: 1.3; }
+  .bcgn { font-size: 16px; }
+  .bcpaper .bcj { text-align: justify; }
+  .bcpaper .bcsig { margin-top: 22px; }
+  .bcpaper .bcsl { margin-top: 30px; }
 #gB:disabled{background:#F3F4F6!important;color:#B6BCC4!important;cursor:default!important}
 body.drvmode .app{display:none!important}
 </style>
@@ -719,6 +735,7 @@ body.drvmode .app{display:none!important}
     <div class="top">
       <h1 id="title">Dashboard</h1>
       <label class="search"><span data-i="search"></span><input id="q" type="search" placeholder="Search jobs, clients, tickets" aria-label="Search" autocomplete="off"><div id="qres" class="qres" hidden role="listbox"></div></label>
+      <div class="seg" id="langSeg" role="group" aria-label="Screen language"><button data-lang="en" aria-pressed="true">EN</button><button data-lang="es" aria-pressed="false">ES</button></div>
       <button class="btn theme" id="themeBtn" aria-label="Switch light or dark"><span data-i="moon"></span></button>
       <span id="topActions" class="topact"><span class="pill bad">3 overdue</span><button class="btn tbtn" data-form="equip"><span data-i="gear"></span>Equipment</button><button class="btn primary tbtn" data-form="rental"><span data-i="plus"></span>New Rental</button><button class="btn primary tbtn" data-form="dump"><span data-i="plus"></span>New Dumping</button></span>
       <button class="btn tbtn" id="signBtn" data-msg="Example only. You would be signed out.">Sign out</button>
@@ -1574,7 +1591,7 @@ body.drvmode .app{display:none!important}
   var MES3 = { Jan: 'ene', Feb: 'feb', Mar: 'mar', Apr: 'abr', May: 'may', Jun: 'jun', Jul: 'jul', Aug: 'ago', Sep: 'sep', Oct: 'oct', Nov: 'nov', Dec: 'dic' };
   function esTime(t) { return String(t || '').replace(/^([A-Za-z]{3})/, function (m) { return MES3[m] || m; }).replace(' AM', ' a.m.').replace(' PM', ' p.m.'); }
   function t12(t) { var m = /^(\d{1,2}):(\d{2})/.exec(t || ''); if (!m) return ''; var h = parseInt(m[1], 10); return (h % 12 === 0 ? 12 : h % 12) + ':' + m[2] + ' ' + (h >= 12 ? 'PM' : 'AM'); }
-  var ES_DOW = ['domingo', 'lunes', 'martes', 'mi&eacute;rcoles', 'jueves', 'viernes', 's&aacute;bado'], ES_MON = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  var ES_DOW = ['domingo', 'lunes', 'martes', 'mi&eacute;rcoles', 'jueves', 'viernes', 's&aacute;bado'], ES_MONA = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
   function fmtMin(x) { x = ((x % 1440) + 1440) % 1440; var h = Math.floor(x / 60), m = x % 60; return (h % 12 === 0 ? 12 : h % 12) + ':' + (m < 10 ? '0' : '') + m + ' ' + (h >= 12 ? 'PM' : 'AM'); }
   function driveMin(addr) { return 10 + (hashS(String(addr || '')) % 18); }
   function esWhen(t) {
@@ -1582,7 +1599,7 @@ body.drvmode .app{display:none!important}
     if (!m || mi < 0) return null;
     var dt = new Date(2026, mi, parseInt(m[2], 10)), diff = Math.round((dt - TODAY) / 86400000), dow = ES_DOW[dt.getDay()], mins = -1;
     if (m[3]) mins = (parseInt(m[3], 10) % 12) * 60 + parseInt(m[4], 10) + (/p/i.test(m[5]) ? 720 : 0);
-    return { day: diff === 0 ? 'Hoy' : (diff === 1 ? 'Ma&ntilde;ana' : (diff === -1 ? 'Ayer' : dow.charAt(0).toUpperCase() + dow.slice(1))), long: dow + ' ' + dt.getDate() + ' de ' + ES_MON[mi], mins: mins, tm: mins < 0 ? '' : fmtMin(mins) };
+    return { day: diff === 0 ? 'Hoy' : (diff === 1 ? 'Ma&ntilde;ana' : (diff === -1 ? 'Ayer' : dow.charAt(0).toUpperCase() + dow.slice(1))), long: dow + ' ' + dt.getDate() + ' de ' + ES_MONA[mi], mins: mins, tm: mins < 0 ? '' : fmtMin(mins) };
   }
   function drvWhen(d) {
     var w = esWhen(d.time), dm = driveMin(d.addr), h = '';
@@ -2391,7 +2408,7 @@ body.drvmode .app{display:none!important}
     document.getElementById('v-overview').hidden = (v !== 'dashboard'); document.getElementById('topActions').hidden = (v !== 'dashboard'); document.getElementById('signBtn').hidden = (v !== 'dashboard');
     var o = document.getElementById('v-other'); o.hidden = (v === 'dashboard');
     if (v !== 'dashboard') {
-      var map = { overview: vOverview, dispatch: vDispatch, schedule: vSchedule, dumping: vDumping, rentals: vRentals, receipts: vReceipts, equipment: vEquipment, scorecard: vScorecard, dumpcost: vDumpCost, permits: vPermits, sites: vSites, asset: vAsset, drivers: vDrivers, clients: vClients, bookings: vInbox, confirmations: vConfirms, invoice: vInvoices, collections: vCollections, collectionscenter: vCenter, settings: vSettings, alldump: vAllDump, allrent: vAllRent, allinv: vAllInv, client: vClient };
+      var map = { overview: vOverview, dispatch: vDispatch, schedule: vSchedule, dumping: vDumping, rentals: vRentals, receipts: vReceipts, equipment: vEquipment, scorecard: vScorecard, dumpcost: vDumpCost, permits: vPermits, sites: vSites, asset: vAsset, drivers: vDrivers, clients: vClients, bookings: vInbox, confirmations: vConfirms, invoice: vInvoices, collections: vCollections, collectionscenter: vCenter, bounced: vBounced, settings: vSettings, alldump: vAllDump, allrent: vAllRent, allinv: vAllInv, client: vClient };
       o.innerHTML = subtabs(v) + map[v]();
     }
     updPBadge();
@@ -2696,8 +2713,8 @@ body.drvmode .app{display:none!important}
     return out;
   }
   function hasPull(jid) { for (var k = 0; k < DISP.length; k++) { if (DISP[k].jid === jid && /^(PULL|SWAP)/.test(DISP[k].what) && DISP[k].st !== 'Delivered') return true; } return false; }
-  var NAVG = { jobs: ['dumping', 'rentals', 'bookings'], schedule: ['schedule'], dispatch: ['dispatch', 'drivers'], invoices: ['invoice', 'receipts'], money: ['overview', 'collections', 'collectionscenter', 'dumpcost'], clients: ['clients', 'scorecard', 'confirmations'], yard: ['equipment', 'permits', 'sites'] };
-  var SUBL = { dumping: 'Dumping', rentals: 'Rentals', schedule: 'Schedule', bookings: 'Bookings', dispatch: 'Dispatch', drivers: 'Drivers', overview: 'Overview', invoice: 'Invoices', receipts: 'Receipts', collections: 'Collections', collectionscenter: 'Collect+', clients: 'Clients', scorecard: 'Scorecard', dumpcost: 'Dump costs', confirmations: 'Confirms', equipment: 'Equipment', permits: 'Permits', sites: 'Dump sites' };
+  var NAVG = { jobs: ['dumping', 'rentals', 'bookings'], schedule: ['schedule'], dispatch: ['dispatch', 'drivers'], invoices: ['invoice', 'receipts'], money: ['overview', 'collections', 'bounced', 'collectionscenter', 'dumpcost'], clients: ['clients', 'scorecard', 'confirmations'], yard: ['equipment', 'permits', 'sites'] };
+  var SUBL = { dumping: 'Dumping', rentals: 'Rentals', schedule: 'Schedule', bookings: 'Bookings', dispatch: 'Dispatch', drivers: 'Drivers', overview: 'Overview', invoice: 'Invoices', receipts: 'Receipts', collections: 'Collections', bounced: 'Bounced check', collectionscenter: 'Collect+', clients: 'Clients', scorecard: 'Scorecard', dumpcost: 'Dump costs', confirmations: 'Confirms', equipment: 'Equipment', permits: 'Permits', sites: 'Dump sites' };
   var SUBOF = { alldump: 'dumping', allrent: 'rentals', allinv: 'invoice', client: 'clients', asset: 'equipment' }, VGROUP = {}, GLAST = {};
   (function () { for (var g in NAVG) { if (NAVG.hasOwnProperty(g)) { for (var q = 0; q < NAVG[g].length; q++) VGROUP[NAVG[g][q]] = g; } } for (var x in SUBOF) { if (SUBOF.hasOwnProperty(x)) VGROUP[x] = VGROUP[SUBOF[x]]; } })();
   function badgeCount(v) {
@@ -2724,6 +2741,387 @@ body.drvmode .app{display:none!important}
     var tabs = document.querySelectorAll('.subtabs [data-sv]');
     for (k = 0; k < tabs.length; k++) { var sv = tabs[k].getAttribute('data-sv'), c = badgeCount(sv); tabs[k].innerHTML = SUBL[sv] + (c ? '<span class="n">' + c + '</span>' : ''); }
   }
+  /* ---- Bounced check recovery (Money > Bounced check) ---- */
+  var BC = { lang: 'en', client: '', phone: '', addr: '', job: '', amt: 1600, fee: '', cdate: '', rdate: '', due: '', msg: 'polite', done: {} };
+  var BC_STEPS = [
+    ['bank', 'Get the returned check and the bank notice that shows why it bounced and what fee you were charged.'],
+    ['text', 'Send the first text. Screenshot it and every reply.'],
+    ['letter', 'Send the demand letter. Mail it with a tracking number if you can, and keep a copy.'],
+    ['wait', 'Wait until the pay-by date. Accept cash, Zelle or a cashier\'s check only.'],
+    ['file', 'File at the Small Claims Part of the Civil Court in the county where the client lives or works.'],
+    ['bring', 'Bring the returned check, the bank notice, the demand letter, the invoice and the texts.']
+  ];
+  TITLES.bounced = 'Bounced check';
+  function bcTotal() { return (parseFloat(BC.amt) || 0) + (parseFloat(BC.fee) || 0); }
+  function bcDate(x, ph) { return invParse(x) ? invLong(x) : ph; }
+  function bcAmt(n) { return '$' + invMoney(n).replace('.00', ''); }
+  function bcMsgEn(kind) {
+    var n = BC.client.trim() || '[Name]', a = bcAmt(BC.amt), cd = bcDate(BC.cdate, '[date]'), due = bcDate(BC.due, '[deadline date]'), job = BC.job.trim() || '[what it was for]';
+    if (kind === 'blunt') return n + ', I worked hard for you and the ' + a + ' check you gave me bounced. I\'m tired of waiting. I want my money today by Zelle or cash. I\'m not chasing you any longer. If it\'s not in my hands by ' + due + ', I\'m filing in small claims court and you\'ll be paying the ' + a + ' plus every fee I get charged.';
+    if (kind === 'court') return n + ', I\'m done waiting. The ' + a + ' check you gave me bounced and you still haven\'t paid. I\'m taking you to court. I\'ll be filing a claim for the ' + a + ' plus any fees, and I have the returned check and all our messages as proof.';
+    return 'Hi ' + n + ', I\'m following up on the check for ' + a + ' you gave me on ' + cd + '. My bank returned it unpaid, so I still haven\'t received payment for ' + job + '. Can you send it today by Zelle, cash, or a cashier\'s check? Please let me know when you can take care of it. Thank you.';
+  }
+  var INV_MONTHS_ES = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+  function bcDateEs(x, ph) { var d = invParse(x); return d ? d.getDate() + ' de ' + INV_MONTHS_ES[d.getMonth()] + ' de ' + d.getFullYear() : ph; }
+  function bcMsgEs(kind) {
+    var n = BC.client.trim() || '[Nombre]', a = bcAmt(BC.amt), cd = bcDateEs(BC.cdate, '[fecha]'), due = bcDateEs(BC.due, '[fecha límite]'), job = BC.job.trim() || '[motivo del pago]';
+    if (kind === 'blunt') return n + ', trabajé duro para usted y el cheque de ' + a + ' que me dio fue devuelto. Ya me cansé de esperar. Quiero mi dinero hoy por Zelle o en efectivo. No lo voy a seguir buscando. Si no lo tengo en mis manos antes del ' + due + ', voy a presentar una demanda en la corte de reclamos menores y usted tendrá que pagar los ' + a + ' más todos los cargos que me cobre el banco.';
+    if (kind === 'court') return n + ', ya no voy a esperar más. El cheque de ' + a + ' que me dio fue devuelto y todavía no ha pagado. Lo voy a llevar a la corte. Voy a presentar una demanda por los ' + a + ' más cualquier cargo, y tengo el cheque devuelto y todos nuestros mensajes como prueba.';
+    return 'Hola ' + n + ', le escribo por el cheque de ' + a + ' que me dio el ' + cd + '. Mi banco lo devolvió sin pagar, así que todavía no he recibido el pago por ' + job + '. ¿Puede enviarlo hoy por Zelle, en efectivo o con un cheque de caja? Por favor avíseme cuándo lo puede resolver. Gracias.';
+  }
+  function bcMsg(kind) { return BC.lang === 'es' ? bcMsgEs(kind) : bcMsgEn(kind); }
+  function bcParts() {
+    var es = BC.lang === 'es', now = new Date(), fee = parseFloat(BC.fee) || 0, P = {};
+    var n = BC.client.trim() || (es ? '[Nombre del cliente]' : '[Client name]');
+    var ap = BC.addr.trim() ? addrParts(BC.addr.trim()) : [es ? '[Dirección del cliente]' : '[Client address]', ''];
+    var job = BC.job.trim() || (es ? '[motivo del pago]' : '[what it was for]');
+    var total = '$' + invMoney(bcTotal()), amt = '$' + invMoney(BC.amt);
+    P.name = n; P.a1 = ap[0]; P.a2 = ap[1];
+    if (es) {
+      P.date = now.getDate() + ' de ' + INV_MONTHS_ES[now.getMonth()] + ' de ' + now.getFullYear();
+      P.re = 'ASUNTO: Cheque devuelto y exigencia de pago';
+      P.ref = 'Cheque con fecha ' + bcDateEs(BC.cdate, '[fecha]') + ', por la cantidad de ' + amt;
+      P.g1 = 'Estimado/a '; P.g2 = ':';
+      P.p1 = 'Nuestro banco devolvió sin pagar el cheque descrito arriba' + (invParse(BC.rdate) ? ' el ' + bcDateEs(BC.rdate, '') : '') + '. El cheque fue entregado como pago por ' + job + '. ' + (fee ? 'El banco cobró un cargo de $' + invMoney(fee) + ' por cheque devuelto, por lo que el total que se debe ahora es ' + total + '.' : 'La cantidad que se debe es ' + total + '.');
+      P.p2 = 'El pago completo debe recibirse antes del ' + bcDateEs(BC.due, '[fecha límite]') + ' en efectivo, por Zelle o con un cheque de caja. Si no lo recibimos antes de esa fecha, presentaremos una demanda en la Corte de Reclamos Menores (Small Claims Part of the Civil Court) y pediremos el monto total más cargos y costos de la corte. Esta carta es un aviso formal de pago.';
+      P.close = 'Atentamente,'; P.role = 'Representante autorizado';
+    } else {
+      P.date = INV_MONTHS[now.getMonth()] + ' ' + now.getDate() + ', ' + now.getFullYear();
+      P.re = 'RE: Returned check and demand for payment';
+      P.ref = 'Check dated ' + bcDate(BC.cdate, '[date]') + ', in the amount of ' + amt;
+      P.g1 = 'Dear '; P.g2 = ':';
+      P.p1 = 'Our bank returned the check described above unpaid' + (invParse(BC.rdate) ? ' on ' + invLong(BC.rdate) : '') + '. The check was given in payment for ' + job + '. ' + (fee ? 'The bank charged a returned check fee of $' + invMoney(fee) + ', so the total now due is ' + total + '.' : 'The amount due is ' + total + '.');
+      P.p2 = 'Payment in full must be received by ' + bcDate(BC.due, '[deadline date]') + ' by cash, Zelle, or cashier\'s check. If it is not received by that date, we will file a claim in the Small Claims Part of the Civil Court and ask for the full amount plus fees and court costs. This letter is a formal request for payment.';
+      P.close = 'Very truly yours,'; P.role = 'Authorized representative';
+    }
+    return P;
+  }
+  function bcLetter() {
+    var P = bcParts(), L = [P.date, '', P.name, P.a1];
+    if (P.a2) L.push(P.a2);
+    L.push('', P.re, P.ref, '', P.g1 + P.name + P.g2, '', P.p1, '', P.p2, '', P.close, '', '______________________________', P.role, 'Sams Construction Services LTD', '188-16 Woodhull Avenue, Hollis, New York 11423', '+1 (917) 663-6369');
+    return L.join('\n');
+  }
+  function bcLetterHTML() {
+    var P = bcParts();
+    return '<div class="bchead"><div class="bcco">SAMS CONSTRUCTION SERVICES LTD</div><div class="bcaddr">188-16 Woodhull Avenue, Hollis, New York 11423<br>Telephone: +1 (917) 663-6369</div></div>' +
+      '<p>' + invEsc(P.date) + '</p>' +
+      '<p class="bcto"><b>' + invEsc(P.name) + '</b>' + invEsc(P.a1) + (P.a2 ? '<br>' + invEsc(P.a2) : '') + '</p>' +
+      '<p><b>' + invEsc(P.re) + '</b><br>' + invEsc(P.ref) + '</p>' +
+      '<p>' + invEsc(P.g1) + '<b class="bcgn">' + invEsc(P.name) + '</b>' + invEsc(P.g2) + '</p>' +
+      '<p class="bcj">' + invEsc(P.p1) + '</p><p class="bcj">' + invEsc(P.p2) + '</p>' +
+      '<p class="bcsig">' + invEsc(P.close) + '</p>' +
+      '<p class="bcsl">______________________________<br>' + invEsc(P.role) + '<br>Sams Construction Services LTD</p>';
+  }
+  function bcSmsHref() { return 'sms:' + String(BC.phone || '').replace(/[^0-9+]/g, '') + '?&body=' + encodeURIComponent(bcMsg(BC.msg)); }
+  function bcCopyText(text, msg) {
+    try { navigator.clipboard.writeText(text).then(function () { toast(msg); }, function () { toast('Could not copy. Press and hold the text to select it.'); }); } catch (e0) { toast('Could not copy. Press and hold the text to select it.'); }
+  }
+  function bcField(id, label, type, val, ph) {
+    return '<div class="fld"><label for="bc_' + id + '">' + label + '</label><input id="bc_' + id + '" data-bc="' + id + '" type="' + type + '" value="' + invEsc(val) + '"' + (ph ? ' placeholder="' + invEsc(ph) + '"' : '') + (type === 'number' ? ' inputmode="decimal" step="0.01" min="0"' : '') + '></div>';
+  }
+  function bcDoneCount() { var c = 0, k; for (k = 0; k < BC_STEPS.length; k++) { if (BC.done[BC_STEPS[k][0]]) c++; } return c; }
+  function vBounced() {
+    var k, steps = '', kinds = [['polite', 'Polite'], ['blunt', 'Blunt'], ['court', 'Court']], seg = '';
+    for (k = 0; k < BC_STEPS.length; k++) {
+      steps += '<label class="bcstep"><input type="checkbox" data-bcstep="' + BC_STEPS[k][0] + '"' + (BC.done[BC_STEPS[k][0]] ? ' checked' : '') + '><span>' + BC_STEPS[k][1] + '</span></label>';
+    }
+    var langs = [['en', 'English'], ['es', 'Español']], langSeg = '';
+    for (k = 0; k < langs.length; k++) { langSeg += '<button data-bcact="lang" data-k="' + langs[k][0] + '" aria-pressed="' + (BC.lang === langs[k][0]) + '">' + langs[k][1] + '</button>'; }
+    for (k = 0; k < kinds.length; k++) { seg += '<button data-bcact="msg" data-k="' + kinds[k][0] + '" aria-pressed="' + (BC.msg === kinds[k][0]) + '">' + kinds[k][1] + '</button>'; }
+    return '<div class="vhead"><p>Track a returned check, send the texts, and follow the steps to small claims court.</p></div>' +
+      '<div class="card"><header><h2>The check</h2><div class="seg" role="group" aria-label="Language for the client">' + langSeg + '</div>' + pillH('Returned unpaid', 'bad') + '</header><div class="bcpad"><div class="fgrid">' +
+        bcField('client', 'Client name', 'text', BC.client, 'Who wrote the check') +
+        bcField('phone', 'Client phone', 'tel', BC.phone, '(555) 555-5555') +
+        bcField('addr', 'Client address', 'text', BC.addr, 'Street, City NY 11000') +
+        bcField('job', 'What it was for', 'text', BC.job, 'Example: dump container, Oct 6') +
+        bcField('amt', 'Check amount', 'number', BC.amt) +
+        bcField('fee', 'Bank fee you were charged', 'number', BC.fee, '0.00') +
+        bcField('cdate', 'Date on the check', 'date', BC.cdate) +
+        bcField('rdate', 'Date the bank returned it', 'date', BC.rdate) +
+        bcField('due', 'Pay-by date', 'date', BC.due) +
+      '</div><div class="ftot"><span>Total owed</span><span id="bcTot">$' + invMoney(bcTotal()) + '</span></div></div></div>' +
+      '<div class="card"><header><h2>Text to send</h2><div class="seg" role="group" aria-label="Tone">' + seg + '</div></header><div class="bcpad"><div class="fld"><textarea id="bcMsgBox" rows="6" readonly aria-label="Text message">' + invEsc(bcMsg(BC.msg)) + '</textarea></div><div class="bcbtns"><button class="btn primary" data-bcact="copymsg">' + icon('doc') + 'Copy text</button><a class="btn" id="bcSms" href="' + invEsc(bcSmsHref()) + '">' + icon('bolt') + 'Open in Messages</a></div><p class="bcnote">Start with Polite. Keep the texts about the money and court, and screenshot every reply.</p></div></div>' +
+      '<div class="card"><header><h2>Demand letter</h2></header><div class="bcpad"><div class="bcpaper" id="bcLetterView">' + bcLetterHTML() + '</div>' +
+      '<div class="card"><header><h2>Steps to small claims</h2><span class="pill info" id="bcProg">' + bcDoneCount() + ' of ' + BC_STEPS.length + ' done</span></header>' + steps +
+        '<div class="bcpad"><p class="bcnote">Small claims handles claims up to $10,000 and you do not need a lawyer. Find the court and the forms at nycourts.gov (search "NYC small claims").</p></div></div>' +
+      '<div class="card"><header><h2>If you think it was fraud</h2></header><div class="bcpad"><p class="bcnote">You can also report it to your local police precinct or the District Attorney\'s office for the county. That is separate from getting your money back. Do not threaten arrest in your texts, because that can backfire.</p></div></div>';
+  }
+  function bcCopy(id, msg) {
+    var el = document.getElementById(id); if (!el) return;
+    function pick() { el.focus(); el.select(); try { el.setSelectionRange(0, 99999); } catch (e2) {} toast('Selected. Tap Copy in the menu.'); }
+    try { navigator.clipboard.writeText(el.value).then(function () { toast(msg); }, pick); } catch (e1) { pick(); }
+  }
+  (function () {
+    var root = document.getElementById('v-other');
+    root.addEventListener('input', function (e) {
+      var id = e.target.getAttribute && e.target.getAttribute('data-bc'); if (!id) return;
+      BC[id] = e.target.value;
+      var t = document.getElementById('bcTot'), m = document.getElementById('bcMsgBox'), l = document.getElementById('bcLetterView'), s = document.getElementById('bcSms');
+      if (t) t.textContent = '$' + invMoney(bcTotal()); if (m) m.value = bcMsg(BC.msg); if (l) l.innerHTML = bcLetterHTML(); if (s) s.setAttribute('href', bcSmsHref());
+    });
+    root.addEventListener('change', function (e) {
+      var sk = e.target.getAttribute && e.target.getAttribute('data-bcstep'); if (!sk) return;
+      BC.done[sk] = e.target.checked;
+      var p = document.getElementById('bcProg'); if (p) p.textContent = bcDoneCount() + ' of ' + BC_STEPS.length + ' done';
+    });
+    root.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-bcact]'); if (!b) return; var a = b.getAttribute('data-bcact');
+      if (a === 'lang') { BC.lang = b.getAttribute('data-k'); setView('bounced'); }
+      else if (a === 'msg') { BC.msg = b.getAttribute('data-k'); setView('bounced'); }
+      else if (a === 'copymsg') bcCopy('bcMsgBox', 'Text copied');
+      else if (a === 'copyletter') bcCopyText(bcLetter(), 'Letter copied');
+    });
+  })();
+  /* ---- Spanish screen language (EN | ES toggle in the top bar) ---- */
+  var LANG = 'en', ES_REC = new WeakMap(), ES_AREC = new WeakMap(), ES_ATTR = ['placeholder', 'aria-label', 'title'];
+  var ES_MON = { January: 'enero', February: 'febrero', March: 'marzo', April: 'abril', May: 'mayo', June: 'junio', July: 'julio', August: 'agosto', September: 'septiembre', October: 'octubre', November: 'noviembre', December: 'diciembre' };
+  var ES_MAB = { Jan: 'ene', Feb: 'feb', Mar: 'mar', Apr: 'abr', May: 'may', Jun: 'jun', Jul: 'jul', Aug: 'ago', Sep: 'sep', Oct: 'oct', Nov: 'nov', Dec: 'dic' };
+  var ES_WD = { Sun: 'Dom', Mon: 'Lun', Tue: 'Mar', Wed: 'Mié', Thu: 'Jue', Fri: 'Vie', Sat: 'Sáb' };
+  var ES_MR = 'Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec', ES_ML = 'January|February|March|April|May|June|July|August|September|October|November|December';
+  function esPl(n, one, many) { return n + ' ' + (parseInt(n, 10) === 1 ? one : many); }
+  var ES_X = {
+    'Dashboard': 'Panel', 'Jobs': 'Trabajos', 'Schedule': 'Calendario', 'Dispatch': 'Despacho', 'Yard': 'Patio', 'Clients': 'Clientes', 'Invoices': 'Facturas', 'Money': 'Dinero', 'Settings': 'Configuración',
+    'Equipment': 'Equipos', 'New Rental': 'Nueva renta', 'New Dumping': 'Nuevo contenedor', 'Sign out': 'Cerrar sesión', 'Main navigation': 'Navegación principal', 'Operations': 'Operaciones', 'Customers': 'Clientes', 'System': 'Sistema',
+    'Search jobs, clients, tickets': 'Buscar trabajos, clientes, tickets', 'Search': 'Buscar', 'Switch light or dark': 'Cambiar entre claro y oscuro', 'Screen language': 'Idioma de la pantalla', 'Summary': 'Resumen',
+    'Overview': 'Resumen', 'Receipts': 'Recibos', 'Permits': 'Permisos', 'Dump sites': 'Sitios de descarga', 'Client scorecard': 'Calificación de clientes', 'Collections': 'Cobros', 'Bounced check': 'Cheque devuelto', 'Collect+': 'Cobros+', 'Dump costs': 'Costos de descarga', 'Confirms': 'Confirmaciones', 'Bookings': 'Reservas', 'Drivers': 'Choferes', 'Scorecard': 'Calificación', 'Collections Center': 'Centro de cobros',
+    'Dumping': 'Contenedores', 'Rentals': 'Rentas', 'Rental': 'Renta', 'Rented': 'Rentada',
+    'Active dumps': 'Contenedores activos', 'Active rentals': 'Rentas activas', 'Containers available': 'Contenedores disponibles', 'Unpaid': 'Sin pagar',
+    'All': 'Todos', 'Open': 'Abiertos', 'Ticket': 'Ticket', 'Client': 'Cliente', 'Material': 'Material', 'Status': 'Estado', 'Total': 'Total',
+    'Scheduled': 'Programado', 'Out for pickup': 'Por recoger', 'Delivered': 'Entregado', 'Paid': 'Pagado', 'Active': 'Activa', 'Due back': 'Por regresar', 'Overdue': 'Vencido', 'Returned': 'Devuelta', 'Past due': 'Vencido', 'Unassigned': 'Sin asignar', 'Complete': 'Completar', 'Assigned': 'Asignado', 'Partial': 'Parcial', 'Completed': 'Completada', 'Cancelled': 'Cancelada',
+    'Dirt': 'Tierra', 'Clean concrete': 'Concreto limpio', 'Mixed debris': 'Escombros mixtos', 'Clean wood': 'Madera limpia', 'Roofing shingles': 'Tejas de techo', 'Heavy debris': 'Escombros pesados',
+    'Documents': 'Documentos', 'History': 'Historial', 'Address': 'Dirección', 'Phone': 'Teléfono', 'Email': 'Correo', 'Driver': 'Chofer', 'Container': 'Contenedor', 'Drop-off': 'Entrega', 'Pickup': 'Recogida', 'Payment method': 'Método de pago', 'Overweight': 'Sobrepeso', 'Permit fee': 'Costo del permiso',
+    'Notes for driver': 'Notas para el chofer', 'Delivery status': 'Estado de entrega', 'Driver notes show here as soon as the driver saves them.': 'Las notas del chofer aparecen aquí en cuanto las guarda.', 'Waiting time logged by driver': 'Tiempo de espera anotado por el chofer', 'Use this if you charge for waiting time.': 'Úsalo si cobras por el tiempo de espera.',
+    'Open invoice': 'Abrir factura', 'Scan receipt': 'Escanear recibo', 'Open portal link': 'Abrir enlace del portal', 'Send to client': 'Enviar al cliente', 'Mark paid': 'Marcar pagado', 'Call': 'Llamar', 'Edit': 'Editar', 'Delete': 'Eliminar',
+    'Tap a rental to open its invoice, portal link and actions below the table.': 'Toca una renta para abrir su factura, el enlace del portal y las acciones debajo de la tabla.', 'Dates': 'Fechas', 'Payment': 'Pago',
+    'Trailer, 16 ft': 'Remolque, 16 pies', 'Mini excavator': 'Miniexcavadora', 'Skid steer': 'Minicargador', 'skid steer': 'minicargador', 'Light tower': 'Torre de luz', 'Plate compactor': 'Compactadora de placa',
+    'Booking page preview (what your clients see)': 'Vista previa de la página de reservas (lo que ven tus clientes)', 'Close preview': 'Cerrar vista previa', 'Scan machine': 'Escanear máquina', 'Close': 'Cerrar', 'Sams Office': 'Vista previa de la app del chofer', 'Demo: offline': 'Demo: sin conexión',
+    'Form': 'Formulario', 'Invoice': 'Factura', 'Download Excel': 'Descargar Excel', 'View all dumping jobs': 'Ver todos los contenedores', 'Filter': 'Filtro', 'Job details': 'Detalles del trabajo', 'View all rentals': 'Ver todas las rentas',
+    'Client portal': 'Portal del cliente', 'Online booking page': 'Página de reservas en línea', 'Driver app': 'App del chofer', 'Client tracking page': 'Página de seguimiento del cliente',
+    'Every dump job, newest first.': 'Cada trabajo de contenedor, del más nuevo al más viejo.', 'New dump': 'Nuevo contenedor', 'All dates': 'Todas las fechas', 'Earlier month': 'Mes anterior', 'Pick a month': 'Elegir mes', 'Later month': 'Mes siguiente',
+    'Every rental, newest first. Tap one to open it.': 'Cada renta, de la más nueva a la más vieja. Toca una para abrirla.', 'New rental': 'Nueva renta',
+    'Pickup type': 'Tipo de recogida', 'Sams delivers and picks up': 'Sams entrega y recoge', 'Scheduled delivery': 'Entrega programada', 'Scheduled pickup': 'Recogida programada', 'Client tag': 'Etiqueta del cliente', 'VIP Client': 'Cliente VIP', 'Machine': 'Máquina',
+    'Delivery status (client sees this)': 'Estado de entrega (el cliente lo ve)', 'Preparing Equipment': 'Preparando equipo', 'Loading onto Truck': 'Cargando al camión', 'On the Way': 'En camino', 'Arrived at Location': 'Llegó al lugar', 'Delivered & Confirmed': 'Entregado y confirmado',
+    'Add to calendar': 'Agregar al calendario', 'Turn days off': 'Desactivar días', 'Closed every': 'Cerrado todos los', 'Tap any day on the calendar to add something or turn it off.': 'Toca cualquier día del calendario para agregar algo o desactivarlo.', 'Today': 'Hoy',
+    'Sun': 'Dom', 'Mon': 'Lun', 'Tue': 'Mar', 'Wed': 'Mié', 'Thu': 'Jue', 'Fri': 'Vie', 'Sat': 'Sáb', 'SUN': 'DOM', 'MON': 'LUN', 'TUE': 'MAR', 'WED': 'MIÉ', 'THU': 'JUE', 'FRI': 'VIE', 'SAT': 'SÁB',
+    'Rental delivery': 'Entrega de renta', 'Rental pickup': 'Recogida de renta', 'Container drop': 'Entrega de contenedor', 'Container pickup': 'Recogida de contenedor', 'Due': 'Vence', 'Added by the office': 'Agregado por la oficina', 'Day off': 'Día libre', 'Upcoming Returns': 'Próximas devoluciones', 'Previous month': 'Mes anterior', 'Next month': 'Mes siguiente',
+    'Pick a day, then assign each job to a driver.': 'Elige un día y luego asigna cada trabajo a un chofer.', 'New job': 'Nuevo trabajo', 'Tomorrow': 'Mañana', 'Live dispatch': 'Despacho en vivo', 'Live': 'En vivo', 'Sams yard': 'Patio de Sams', 'On the way': 'En camino', 'At the yard': 'En el patio', 'Not left yet': 'Todavía no sale', 'Waiting for a job': 'Esperando un trabajo', 'No active job': 'Sin trabajo activo',
+    "Demo: truck positions are simulated. In the live app they come from each driver's phone.": 'Demo: las posiciones de los camiones son simuladas. En la app real vienen del teléfono de cada chofer.', 'not assigned. Give them all to:': 'sin asignar. Dáselos todos a:',
+    'Move day': 'Cambiar día', 'Unassign': 'Quitar asignación', 'Nothing here.': 'Nada aquí.', 'Day before': 'Día anterior', 'Next day': 'Día siguiente', 'Pick a day': 'Elegir día', 'Not assigned yet': 'Sin asignar todavía', "Map with each driver's truck and where they are going": 'Mapa con el camión de cada chofer y a dónde va',
+    'Size': 'Tamaño', 'In yard': 'En el patio', 'At clients': 'Con clientes', 'On a truck': 'En un camión', 'Booked': 'Reservados', 'Left to book': 'Por reservar', 'Counts come from your dumping jobs. The fleet sizes are examples, you will set your own.': 'Los conteos salen de tus trabajos de contenedores. Los tamaños de flota son ejemplos, tú pondrás los tuyos.',
+    'Sitting too long': 'Demasiado tiempo en el sitio', 'Flag after': 'Avisar después de', 'Schedule pickup': 'Programar recogida',
+    'Every machine you rent out. Scan the nameplate to add one.': 'Cada máquina que rentas. Escanea la placa para agregar una.', 'Serial #': 'Serie #', 'Age': 'Antigüedad',
+    'Street permits for every container on the road. Always check the real dates on the paper permit.': 'Permisos de calle para cada contenedor en la vía. Revisa siempre las fechas reales en el permiso de papel.', 'Add permit': 'Agregar permiso', 'Containers with no permit': 'Contenedores sin permiso', 'No permit needed': 'No necesita permiso', 'No permit': 'Sin permiso', 'All permits': 'Todos los permisos',
+    'The container is still on the street. Renew the permit or schedule the pickup.': 'El contenedor sigue en la calle. Renueva el permiso o programa la recogida.', 'Renew 14 days': 'Renovar 14 días', 'Remove': 'Quitar',
+    'Everyone you rent to or dump for.': 'Todos a quienes rentas o les pones contenedor.', 'Add client': 'Agregar cliente', 'Paid up': 'Al corriente', 'Open portal': 'Abrir portal', 'Example only. This opens the new client form.': 'Solo ejemplo. Esto abre el formulario de cliente nuevo.', '← Back to clients': '← Volver a clientes', 'Back to clients': 'Volver a clientes', 'Total billed': 'Total facturado',
+    'Good Standing': 'En buen estado', 'Paying Client': 'Cliente que paga', 'Chronically Delinquent': 'Moroso crónico', 'Cash Only': 'Solo efectivo', 'New Client': 'Cliente nuevo', 'Do Not Rent': 'No rentar', 'Payment Plan': 'Plan de pagos', 'Blacklisted': 'Lista negra',
+    'Every client graded A to D, from how they pay, how much they spend and how often they order. Tap a client to open them.': 'Cada cliente calificado de A a D, según cómo paga, cuánto gasta y cada cuánto pide. Toca un cliente para abrirlo.', 'Best client': 'Mejor cliente', 'Owes the most': 'Debe más', 'Watch list': 'Lista de vigilancia', 'Grade C or D': 'Calificación C o D', 'Sort by': 'Ordenar por', 'Best grade': 'Mejor calificación', 'Top spender': 'Mayor gasto', 'Owes most': 'Debe más', 'Always paid up': 'Siempre al corriente', 'How the grade works': 'Cómo funciona la calificación',
+    'Out of 100. Up to 60 points for paying on time (late invoices take points off), 20 for how much they spend, and 20 for how often and how recently they order. A is 80 and up, B is 65, C is 50, D is under 50. It uses your jobs and rentals in this demo.': 'Sobre 100. Hasta 60 puntos por pagar a tiempo (las facturas atrasadas restan puntos), 20 por cuánto gastan y 20 por cada cuánto y qué tan reciente piden. A es 80 o más, B es 65, C es 50, D es menos de 50. Usa tus trabajos y rentas de esta demo.',
+    'Tap an invoice to preview it, then open it full size.': 'Toca una factura para verla y luego ábrela en tamaño completo.', 'New invoice': 'Nueva factura', 'Date': 'Fecha', 'Amount': 'Monto', 'Description': 'Descripción',
+    'Example only. This opens the invoice builder.': 'Solo ejemplo. Esto abre el creador de facturas.', 'View all invoices': 'Ver todas las facturas', 'Example only. Downloads the Excel invoice.': 'Solo ejemplo. Descarga la factura en Excel.', 'Example only. Nothing was sent.': 'Solo ejemplo. No se envió nada.',
+    'Revenue this month': 'Ingresos este mes', 'All rentals and dumping': 'Todas las rentas y contenedores', 'Rental revenue': 'Ingresos por rentas', 'Dumping revenue': 'Ingresos por contenedores', 'Outstanding': 'Pendiente', 'Top clients this month': 'Mejores clientes este mes', 'Unpaid accounts sorted by how late they are.': 'Cuentas sin pagar ordenadas por atraso.',
+    'Collected by drivers': 'Cobrado por choferes', 'Not handed to the office yet': 'Todavía no entregado a la oficina', 'Mark cash received': 'Marcar efectivo recibido',
+    'Drivers can take cash, check, Zelle or a bank transfer link. Card is left out for now because of the fee. Demo only: nothing is really charged.': 'Los choferes pueden recibir efectivo, cheque, Zelle o un enlace de transferencia bancaria. La tarjeta se deja fuera por ahora por la comisión. Solo demo: no se cobra nada de verdad.',
+    'Late payment reminders': 'Recordatorios de pago atrasado', 'Turn off': 'Apagar', 'Turn on': 'Encender', 'Friendly reminder': 'Recordatorio amable', 'On': 'Encendido', 'Off': 'Apagado', 'Past due notice': 'Aviso de pago vencido', 'Second notice': 'Segundo aviso', 'Final notice with the lien and removal warning': 'Aviso final con advertencia de gravamen y retiro',
+    'Each client gets a text in their language with their invoice link. Demo only: nothing is sent yet. Real automatic sending needs Supabase Pro. You can still tap Remind on any client below.': 'Cada cliente recibe un texto en su idioma con el enlace de su factura. Solo demo: todavía no se envía nada. El envío automático real necesita Supabase Pro. Aún puedes tocar Recordar en cualquier cliente de abajo.',
+    'Not due': 'No vencido', 'Remind': 'Recordar', 'Final notice': 'Aviso final', 'Lien stage': 'Etapa de gravamen',
+    'Total unpaid': 'Total sin pagar', 'Collected this month': 'Cobrado este mes', 'Who owes you': 'Quién te debe', 'Due this week': 'Vence esta semana', 'Example only. Reminder not sent.': 'Solo ejemplo. Recordatorio no enviado.',
+    'Company': 'Empresa', 'Name': 'Nombre', 'Equipment and prices': 'Equipos y precios', 'Dump container 20 yd': 'Contenedor de descarga 20 yd', 'Dump container 30 yd': 'Contenedor de descarga 30 yd', 'People': 'Personas', 'Owner': 'Dueño', 'Office': 'Oficina', 'Secretary': 'Secretaria',
+    'Your equipment': 'Tu equipo', 'New equipment name': 'Nombre del equipo nuevo', 'Price ($)': 'Precio ($)', 'Per': 'Por', 'day': 'día', 'week': 'semana', '2 weeks': '2 semanas', 'month': 'mes', 'Add equipment': 'Agregar equipo', 'Done': 'Listo', 'Example: Dump trailer': 'Ejemplo: Remolque de volteo',
+    'Client information': 'Información del cliente', 'Search existing client': 'Buscar cliente existente', 'Client name *': 'Nombre del cliente *', 'Equipment and driver': 'Equipo y chofer', 'Equipment *': 'Equipo *',
+    'Caterpillar Excavator CAT 320': 'Excavadora Caterpillar CAT 320', 'Caterpillar Excavator CAT 336': 'Excavadora Caterpillar CAT 336', 'Mini Excavator': 'Miniexcavadora', 'Kubota Skid Steer': 'Minicargador Kubota', 'Bobcat Skid Steer': 'Minicargador Bobcat', 'Backhoe Loader': 'Retroexcavadora', 'Wheel Loader': 'Cargadora de ruedas', 'Bulldozer D6': 'Bulldozer D6', 'Dump Truck': 'Camión de volteo',
+    'Scissor Lift 26ft': 'Plataforma de tijera 26 pies', 'Scissor Lift 32ft': 'Plataforma de tijera 32 pies', 'Boom Lift 45ft': 'Plataforma articulada 45 pies', 'Telescopic Forklift': 'Montacargas telescópico', 'Crane 30 Ton': 'Grúa 30 toneladas', 'Compact Track Loader': 'Cargadora compacta de orugas', 'Trencher': 'Zanjadora', 'Rough Terrain Forklift': 'Montacargas todo terreno',
+    'Demolition Hammer Set': 'Juego de martillo demoledor', 'Jackhammer': 'Martillo neumático', 'Concrete Mixer': 'Mezcladora de concreto', 'Concrete Saw': 'Sierra de concreto', 'Plate Compactor': 'Compactadora de placa', 'Pressure Washer': 'Hidrolavadora', 'Generator 10kW': 'Generador 10 kW', 'Generator 20kW': 'Generador 20 kW', 'Air Compressor': 'Compresor de aire',
+    'Pipe Threader': 'Roscadora de tubos', 'Welding Machine': 'Máquina de soldar', 'Water Pump': 'Bomba de agua', 'Light Tower': 'Torre de luz', 'Floor Grinder': 'Pulidora de piso', 'Core Drill': 'Taladro de núcleo',
+    'Specific machine (optional)': 'Máquina específica (opcional)', 'Not chosen': 'No elegida', 'Timeframe': 'Duración', 'Start date *': 'Fecha de inicio *', 'Duration (days) *': 'Duración (días) *', 'Due date (auto)': 'Fecha de vencimiento (auto)', 'Price ($) *': 'Precio ($) *',
+    'Delivery fee ($)': 'Costo de entrega ($)', 'Pickup fee ($)': 'Costo de recogida ($)', 'Trailer fee ($100/day)': 'Costo de remolque ($100/día)', 'Diesel charge ($)': 'Cargo de diésel ($)', 'Sams Delivers and Picks Up': 'Sams entrega y recoge', 'Client Picks Up (No Delivery Fee)': 'El cliente recoge (sin costo de entrega)',
+    'Scheduled delivery date': 'Fecha de entrega programada', 'Delivery time': 'Hora de entrega', 'Scheduled pickup date': 'Fecha de recogida programada', 'Pickup time': 'Hora de recogida', 'Payment status': 'Estado del pago', 'Cash': 'Efectivo', 'Check': 'Cheque', 'Credit Card': 'Tarjeta de crédito', 'Bank Transfer': 'Transferencia bancaria',
+    'Rental status': 'Estado de la renta', 'Save rental': 'Guardar renta', 'Cancel': 'Cancelar', 'Start typing a name': 'Empieza a escribir un nombre', 'Who is renting': 'Quién renta', 'Street, City': 'Calle, Ciudad', 'Special delivery instructions...': 'Instrucciones especiales de entrega...',
+    '0 if client picks up': '0 si el cliente recoge', '0 if none': '0 si no hay', '0 if no trailer used': '0 si no usó remolque', '0 if returned full tank': '0 si regresó con tanque lleno',
+    'Job address *': 'Dirección del trabajo *', 'Job type': 'Tipo de trabajo', 'DROP': 'ENTREGAR', 'PULL': 'RECOGER', 'SWAP': 'CAMBIAR', 'Container size': 'Tamaño del contenedor', 'Drop-off date': 'Fecha de entrega', 'Pickup date': 'Fecha de recogida', 'Base price ($)': 'Precio base ($)', 'Overweight charge ($)': 'Cargo por sobrepeso ($)', 'Permit fee ($)': 'Costo del permiso ($)',
+    'Total the client owes': 'Total que debe el cliente', 'Create dumping': 'Crear contenedor', 'Who is the job for': 'Para quién es el trabajo', 'Gate code, where to place the container...': 'Código de portón, dónde poner el contenedor...',
+    'Track a returned check, send the texts, and follow the steps to small claims court.': 'Registra un cheque devuelto, envía los textos y sigue los pasos hasta la corte de reclamos menores.', 'The check': 'El cheque', 'Returned unpaid': 'Devuelto sin pagar', 'Client name': 'Nombre del cliente', 'Client phone': 'Teléfono del cliente', 'Client address': 'Dirección del cliente',
+    'What it was for': 'Para qué era', 'Check amount': 'Monto del cheque', 'Bank fee you were charged': 'Cargo del banco que te cobraron', 'Date on the check': 'Fecha del cheque', 'Date the bank returned it': 'Fecha en que el banco lo devolvió', 'Pay-by date': 'Fecha límite de pago', 'Total owed': 'Total adeudado',
+    'Text to send': 'Texto para enviar', 'Polite': 'Amable', 'Blunt': 'Directo', 'Court': 'Corte', 'Copy text': 'Copiar texto', 'Open in Messages': 'Abrir en Mensajes', 'Start with Polite. Keep the texts about the money and court, and screenshot every reply.': 'Empieza con Amable. Mantén los textos sobre el dinero y la corte, y toma captura de cada respuesta.',
+    'Demand letter': 'Carta de reclamo', 'Copy letter': 'Copiar carta', 'Steps to small claims': 'Pasos hacia reclamos menores',
+    'Get the returned check and the bank notice that shows why it bounced and what fee you were charged.': 'Consigue el cheque devuelto y el aviso del banco que muestra por qué rebotó y qué cargo te cobraron.', 'Send the first text. Screenshot it and every reply.': 'Envía el primer texto. Toma captura de él y de cada respuesta.',
+    'Send the demand letter. Mail it with a tracking number if you can, and keep a copy.': 'Envía la carta de reclamo. Mándala con número de seguimiento si puedes y guarda una copia.', "Wait until the pay-by date. Accept cash, Zelle or a cashier's check only.": 'Espera hasta la fecha límite de pago. Acepta solo efectivo, Zelle o cheque de caja.',
+    'File at the Small Claims Part of the Civil Court in the county where the client lives or works.': 'Presenta la demanda en la Parte de Reclamos Menores de la Corte Civil, en el condado donde el cliente vive o trabaja.', 'Bring the returned check, the bank notice, the demand letter, the invoice and the texts.': 'Lleva el cheque devuelto, el aviso del banco, la carta de reclamo, la factura y los textos.',
+    'Small claims handles claims up to $10,000 and you do not need a lawyer. Find the court and the forms at nycourts.gov (search "NYC small claims").': 'Reclamos menores atiende reclamos de hasta $10,000 y no necesitas abogado. Encuentra la corte y los formularios en nycourts.gov (busca "NYC small claims").',
+    'If you think it was fraud': 'Si crees que fue fraude', "You can also report it to your local police precinct or the District Attorney's office for the county. That is separate from getting your money back. Do not threaten arrest in your texts, because that can backfire.": 'También puedes reportarlo a tu estación de policía local o a la oficina del Fiscal de Distrito del condado. Eso es aparte de recuperar tu dinero. No amenaces con arresto en tus textos, porque puede salir mal.',
+    'Language for the client': 'Idioma para el cliente', 'Who wrote the check': 'Quién escribió el cheque', 'Street, City NY 11000': 'Calle, Ciudad NY 11000', 'Example: dump container, Oct 6': 'Ejemplo: contenedor, 6 oct', 'Tone': 'Tono', 'Text message': 'Mensaje de texto',
+    'Approved': 'Aprobado', 'Booking link copied': 'Enlace de reservas copiado', 'Copied': 'Copiado', 'Could not copy. Press and hold the text to select it.': 'No se pudo copiar. Mantén presionado el texto para seleccionarlo.', 'Day turned back on': 'Día activado de nuevo', 'Delivery status updated. The client portal shows it.': 'Estado de entrega actualizado. El portal del cliente lo muestra.',
+    'Dump saved': 'Contenedor guardado', 'Dump site removed': 'Sitio de descarga eliminado', 'Dump site saved': 'Sitio de descarga guardado', 'Dumping created. Open its portal link or invoice from the job panel.': 'Contenedor creado. Abre su enlace del portal o su factura desde el panel del trabajo.', 'Dumping deleted': 'Contenedor eliminado', 'Dumping updated': 'Contenedor actualizado', 'Equipment removed': 'Equipo eliminado',
+    'Job completed': 'Trabajo completado', 'Logged as sent. Demo only, nothing was really sent.': 'Anotado como enviado. Solo demo, no se envió nada.', 'Machine deleted': 'Máquina eliminada', 'Maintenance added': 'Mantenimiento agregado', 'Marked as no permit needed': 'Marcado como sin permiso necesario', 'Marked paid. Bank confirmed.': 'Marcado como pagado. El banco confirmó.', 'Message copied': 'Mensaje copiado',
+    'Notes saved': 'Notas guardadas', 'Permit removed': 'Permiso eliminado', 'Permit renewed for 14 more days': 'Permiso renovado por 14 días más', 'Permit saved': 'Permiso guardado', 'Pickup added to Dispatch. Assign a driver there.': 'Recogida agregada a Despacho. Asigna un chofer ahí.', 'Receipt attached and read. Check it below.': 'Recibo adjuntado y leído. Revísalo abajo.',
+    'Removed from the calendar': 'Quitado del calendario', 'Rental completed': 'Renta completada', 'Rental deleted': 'Renta eliminada', 'Rental updated': 'Renta actualizada', 'Select the text and copy it': 'Selecciona el texto y cópialo', 'Selected. Tap Copy in the menu.': 'Seleccionado. Toca Copiar en el menú.', 'Status updated. The office and client see it right away.': 'Estado actualizado. La oficina y el cliente lo ven de inmediato.',
+    'Moved back to unassigned': 'Devuelto a sin asignar', 'Late payment reminders on': 'Recordatorios de pago atrasado encendidos', 'Late payment reminders off': 'Recordatorios de pago atrasado apagados', 'Example only. You would be signed out.': 'Solo ejemplo. Se cerraría tu sesión.'
+  };
+  var ES_P = [
+    [/^(\d+) overdue$/, function (a, n) { return n + ' vencidos'; }],
+    [/^(\d+) out for pickup today$/, function (a, n) { return n + ' por recoger hoy'; }],
+    [/^(\d+) due back this week$/, function (a, n) { return n + ' por regresar esta semana'; }],
+    [/^of (\d+) in the yard$/, function (a, n) { return 'de ' + n + ' en el patio'; }],
+    [/^(\d+) invoices past due$/, function (a, n) { return n + ' facturas vencidas'; }],
+    [/^All Dumping \((\d+)\)$/, function (a, n) { return 'Todos los contenedores (' + n + ')'; }],
+    [/^All Rentals \((\d+)\)$/, function (a, n) { return 'Todas las rentas (' + n + ')'; }],
+    [/^(\d+) jobs?$/, function (a, n) { return esPl(n, 'trabajo', 'trabajos'); }],
+    [/^(\d+) rentals?$/, function (a, n) { return esPl(n, 'renta', 'rentas'); }],
+    [/^(\d+) active rentals?$/, function (a, n) { return esPl(n, 'renta activa', 'rentas activas'); }],
+    [/^(\d+) clients?$/, function (a, n) { return esPl(n, 'cliente', 'clientes'); }],
+    [/^(\d+) invoices?$/, function (a, n) { return esPl(n, 'factura', 'facturas'); }],
+    [/^(\d+) invoices? paid$/, function (a, n) { return esPl(n, 'factura pagada', 'facturas pagadas'); }],
+    [/^(\d+) permits?$/, function (a, n) { return esPl(n, 'permiso', 'permisos'); }],
+    [/^(\d+) payments?$/, function (a, n) { return esPl(n, 'pago', 'pagos'); }],
+    [/^(\d+) days?$/, function (a, n) { return esPl(n, 'día', 'días'); }],
+    [/^(\d+) days? late$/, function (a, n) { return esPl(n, 'día de atraso', 'días de atraso'); }],
+    [/^(\d+) days? past due$/, function (a, n) { return esPl(n, 'día vencido', 'días vencidos'); }],
+    [/^(\d+) days? before it is due$/, function (a, n) { return esPl(n, 'día antes de que venza', 'días antes de que venza'); }],
+    [/^(\d+) years? old$/, function (a, n) { return esPl(n, 'año', 'años'); }],
+    [/^(\d+) in your fleet$/, function (a, n) { return n + ' en tu flota'; }],
+    [/^(\d+) left$/, function (a, n) { return 'quedan ' + n; }],
+    [/^(\d+) of (\d+) done$/, function (a, x, y) { return x + ' de ' + y + ' listos'; }],
+    [/^ETA (\d+) min$/, function (a, n) { return 'Llega en ' + n + ' min'; }],
+    [/^\+(\d+) more$/, function (a, n) { return '+' + n + ' más'; }],
+    [/^History \((\d+)\)$/, function (a, n) { return 'Historial (' + n + ')'; }],
+    [/^Recent invoices \((\d+)\)$/, function (a, n) { return 'Facturas recientes (' + n + ')'; }],
+    [/^Scheduled Drop-offs \((\d+)\)$/, function (a, n) { return 'Entregas programadas (' + n + ')'; }],
+    [/^Scheduled Pickups \((\d+)\)$/, function (a, n) { return 'Recogidas programadas (' + n + ')'; }],
+    [/^Equipment Currently Out - (.+)$/, function (a, m) { return 'Equipos fuera ahora - ' + esCore(m); }],
+    [/^Containers Currently Out - (.+)$/, function (a, m) { return 'Contenedores fuera ahora - ' + esCore(m); }],
+    [/^Due (.+)$/, function (a, d) { return 'Vence ' + esCore(d); }],
+    [/^Delivery: (.+)$/, function (a, d) { return 'Entrega: ' + d; }],
+    [/^Due: (.+)$/, function (a, d) { return 'Vence: ' + d; }],
+    [/^Drop: (.+)$/, function (a, d) { return 'Entrega: ' + d; }],
+    [/^Pickup: (.+)$/, function (a, d) { return 'Recogida: ' + d; }],
+    [/^(PULL|SWAP|DROP) - (.+?)(?: \((\d+ yd)\))?$/, function (a, k, m, s) { return ({ PULL: 'RECOGER', SWAP: 'CAMBIAR', DROP: 'ENTREGAR' })[k] + ' - ' + esCore(m) + (s ? ' (' + s + ')' : ''); }],
+    [/^Pick up (.+)$/, function (a, m) { return 'Recoger ' + esCore(m); }],
+    [/^Rental #(\d+) - (.+)$/, function (a, n, c) { return 'Renta #' + n + ' - ' + c; }],
+    [/^Invoice #(\d+)$/, function (a, n) { return 'Factura #' + n; }],
+    [/^Invoice No\. (\d+)$/, function (a, n) { return 'Factura No. ' + n; }],
+    [/^Where your dump containers are right now: (\d+) of (\d+) are out\.$/, function (a, x, y) { return 'Dónde están tus contenedores ahora: ' + x + ' de ' + y + ' están afuera.'; }],
+    [/^Permit (\d+)$/, function (a, n) { return 'Permiso ' + n; }],
+    [/^fee (.+)$/, function (a, m) { return 'costo ' + m; }],
+    [/^Expired (\d+) days? ago$/, function (a, n) { return 'Venció hace ' + esPl(n, 'día', 'días'); }],
+    [/^Expires in (\d+) days?$/, function (a, n) { return 'Vence en ' + esPl(n, 'día', 'días'); }],
+    [/^Active, (\d+) days? left$/, function (a, n) { return 'Activo, ' + (parseInt(n, 10) === 1 ? 'queda ' : 'quedan ') + esPl(n, 'día', 'días'); }],
+    [/^(.+), back (.+)$/, function (a, c, d) { return c + ', regresa ' + esCore(d); }],
+    [/^(.+) due$/, function (a, m) { return m + ' por pagar'; }],
+    [/^(.+) owed$/, function (a, m) { return m + ' adeudados'; }],
+    [/^(.+) unpaid$/, function (a, m) { return m + ' sin pagar'; }],
+    [/^(.+) billed$/, function (a, m) { return m + ' facturados'; }],
+    [/^billed (.+)$/, function (a, m) { return 'facturado ' + m; }],
+    [/^Grade ([A-D]), (.+) billed$/, function (a, g, m) { return 'Calificación ' + g + ', ' + m + ' facturados'; }],
+    [/^Client grade ([A-D]), score (\d+)$/, function (a, g, s) { return 'Calificación del cliente ' + g + ', puntos ' + s; }],
+    [/^Score (\d+) of 100$/, function (a, n) { return 'Puntos ' + n + ' de 100'; }],
+    [/^Owes (.+), not due yet$/, function (a, m) { return 'Debe ' + m + ', aún no vence'; }],
+    [/^Owes (.+), (\d+) days late$/, function (a, m, n) { return 'Debe ' + m + ', ' + esPl(n, 'día', 'días') + ' de atraso'; }],
+    [/^Everything (.+) rented and dumped, newest first\. Tap one to open it\.$/, function (a, c) { return 'Todo lo que ' + c + ' rentó y descargó, del más nuevo al más viejo. Toca uno para abrirlo.'; }],
+    [/^(.+) is holding (.+) in cash$/, function (a, n, m) { return n + ' tiene ' + m + ' en efectivo'; }],
+    [/^Today, (.+)$/, function (a, t) { return 'Hoy, ' + t; }],
+    [/^(.+) per (2 weeks|week|day|month)$/, function (a, m, u) { return m + ' por ' + ({ '2 weeks': '2 semanas', week: 'semana', day: 'día', month: 'mes' })[u]; }],
+    [/^(.+) and up$/, function (a, m) { return m + ' en adelante'; }],
+    [/^(Mini excavator|Skid steer|Light tower|Trailer, 16 ft|Plate compactor) - (.+?)( \(rented out\))?$/, function (a, t, m, r) { return esCore(t) + ' - ' + m + (r ? ' (rentada)' : ''); }],
+    [/^Dump - (.+) \((\d+ yd)\)$/, function (a, m, s) { return 'Contenedor - ' + esCore(m) + ' (' + s + ')'; }],
+    [/^Overweight Charge$/, function () { return 'Cargo por sobrepeso'; }],
+    [/^Date: (.+)$/, function (a, d) { return 'Fecha: ' + esCore(d); }],
+    [/^Bill to: (.+)$/, function (a, c) { return 'Facturar a: ' + c; }],
+    [/^(.+), (\d+ yd)$/, function (a, m, s) { return esCore(m) + ', ' + s; }],
+    [/^Approved\. Invoice #(.+)$/, function (a, n) { return 'Aprobado. Factura #' + n; }],
+    [/^Cash from (.+) marked received$/, function (a, n) { return 'Efectivo de ' + n + ' marcado como recibido'; }],
+    [/^Flagging containers after (\d+) days$/, function (a, n) { return 'Avisar de contenedores después de ' + n + ' días'; }],
+    [/^Moved to (.+)$/, function (a, n) { return 'Movido a ' + n; }],
+    [/^Note sent to (.+)$/, function (a, n) { return 'Nota enviada a ' + n; }],
+    [/^Rental created for (.+)$/, function (a, n) { return 'Renta creada para ' + n; }],
+    [/^Saved to ticket #(.+)$/, function (a, n) { return 'Guardado en el ticket #' + n; }],
+    [/^Sent back to (.+)$/, function (a, n) { return 'Devuelto a ' + n; }],
+    [/^Assigned to (.+)$/, function (a, n) { return 'Asignado a ' + n; }],
+    [/^(\d+) jobs assigned to (.+)$/, function (a, n, d) { return esPl(n, 'trabajo asignado', 'trabajos asignados') + ' a ' + d; }]
+  ];
+  function esDates(c) {
+    var ab = new RegExp('\\b(' + ES_MR + ') (\\d{1,2}) to (' + ES_MR + ') (\\d{1,2})\\b', 'g');
+    c = c.replace(ab, function (a, m1, d1, m2, d2) { return d1 + ' ' + ES_MAB[m1] + ' al ' + d2 + ' ' + ES_MAB[m2]; });
+    c = c.replace(new RegExp('\\b(' + ES_ML + ') (\\d{1,2}), (\\d{4})\\b', 'g'), function (a, m, d, y) { return d + ' de ' + ES_MON[m] + ' de ' + y; });
+    c = c.replace(new RegExp('\\b(' + ES_ML + ') (\\d{4})\\b', 'g'), function (a, m, y) { return ES_MON[m] + ' de ' + y; });
+    c = c.replace(new RegExp('\\b(' + ES_MR + ') (\\d{1,2}), (\\d{4})\\b', 'g'), function (a, m, d, y) { return d + ' ' + ES_MAB[m] + ' ' + y; });
+    c = c.replace(new RegExp('\\b(' + ES_MR + ') (\\d{1,2})\\b', 'g'), function (a, m, d) { return d + ' ' + ES_MAB[m]; });
+    c = c.replace(/^(Sun|Mon|Tue|Wed|Thu|Fri|Sat)(?= \d)/, function (a, w) { return ES_WD[w]; });
+    return c;
+  }
+  function esCore(c) {
+    if (Object.prototype.hasOwnProperty.call(ES_X, c)) return ES_X[c];
+    var k, m, parts, o;
+    if (c.indexOf(' · ') > -1) { parts = c.split(' · '); o = []; for (k = 0; k < parts.length; k++) o.push(esCore(parts[k])); return o.join(' · '); }
+    for (k = 0; k < ES_P.length; k++) { m = ES_P[k][0].exec(c); if (m) return ES_P[k][1].apply(null, m); }
+    return esDates(c);
+  }
+  function esTr(raw) {
+    var core = raw.replace(/\s+/g, ' ').trim();
+    if (!core || !/[A-Za-z]/.test(core)) return raw;
+    var out = esCore(core);
+    if (out === core) return raw;
+    return raw.match(/^\s*/)[0] + out + raw.match(/\s*$/)[0];
+  }
+  var ES_SKIP = 'textarea, script, style, .bcpaper, .isheet, .paper2, .portal, .bookapp, .drvapp, [data-nolang]';
+  function esSkip(n) { var e = n.nodeType === 1 ? n : n.parentNode; return !e || !!(e.closest && e.closest(ES_SKIP)); }
+  function esNode(n) {
+    if (esSkip(n)) return;
+    var rec = ES_REC.get(n), cur = n.nodeValue;
+    if (LANG === 'es') {
+      if (rec && rec.es === cur) return;
+      var tr = esTr(cur);
+      if (tr !== cur) {
+        var p = n.parentNode;
+        if (p && p.nodeName === 'OPTION' && !p.hasAttribute('value')) p.setAttribute('value', cur.replace(/\s+/g, ' ').trim());
+        ES_REC.set(n, { en: cur, es: tr }); n.nodeValue = tr;
+      } else if (rec) ES_REC.delete(n);
+    } else if (rec) { if (cur === rec.es) n.nodeValue = rec.en; ES_REC.delete(n); }
+  }
+  function esAttrs(el) {
+    if (esSkip(el)) return;
+    var recs = ES_AREC.get(el) || {}, i, a, v, r, tr;
+    for (i = 0; i < ES_ATTR.length; i++) {
+      a = ES_ATTR[i]; v = el.getAttribute(a); r = recs[a];
+      if (v == null) { delete recs[a]; continue; }
+      if (LANG === 'es') {
+        if (r && r.es === v) continue;
+        tr = esTr(v);
+        if (tr !== v) { recs[a] = { en: v, es: tr }; el.setAttribute(a, tr); } else delete recs[a];
+      } else if (r) { if (v === r.es) el.setAttribute(a, r.en); delete recs[a]; }
+    }
+    ES_AREC.set(el, recs);
+  }
+  function esWalk(root) {
+    if (root.nodeType === 3) { esNode(root); return; }
+    if (root.nodeType !== 1 || root.nodeName === 'SCRIPT' || root.nodeName === 'STYLE') return;
+    esAttrs(root);
+    var w = document.createTreeWalker(root, 5), n, pn;
+    while ((n = w.nextNode())) {
+      if (n.nodeType === 3) { pn = n.parentNode.nodeName; if (pn !== 'SCRIPT' && pn !== 'STYLE' && pn !== 'TITLE') esNode(n); } else esAttrs(n);
+    }
+  }
+  var ES_OPTS = { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ES_ATTR };
+  var esObs = new MutationObserver(function (list) {
+    esObs.disconnect();
+    for (var i = 0; i < list.length; i++) {
+      var r = list[i], j;
+      if (r.type === 'childList') { for (j = 0; j < r.addedNodes.length; j++) esWalk(r.addedNodes[j]); }
+      else if (r.type === 'characterData') esNode(r.target);
+      else if (r.type === 'attributes') esAttrs(r.target);
+    }
+    esObs.observe(document.body, ES_OPTS);
+  });
+  function setLang(l) {
+    LANG = l === 'es' ? 'es' : 'en';
+    esObs.disconnect();
+    esWalk(document.body);
+    if (LANG === 'es') esObs.observe(document.body, ES_OPTS);
+    var bs = document.querySelectorAll('#langSeg [data-lang]'), k;
+    for (k = 0; k < bs.length; k++) bs[k].setAttribute('aria-pressed', String(bs[k].getAttribute('data-lang') === LANG));
+    try { localStorage.setItem('samsLang', LANG); } catch (e0) {}
+  }
+  document.getElementById('langSeg').addEventListener('click', function (e) { var b = e.target.closest('[data-lang]'); if (b) setLang(b.getAttribute('data-lang')); });
+  (function () { var sv = ''; try { sv = localStorage.getItem('samsLang') || ''; } catch (e1) {} if (sv === 'es') setLang('es'); })();
   function vPermits() {
     var h = '', k, rows = '', miss = missingPermits(), list = PERMITS.slice().sort(function (a, b) { return permLeft(a) - permLeft(b); });
     h += '<div class="vhead"><p>Street permits for every container on the road. Always check the real dates on the paper permit.</p><button class="btn primary" data-act="padd">' + icon('plus') + 'Add permit</button></div>';
