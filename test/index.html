@@ -236,8 +236,8 @@ function Login({
     e.preventDefault();
     setLoad(true);
     setErr('');
-    const si = await sb.auth.signInWithPassword({ email: u.trim(), password: p });
-    if (si.error) { setErr(t('Wrong email or password.', 'Correo o contraseña incorrectos.')); setLoad(false); return; }
+    const si = await sb.auth.signInWithPassword({ email: u.trim().toLowerCase().replace(/[^a-z0-9._-]/g, '') + '@staff.sams-office.app', password: p });
+    if (si.error) { setErr(t('Wrong username or password.', 'Usuario o contraseña incorrectos.')); setLoad(false); return; }
     const pr = await getProfile();
     if (!pr || (pr.role !== 'owner' && pr.role !== 'secretary')) { await sb.auth.signOut(); setErr(t('This account is not set up for the office.', 'Esta cuenta no es de la oficina.')); setLoad(false); return; }
     onLogin({ name: pr.full_name, role: pr.role });
@@ -258,8 +258,8 @@ function Login({
           React.createElement('button', { type: 'button', onClick: () => setForgot(false), style: { width: '100%', padding: 14, borderRadius: 999, border: '1.5px solid #E5E7EB', background: '#fff', fontSize: 15, fontWeight: 600, cursor: 'pointer', color: '#111827' } }, t('Back to sign in', 'Volver'))
         ) : React.createElement('form', { onSubmit: go },
           React.createElement('div', { style: box },
-            React.createElement('label', { style: lab, htmlFor: 'si-email' }, t('Email', 'Correo electrónico')),
-            React.createElement('input', { id: 'si-email', style: inp, type: 'email', value: u, onChange: e => setU(e.target.value), required: true, autoComplete: 'username' })),
+            React.createElement('label', { style: lab, htmlFor: 'si-email' }, t('Username', 'Usuario')),
+            React.createElement('input', { id: 'si-email', style: inp, type: 'text', autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false, value: u, onChange: e => setU(e.target.value), required: true, autoComplete: 'username' })),
           React.createElement('div', { style: box },
             React.createElement('label', { style: lab, htmlFor: 'si-pass' }, t('Password', 'Contraseña')),
             React.createElement('input', { id: 'si-pass', style: inp, type: 'password', value: p, onChange: e => setP(e.target.value), required: true, autoComplete: 'current-password' })),
