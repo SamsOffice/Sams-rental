@@ -17,10 +17,12 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .spinner{width:32px;height:32px;border:3px solid #E5E7EB;border-top-color:#2563EB;border-radius:50%;animation:spin 1s linear infinite;}
+:focus-visible{outline:3px solid #F59E0B!important;outline-offset:2px!important}
 </style>
 </head>
 <body>
 <div id="root"></div>
+<div id="polfoot" style="text-align:center;padding:18px 16px 28px;font:14px/1.5 system-ui,sans-serif;color:#374151"><a href="privacy.html" style="color:#1D4ED8">Privacy Policy / Pol&iacute;tica de privacidad</a> &nbsp;|&nbsp; <a href="terms.html" style="color:#1D4ED8">Terms / T&eacute;rminos</a></div>
 <script>
 const {
   useState,
@@ -120,7 +122,7 @@ const lbl = {
   fontSize: 11,
   fontWeight: 700,
   textTransform: 'uppercase',
-  color: '#9CA3AF',
+  color:'#6B7280',
   display: 'block',
   marginBottom: 5
 };
@@ -344,12 +346,12 @@ function MonthCalendar(props) {
       React.createElement('button', { onClick:prevMonth, style:{ background:'rgba(255,255,255,0.15)', border:'none', color:'#fff', width:34, height:34, borderRadius:8, fontSize:18, fontWeight:700, cursor:'pointer' } }, '\u2039'),
       React.createElement('div', { style:{ display:'flex', flexDirection:'column', alignItems:'center' } },
         React.createElement('div', { style:{ color:'#fff', fontSize:16, fontWeight:700 } }, monthNames[view.m] + ' ' + view.y),
-        React.createElement('button', { onClick:goToday, style:{ background:'none', border:'none', color:'#9CA3AF', fontSize:11, cursor:'pointer', marginTop:2, textDecoration:'underline' } }, 'Today')
+        React.createElement('button', { onClick:goToday, style:{ background:'none', border:'none', color:'#6B7280', fontSize:11, cursor:'pointer', marginTop:2, textDecoration:'underline' } }, 'Today')
       ),
       React.createElement('button', { onClick:nextMonth, style:{ background:'rgba(255,255,255,0.15)', border:'none', color:'#fff', width:34, height:34, borderRadius:8, fontSize:18, fontWeight:700, cursor:'pointer' } }, '\u203A')
     ),
     React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:1, background:'#F3F4F6', padding:'8px 8px 0' } },
-      dow.map(function(d){ return React.createElement('div', { key:d, style:{ textAlign:'center', fontSize:10, fontWeight:700, color:'#9CA3AF', padding:'4px 0', textTransform:'uppercase' } }, d); })
+      dow.map(function(d){ return React.createElement('div', { key:d, style:{ textAlign:'center', fontSize:10, fontWeight:700, color:'#6B7280', padding:'4px 0', textTransform:'uppercase' } }, d); })
     ),
     React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:4, padding:8 } },
       cells.map(function(day, idx){
@@ -362,7 +364,7 @@ function MonthCalendar(props) {
           evs.slice(0,3).map(function(e, k){
             return React.createElement('div', { key:k, title:e.label, style:{ fontSize:8, fontWeight:600, background:e.bg, color:e.color, borderRadius:3, padding:'1px 3px', marginBottom:1, overflow:'hidden', whiteSpace:'nowrap', textOverflow:'ellipsis' } }, e.label);
           }),
-          evs.length>3 && React.createElement('div', { style:{ fontSize:8, color:'#9CA3AF' } }, '+'+(evs.length-3))
+          evs.length>3 && React.createElement('div', { style:{ fontSize:8, color:'#6B7280' } }, '+'+(evs.length-3))
         );
       })
     ),
@@ -441,7 +443,7 @@ function ScheduleTab({
     style: {
       padding: 24,
       textAlign: 'center',
-      color: '#9CA3AF'
+      color:'#6B7280'
     }
   }, "No equipment out") : active.map(r => {
     const d = days(r.due_date);
@@ -484,7 +486,7 @@ function ScheduleTab({
   }))), /*#__PURE__*/React.createElement("div", { style: { background: '#fff', borderRadius: 12, border: '1px solid #FDE68A', overflow: 'hidden' } },
     /*#__PURE__*/React.createElement("div", { style: { background: '#F59E0B', padding: '14px 18px' } }, /*#__PURE__*/React.createElement("h3", { style: { fontSize: 14, fontWeight: 700, color: '#fff' } }, "\uD83D\uDEDB Containers Currently Out \u2014 " + monthLabel)),
     /*#__PURE__*/React.createElement("div", { style: { padding: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 10 } },
-      containersOut.length === 0 ? /*#__PURE__*/React.createElement("div", { style: { padding: 24, textAlign: 'center', color: '#9CA3AF' } }, "No containers out") :
+      containersOut.length === 0 ? /*#__PURE__*/React.createElement("div", { style: { padding: 24, textAlign: 'center', color:'#6B7280' } }, "No containers out") :
       containersOut.map(function(j) {
         return /*#__PURE__*/React.createElement("div", { key: j.id, style: { background: '#FFFBEB', borderRadius: 8, padding: '12px 14px', border: '1px solid #FDE68A' } },
           /*#__PURE__*/React.createElement("div", { style: { fontWeight: 700, fontSize: 14 } }, j.client_name),
@@ -496,12 +498,12 @@ function ScheduleTab({
     /*#__PURE__*/React.createElement("div", { style: { padding: '0 16px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
       /*#__PURE__*/React.createElement("div", null,
         /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: '#1D4ED8', marginBottom: 6 } }, "Scheduled Drop-offs (" + dumpDrops.length + ")"),
-        dumpDrops.length === 0 ? /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, color: '#9CA3AF' } }, "None") :
+        dumpDrops.length === 0 ? /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, color:'#6B7280' } }, "None") :
         dumpDrops.map(function(j){ return /*#__PURE__*/React.createElement("div", { key: j.id, style: { fontSize: 12, padding: '4px 0', borderBottom: '1px solid #F3F4F6' } }, (j.scheduled_dropoff||'') + " \u2014 " + j.client_name); })
       ),
       /*#__PURE__*/React.createElement("div", null,
         /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, fontWeight: 700, color: '#7C3AED', marginBottom: 6 } }, "Scheduled Pickups (" + dumpPicks.length + ")"),
-        dumpPicks.length === 0 ? /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, color: '#9CA3AF' } }, "None") :
+        dumpPicks.length === 0 ? /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, color:'#6B7280' } }, "None") :
         dumpPicks.map(function(j){ return /*#__PURE__*/React.createElement("div", { key: j.id, style: { fontSize: 12, padding: '4px 0', borderBottom: '1px solid #F3F4F6' } }, (j.scheduled_pickup||'') + " \u2014 " + j.client_name); })
       )
     )
@@ -570,7 +572,7 @@ function ScheduleTab({
     style: {
       textAlign: 'center',
       padding: 24,
-      color: '#9CA3AF'
+      color:'#6B7280'
     }
   }, "No active rentals"))));
 }
@@ -760,7 +762,7 @@ function EquipmentManager({
     style: {
       fontSize: 11,
       fontWeight: 700,
-      color: '#9CA3AF',
+      color:'#6B7280',
       textTransform: 'uppercase',
       marginBottom: 8
     }
@@ -791,7 +793,7 @@ function EquipmentManager({
     style: {
       fontSize: 11,
       fontWeight: 700,
-      color: '#9CA3AF',
+      color:'#6B7280',
       textTransform: 'uppercase',
       marginBottom: 10
     }
@@ -1400,7 +1402,7 @@ function EditRental({
   }, "Edit Rental"), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 11,
-      color: '#9CA3AF'
+      color:'#6B7280'
     }
   }, rental.id)), /*#__PURE__*/React.createElement("button", {
     onClick: onClose,
@@ -1685,14 +1687,14 @@ function ClientsTab(props) {
       React.createElement('h2', { style:{ fontSize:20, fontWeight:800 } }, '\uD83D\uDC65 Clients (' + clients.length + ')'),
       React.createElement('input', { value:q, onChange:function(e){ setQ(e.target.value); }, placeholder:'\uD83D\uDD0D Search by name or phone...', style:{ padding:'8px 14px', border:'1px solid #E5E7EB', borderRadius:8, fontSize:13, outline:'none', background:'#F9FAFB', minWidth:240 } }), React.createElement('button', { onClick:function(){ exportCSV('clients.csv', clients.map(function(c){ return { Name:c.name, Phone:c.phone, Email:c.email, Tag:c.tag, Rentals:c.rentals, Dumps:c.dumps, Paid:c.paid, Owed:c.owed }; })); }, style:{ padding:'8px 14px', border:'none', borderRadius:8, fontSize:13, fontWeight:700, background:'#065F46', color:'#fff', cursor:'pointer' } }, '\u2B07 Export CSV')
     ),
-    clients.length === 0 && React.createElement('div', { style:{ background:'#fff', borderRadius:12, border:'1px solid #F3F4F6', padding:40, textAlign:'center', color:'#9CA3AF' } }, 'No clients yet.'),
+    clients.length === 0 && React.createElement('div', { style:{ background:'#fff', borderRadius:12, border:'1px solid #F3F4F6', padding:40, textAlign:'center', color:'#6B7280' } }, 'No clients yet.'),
     React.createElement('div', { style:{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:12 } },
       clients.map(function(cl, i){
         return React.createElement('div', { key:i, onClick:function(){ setClientPanel(cl.name); }, style:{ background:'#fff', borderRadius:12, border:'1px solid #F3F4F6', padding:16, cursor:'pointer', transition:'all 0.15s' } },
           React.createElement('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:10 } },
             React.createElement('div', null,
               React.createElement('div', { style:{ fontSize:15, fontWeight:700 } }, cl.name || '(no name)'),
-              React.createElement('div', { style:{ fontSize:12, color:'#9CA3AF', marginTop:2 } }, cl.phone || 'No phone')
+              React.createElement('div', { style:{ fontSize:12, color:'#6B7280', marginTop:2 } }, cl.phone || 'No phone')
             ),
             cl.tag && React.createElement('span', { style:{ fontSize:10, fontWeight:700, background:'#EFF6FF', color:'#1D4ED8', padding:'2px 8px', borderRadius:20 } }, cl.tag)
           ),
@@ -1701,8 +1703,8 @@ function ClientsTab(props) {
             cl.dumps > 0 && React.createElement('span', { style:{ fontSize:11, fontWeight:600, background:'#FFF7ED', color:'#C2410C', padding:'3px 8px', borderRadius:6 } }, cl.dumps + ' dump' + (cl.dumps>1?'s':''))
           ),
           React.createElement('div', { style:{ display:'flex', justifyContent:'space-between', borderTop:'1px solid #F3F4F6', paddingTop:10 } },
-            React.createElement('div', null, React.createElement('div', { style:{ fontSize:10, color:'#9CA3AF' } }, 'PAID'), React.createElement('div', { style:{ fontSize:14, fontWeight:700, color:'#065F46' } }, money(cl.paid))),
-            React.createElement('div', { style:{ textAlign:'right' } }, React.createElement('div', { style:{ fontSize:10, color:'#9CA3AF' } }, 'OWED'), React.createElement('div', { style:{ fontSize:14, fontWeight:700, color: cl.owed>0?'#DC2626':'#9CA3AF' } }, money(cl.owed)))
+            React.createElement('div', null, React.createElement('div', { style:{ fontSize:10, color:'#6B7280' } }, 'PAID'), React.createElement('div', { style:{ fontSize:14, fontWeight:700, color:'#065F46' } }, money(cl.paid))),
+            React.createElement('div', { style:{ textAlign:'right' } }, React.createElement('div', { style:{ fontSize:10, color:'#6B7280' } }, 'OWED'), React.createElement('div', { style:{ fontSize:14, fontWeight:700, color: cl.owed>0?'#DC2626':'#9CA3AF' } }, money(cl.owed)))
           )
         );
       })
@@ -1807,7 +1809,7 @@ function ClientPanel({
       fontSize: 10,
       fontWeight: 700,
       textTransform: 'uppercase',
-      color: '#9CA3AF'
+      color:'#6B7280'
     }
   }, "Client Profile"), /*#__PURE__*/React.createElement("h2", {
     style: {
@@ -1903,7 +1905,7 @@ function ClientPanel({
       fontSize: 10,
       fontWeight: 700,
       textTransform: 'uppercase',
-      color: '#9CA3AF',
+      color:'#6B7280',
       marginBottom: 5
     }
   }, s.l), /*#__PURE__*/React.createElement("p", {
@@ -1916,7 +1918,7 @@ function ClientPanel({
     style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }
   }, [{ l: 'Lifetime', v: money(lifetime), c: '#111827' }, { l: 'Avg Job', v: money(avgJob), c: '#111827' }, { l: reliabilityLabel, v: reliabilityPct + '%', c: reliabilityColor }].map(function(s){
     return /*#__PURE__*/React.createElement("div", { key: s.l, style: { background: '#F9FAFB', border: '1px solid #F3F4F6', borderRadius: 8, padding: '10px 12px' } },
-      /*#__PURE__*/React.createElement("p", { style: { fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#9CA3AF', marginBottom: 5 } }, s.l),
+      /*#__PURE__*/React.createElement("p", { style: { fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color:'#6B7280', marginBottom: 5 } }, s.l),
       /*#__PURE__*/React.createElement("p", { style: { fontSize: 14, fontWeight: 700, color: s.c } }, s.v));
   })),
   /*#__PURE__*/React.createElement("div", { style: { display: 'flex', gap: 8, marginBottom: 14 } },
@@ -1958,7 +1960,7 @@ function ClientPanel({
                 /*#__PURE__*/React.createElement("span", { style: { fontSize: 12, fontWeight: 700 } }, (r._isDump ? '\uD83D\uDE9B ' : '\uD83D\uDD27 ') + (r.asset||'')),
                 /*#__PURE__*/React.createElement(Badge, { status: r.payment_status })),
               /*#__PURE__*/React.createElement("div", { style: { display: 'flex', justifyContent: 'space-between' } },
-                /*#__PURE__*/React.createElement("span", { style: { fontSize: 11, color: '#9CA3AF' } }, _dOf(r) || '-'),
+                /*#__PURE__*/React.createElement("span", { style: { fontSize: 11, color:'#6B7280' } }, _dOf(r) || '-'),
                 /*#__PURE__*/React.createElement("span", { style: { fontSize: 13, fontWeight: 700 } }, money(parseFloat(r.price)||0))),
               /*#__PURE__*/React.createElement("button", { onClick: function(){ openClientInvoice(r); }, style: { marginTop: 8, width: '100%', padding: '7px', borderRadius: 6, border: 'none', background: '#EFF6FF', color: '#1D4ED8', fontSize: 11, fontWeight: 700, cursor: 'pointer' } }, "\uD83D\uDCC4 Open Invoice"));
           }));
@@ -2795,7 +2797,7 @@ function SettingsTab({
     }, driver), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 11,
-        color: '#9CA3AF',
+        color:'#6B7280',
         wordBreak: 'break-all'
       }
     }, link)), /*#__PURE__*/React.createElement("button", {
@@ -3024,7 +3026,7 @@ function DumpingTab(_ref) {
           rentals.filter(function(r){return r.client_name&&r.client_name.toLowerCase().includes(form.client_name.toLowerCase())&&r.client_name!==form.client_name;}).filter(function(r,i,a){return a.findIndex(function(x){return x.client_name===r.client_name;})==i;}).slice(0,6).map(function(r){
             return React.createElement('div',{key:r.id,onClick:function(){set('client_name',r.client_name);set('client_phone',r.client_phone||'');set('client_address',r.client_address||'');},style:{padding:'8px 12px',cursor:'pointer',fontSize:13,borderBottom:'1px solid #F3F4F6',display:'flex',justifyContent:'space-between'}},
               React.createElement('span',{style:{fontWeight:600}},r.client_name),
-              React.createElement('span',{style:{color:'#9CA3AF',fontSize:11}},r.client_phone||'')
+              React.createElement('span',{style:{color:'#6B7280',fontSize:11}},r.client_phone||'')
             );
           })
         )
@@ -3108,7 +3110,7 @@ function DumpingTab(_ref) {
     React.createElement('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20,flexWrap:'wrap',gap:10}},
       React.createElement('div', null,
         React.createElement('h2', {style:{fontSize:20,fontWeight:800}}, '🚛 Dumping Jobs'),
-        React.createElement('div', {style:{fontSize:13,color:'#9CA3AF'}}, jobs.length + ' total jobs')
+        React.createElement('div', {style:{fontSize:13,color:'#6B7280'}}, jobs.length + ' total jobs')
       ),
       React.createElement('button', {onClick:function(){setShowForm(true);}, style:{padding:'10px 20px',background:'#1D4ED8',color:'#fff',border:'none',borderRadius:9,fontSize:14,fontWeight:700,cursor:'pointer'}}, '+ New Dump Job')
     ),
@@ -3116,15 +3118,15 @@ function DumpingTab(_ref) {
     // Stats
     React.createElement('div', {style:{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12,marginBottom:20}},
       React.createElement('div', {style:{background:'#fff',borderRadius:10,padding:'14px 16px',border:'1px solid #F3F4F6'}},
-        React.createElement('div', {style:{fontSize:11,color:'#9CA3AF',fontWeight:600,textTransform:'uppercase'}}, 'Active'),
+        React.createElement('div', {style:{fontSize:11,color:'#6B7280',fontWeight:600,textTransform:'uppercase'}}, 'Active'),
         React.createElement('div', {style:{fontSize:24,fontWeight:800,color:'#1D4ED8'}}, activeJobs.length)
       ),
       React.createElement('div', {style:{background:'#fff',borderRadius:10,padding:'14px 16px',border:'1px solid #F3F4F6'}},
-        React.createElement('div', {style:{fontSize:11,color:'#9CA3AF',fontWeight:600,textTransform:'uppercase'}}, 'Unpaid Total'),
+        React.createElement('div', {style:{fontSize:11,color:'#6B7280',fontWeight:600,textTransform:'uppercase'}}, 'Unpaid Total'),
         React.createElement('div', {style:{fontSize:22,fontWeight:800,color:'#DC2626'}}, '$' + totalUnpaid.toLocaleString())
       ),
       React.createElement('div', {style:{background:'#fff',borderRadius:10,padding:'14px 16px',border:'1px solid #F3F4F6'}},
-        React.createElement('div', {style:{fontSize:11,color:'#9CA3AF',fontWeight:600,textTransform:'uppercase'}}, 'Completed Unpaid'),
+        React.createElement('div', {style:{fontSize:11,color:'#6B7280',fontWeight:600,textTransform:'uppercase'}}, 'Completed Unpaid'),
         React.createElement('div', {style:{fontSize:24,fontWeight:800,color:'#F59E0B'}}, overdueJobs.length)
       )
     ),
@@ -3139,7 +3141,7 @@ function DumpingTab(_ref) {
 
     // Jobs list
     loading ? React.createElement('div', {style:{textAlign:'center',padding:40}}, React.createElement('div', {className:'spinner'})) :
-    displayJobs.length === 0 ? React.createElement('div', {style:{background:'#fff',borderRadius:12,padding:40,textAlign:'center',border:'1px solid #F3F4F6',color:'#9CA3AF',fontSize:14}}, 'No jobs in this category') :
+    displayJobs.length === 0 ? React.createElement('div', {style:{background:'#fff',borderRadius:12,padding:40,textAlign:'center',border:'1px solid #F3F4F6',color:'#6B7280',fontSize:14}}, 'No jobs in this category') :
     React.createElement('div', {style:{display:'flex',flexDirection:'column',gap:10}},
       displayJobs.map(function(j) {
         var isOverweight = parseFloat(j.overweight_charge) > 0;
@@ -3147,7 +3149,7 @@ function DumpingTab(_ref) {
           React.createElement('div', {style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',flexWrap:'wrap',gap:8}},
             React.createElement('div', null,
               React.createElement('div', {style:{display:'flex',alignItems:'center',gap:8,marginBottom:4}},
-                React.createElement('span', {style:{fontSize:13,fontWeight:700,color:'#9CA3AF'}}, '#' + j.ticket_no),
+                React.createElement('span', {style:{fontSize:13,fontWeight:700,color:'#6B7280'}}, '#' + j.ticket_no),
                 React.createElement('span', {style:{fontSize:12,fontWeight:700,padding:'2px 8px',borderRadius:20,background:j.job_type==='PULL'?'#EFF6FF':j.job_type==='SWITCH'?'#FFF7ED':'#F0FDF4',color:j.job_type==='PULL'?'#1D4ED8':j.job_type==='SWITCH'?'#C2410C':'#065F46'}}, j.job_type),
                 React.createElement('span', {style:{fontSize:12,color:'#6B7280'}}, j.container_size),
                 j.payment_status==='paid' && React.createElement('span', {style:{fontSize:11,fontWeight:700,background:'#ECFDF5',color:'#065F46',padding:'2px 8px',borderRadius:20}}, '✅ PAID'),
@@ -3159,15 +3161,15 @@ function DumpingTab(_ref) {
               j.client_tag && React.createElement('span', {style:{fontSize:10,fontWeight:700,padding:'2px 7px',borderRadius:20,background:j.client_tag==='Blacklisted'?'#111827':j.client_tag==='Do Not Rent'?'#FEF2F2':'#F3F4F6',color:j.client_tag==='Blacklisted'?'#fff':j.client_tag==='Do Not Rent'?'#991B1B':'#374151'}}, j.client_tag)
             ),
               React.createElement('div', {style:{fontSize:12,color:'#6B7280'}}, j.material_type + ' • ' + j.assigned_driver + (j.weight_tons?' • '+j.weight_tons+'T':'')),
-              React.createElement('div', {style:{fontSize:12,color:'#9CA3AF'}}, j.client_address),
+              React.createElement('div', {style:{fontSize:12,color:'#6B7280'}}, j.client_address),
               j.permit_no && React.createElement('div', {style:{fontSize:11,color:'#6B7280',marginTop:2}}, '📋 Permit: ' + j.permit_no),
               j.driver_notes && React.createElement('div', {style:{fontSize:12,color:'#92400E',background:'#FFFBEB',border:'1px solid #FDE68A',borderRadius:8,padding:'6px 9px',marginTop:6}}, '📝 Chofer: ' + j.driver_notes)
             ),
             React.createElement('div', {style:{textAlign:'right'}},
               React.createElement('div', {style:{fontSize:18,fontWeight:800,color:'#111827'}}, '$' + (parseFloat(j.total_price)||0).toLocaleString()),
-              React.createElement('div', {style:{fontSize:11,color:'#9CA3AF'}}, j.payment_type),
+              React.createElement('div', {style:{fontSize:11,color:'#6B7280'}}, j.payment_type),
               j.payment_type==='Zelle' && j.payment_recipient && j.payment_recipient!=='Company' && React.createElement('div', {style:{fontSize:11,fontWeight:700,color:'#DC2626',background:'#FEF2F2',padding:'2px 6px',borderRadius:4,marginTop:2}}, 'ZELLE TO: ' + j.payment_recipient),
-              React.createElement('div', {style:{fontSize:11,color:'#9CA3AF'}}, j.date)
+              React.createElement('div', {style:{fontSize:11,color:'#6B7280'}}, j.date)
             )
           ),
           // Action buttons
@@ -3231,7 +3233,7 @@ function DumpClientPortal(_ref) {
   if (!job) return React.createElement('div', { style:{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:10, fontFamily:'system-ui' } },
     React.createElement('div', { style:{ fontSize:40 } }, '\uD83D\uDD0D'),
     React.createElement('div', { style:{ fontSize:16, fontWeight:700 } }, 'Job not found'),
-    React.createElement('div', { style:{ fontSize:13, color:'#9CA3AF' } }, 'This link may be invalid or expired.')
+    React.createElement('div', { style:{ fontSize:13, color:'#6B7280' } }, 'This link may be invalid or expired.')
   );
 
   var zelle = '+1 (917) 663-6369';
@@ -3271,7 +3273,7 @@ function DumpClientPortal(_ref) {
           )
         ),
         React.createElement('div', { style:{ background:'#fff', borderRadius:16, padding:28, border:'1px solid #E5E7EB', boxShadow:'0 2px 12px rgba(0,0,0,0.08)', marginBottom:16 } },
-          React.createElement('div', { style:{ fontSize:13, fontWeight:700, color:'#9CA3AF', textTransform:'uppercase', marginBottom:6 } }, 'Sams Construction Services LTD'),
+          React.createElement('div', { style:{ fontSize:13, fontWeight:700, color:'#6B7280', textTransform:'uppercase', marginBottom:6 } }, 'Sams Construction Services LTD'),
           React.createElement('h2', { style:{ fontSize:22, fontWeight:800, color:'#111827', marginBottom:20 } }, es ? 'Acuerdo de Dumping' : 'Dumping Agreement'),
           React.createElement('div', { style:{ background:'#EFF6FF', borderRadius:10, padding:16, marginBottom:20 } },
             React.createElement('div', { style:{ fontSize:14, color:'#374151', marginBottom:8 } }, es?'Yo, ':'I, ', React.createElement('strong', null, job.client_name||''), es?' , confirmo que debo a Sams Construction Services LTD:':' , confirm I owe Sams Construction Services LTD:'),
@@ -3293,7 +3295,7 @@ function DumpClientPortal(_ref) {
           ),
           React.createElement('button', { onClick:logConfirmation, style:{ width:'100%', padding:18, borderRadius:12, background:'#2563EB', color:'#fff', border:'none', fontSize:17, fontWeight:800, cursor:'pointer', marginBottom:12 } }, es?('CONFIRMO QUE DEBO '+money(total)):('I CONFIRM I OWE '+money(total))),
           React.createElement('button', { onClick:function(){ setShowTerms(true); }, style:{ width:'100%', padding:12, borderRadius:10, background:'#fff', border:'1px solid #E5E7EB', color:'#2563EB', fontSize:13, fontWeight:600, cursor:'pointer' } }, es?'Ver Terminos y Condiciones':'View Terms & Conditions'),
-          React.createElement('div', { style:{ fontSize:11, color:'#9CA3AF', textAlign:'center', marginTop:12 } }, es?'Al confirmar, se registrara la hora de su confirmacion.':'By confirming, the time of your confirmation will be recorded.')
+          React.createElement('div', { style:{ fontSize:11, color:'#6B7280', textAlign:'center', marginTop:12 } }, es?'Al confirmar, se registrara la hora de su confirmacion.':'By confirming, the time of your confirmation will be recorded.')
         ),
         showTerms && React.createElement(TermsPopup, { onClose:function(){ setShowTerms(false); }, es:es })
       )
@@ -3305,7 +3307,7 @@ function DumpClientPortal(_ref) {
     React.createElement('div', { style:{ background:'#111827', padding:'18px 20px', display:'flex', justifyContent:'space-between', alignItems:'center' } },
       React.createElement('div', null,
         React.createElement('div', { style:{ color:'#fff', fontWeight:800, fontSize:15 } }, 'SAMS CONSTRUCTION SERVICES LTD'),
-        React.createElement('div', { style:{ color:'#9CA3AF', fontSize:11, marginTop:2 } }, '188-16 Woodhull Ave, Hollis NY 11423')
+        React.createElement('div', { style:{ color:'#6B7280', fontSize:11, marginTop:2 } }, '188-16 Woodhull Ave, Hollis NY 11423')
       ),
       React.createElement('div', { style:{ display:'flex', gap:6 } },
         React.createElement('button', { onClick:function(){ setLang('en'); }, style:{ padding:'6px 12px', borderRadius:8, fontSize:13, fontWeight:700, cursor:'pointer', border:'2px solid '+(lang==='en'?'#fff':'#4B5563'), background:lang==='en'?'#fff':'transparent', color:lang==='en'?'#111827':'#9CA3AF' } }, 'EN'),
@@ -3315,13 +3317,13 @@ function DumpClientPortal(_ref) {
     React.createElement('div', { style:{ maxWidth:500, margin:'0 auto', padding:'20px 16px', display:'flex', flexDirection:'column', gap:16 } },
 
       React.createElement('div', null,
-        React.createElement('p', { style:{ fontSize:13, color:'#9CA3AF' } }, es?'Hola,':'Hello,'),
+        React.createElement('p', { style:{ fontSize:13, color:'#6B7280' } }, es?'Hola,':'Hello,'),
         React.createElement('h1', { style:{ fontSize:22, fontWeight:700 } }, job.client_name||'')
       ),
 
       React.createElement('div', { style:{ background:'#fff', borderRadius:12, border:'1px solid #F3F4F6', padding:18 } },
         React.createElement('h3', { style:{ fontSize:14, fontWeight:700, marginBottom:12 } }, es?'Cronograma del Contenedor':'Container Timeline'),
-        React.createElement('div', { style:{ display:'flex', justifyContent:'space-between', fontSize:12, color:'#9CA3AF', marginBottom:6 } },
+        React.createElement('div', { style:{ display:'flex', justifyContent:'space-between', fontSize:12, color:'#6B7280', marginBottom:6 } },
           React.createElement('span', null, (es?'Entrega: ':'Drop: ')+fmtD(job.scheduled_dropoff||job.date)+(job.scheduled_dropoff_time?(' '+job.scheduled_dropoff_time):'')),
           React.createElement('span', null, (es?'Recogida: ':'Pickup: ')+fmtD(dueDate)+(job.scheduled_pickup_time?(' '+job.scheduled_pickup_time):''))
         ),
@@ -3358,7 +3360,7 @@ function DumpClientPortal(_ref) {
         React.createElement('h3', { style:{ fontSize:14, fontWeight:700, marginBottom:12 } }, es?'Detalles de Factura':'Invoice Details'),
         [[es?'Factura':'Invoice', 'DMP-'+(job.ticket_no||'')], [es?'Tipo':'Type', job.job_type+' \u2014 '+job.material_type], [es?'Contenedor':'Container', job.container_size], [es?'Material base':'Material', money(base)]].concat(ow>0?[[es?'Sobrepeso':'Overweight', money(ow)]]:[]).concat(permit>0?[[es?'Permiso':'Permit', money(permit)]]:[]).concat([[es?'Entrega':'Drop Off', fmtD(job.scheduled_dropoff||job.date)], [es?'Recogida/Vence':'Pickup/Due', fmtD(dueDate)], [es?'Conductor':'Driver', job.assigned_driver||'-']]).map(function(row){
           return React.createElement('div', { key:row[0], style:{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'1px solid #F9FAFB', fontSize:13 } },
-            React.createElement('span', { style:{ color:'#9CA3AF' } }, row[0]),
+            React.createElement('span', { style:{ color:'#6B7280' } }, row[0]),
             React.createElement('span', { style:{ fontWeight:500 } }, row[1])
           );
         }),
@@ -3604,7 +3606,7 @@ function DumpClientPortal(_ref) {
       textAlign: 'center'
     }
   }, "\uD83D\uDCDE +1 (917) 663-6369")),
-          !payChoice && React.createElement('div', { style:{ textAlign:'center', fontSize:13, color:'#9CA3AF' } }, es?'Seleccione un metodo de pago arriba':'Select a payment method above')
+          !payChoice && React.createElement('div', { style:{ textAlign:'center', fontSize:13, color:'#6B7280' } }, es?'Seleccione un metodo de pago arriba':'Select a payment method above')
         )
       ),
 
@@ -3638,7 +3640,7 @@ function DumpClientPortal(_ref) {
 
       React.createElement('div', { style:{ textAlign:'center', paddingBottom:20 } },
         React.createElement('button', { onClick:function(){ setShowTerms(true); }, style:{ background:'none', border:'none', color:'#2563EB', fontSize:13, cursor:'pointer', textDecoration:'underline', fontWeight:600 } }, es?'Ver Terminos y Condiciones':'View Terms & Conditions'),
-        React.createElement('div', { style:{ fontSize:11, color:'#9CA3AF', marginTop:8 } }, es?'Esta factura es privada y solo accesible por este enlace.':'This invoice is private and only accessible via this link.'),
+        React.createElement('div', { style:{ fontSize:11, color:'#6B7280', marginTop:8 } }, es?'Esta factura es privada y solo accesible por este enlace.':'This invoice is private and only accessible via this link.'),
         showTerms && React.createElement(TermsPopup, { onClose:function(){ setShowTerms(false); }, es:es })
       )
     )
@@ -3697,7 +3699,7 @@ function CombinedPortal(props) {
   var allPaid=(!rental||rental.payment_status==='paid')&&(!dump||dump.payment_status==='paid');
   if(!confirmed&&!allPaid)return React.createElement('div',{style:{minHeight:'100vh',background:'#F9FAFB',display:'flex',alignItems:'center',justifyContent:'center',padding:20}},
     React.createElement('div',{style:{maxWidth:480,width:'100%',background:'#fff',borderRadius:14,padding:24,border:'1px solid #E5E7EB'}},
-      React.createElement('div',{style:{fontSize:13,fontWeight:700,color:'#9CA3AF',textTransform:'uppercase',marginBottom:4}},'Sams Construction Services LTD'),
+      React.createElement('div',{style:{fontSize:13,fontWeight:700,color:'#6B7280',textTransform:'uppercase',marginBottom:4}},'Sams Construction Services LTD'),
       React.createElement('h2',{style:{fontSize:20,fontWeight:800,marginBottom:14}},es?'Total de Servicios':'Combined Services Total'),
       React.createElement('div',{style:{display:'flex',gap:8,marginBottom:14}},
         React.createElement('button',{onClick:function(){setLang('en');},style:{flex:1,padding:10,borderRadius:8,fontWeight:700,fontSize:14,cursor:'pointer',border:'2px solid '+(lang==='en'?'#2563EB':'#E5E7EB'),background:lang==='en'?'#2563EB':'#fff',color:lang==='en'?'#fff':'#9CA3AF'}},'ENGLISH'),
@@ -3712,7 +3714,7 @@ function CombinedPortal(props) {
         React.createElement('div',{style:{fontWeight:700,fontSize:16,color:'#F59E0B'}},'$'+dT.toFixed(2)+' — '+dump.job_type+' ('+dump.material_type+')')
       ),
       React.createElement('div',{style:{background:'#F9FAFB',borderRadius:10,padding:14,border:'2px solid #E5E7EB',marginBottom:14,textAlign:'center'}},
-        React.createElement('div',{style:{fontSize:12,color:'#9CA3AF'}},es?'TOTAL COMBINADO':'COMBINED TOTAL'),
+        React.createElement('div',{style:{fontSize:12,color:'#6B7280'}},es?'TOTAL COMBINADO':'COMBINED TOTAL'),
         React.createElement('div',{style:{fontSize:30,fontWeight:900,color:'#111827'}},'$'+grand.toFixed(2))
       ),
       React.createElement('button',{onClick:function(){setConfirmed(true);},style:{width:'100%',padding:14,borderRadius:10,background:'#2563EB',color:'#fff',border:'none',fontSize:15,fontWeight:800,cursor:'pointer',marginBottom:8}},
@@ -3754,7 +3756,7 @@ function CombinedPortal(props) {
       rental&&React.createElement('div',{style:{background:'#fff',borderRadius:12,padding:'14px 16px',border:'2px solid #BFDBFE'}},
         React.createElement('div',{style:{fontSize:12,fontWeight:700,color:'#1D4ED8',marginBottom:4}},es?'Renta de Maquina':'Machine Rental'),
         React.createElement('div',{style:{fontWeight:600}},rental.asset),
-        React.createElement('div',{style:{fontSize:12,color:'#9CA3AF'}},(es?'Vence: ':'Due: ')+(rental.due_date||'')+' — $'+rT.toFixed(2))
+        React.createElement('div',{style:{fontSize:12,color:'#6B7280'}},(es?'Vence: ':'Due: ')+(rental.due_date||'')+' — $'+rT.toFixed(2))
       ),
       dump&&React.createElement('div',{style:{background:'#fff',borderRadius:12,padding:'14px 16px',border:'2px solid #FDE68A'}},
         React.createElement('div',{style:{fontSize:12,fontWeight:700,color:'#F59E0B',marginBottom:4}},es?'Trabajo de Dump':'Dump Job'),
@@ -3825,11 +3827,11 @@ function DumpInvoiceTab(props) {
       React.createElement('div',{style:{padding:'18px 20px'}},
         React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:14}},
           React.createElement('div',null,
-            React.createElement('div',{style:{fontSize:11,color:'#9CA3AF'}},'Invoice'), React.createElement('div',{style:{fontWeight:700,fontSize:15}},invNo),
-            React.createElement('div',{style:{fontSize:11,color:'#9CA3AF',marginTop:6}},'Date'), React.createElement('div',{style:{fontWeight:600}},invDate)
+            React.createElement('div',{style:{fontSize:11,color:'#6B7280'}},'Invoice'), React.createElement('div',{style:{fontWeight:700,fontSize:15}},invNo),
+            React.createElement('div',{style:{fontSize:11,color:'#6B7280',marginTop:6}},'Date'), React.createElement('div',{style:{fontWeight:600}},invDate)
           ),
           React.createElement('div',{style:{background:'#EFF6FF',borderRadius:8,padding:'10px 12px'}},
-            React.createElement('div',{style:{fontSize:11,color:'#9CA3AF'}},'Bill To'),
+            React.createElement('div',{style:{fontSize:11,color:'#6B7280'}},'Bill To'),
             React.createElement('div',{style:{fontWeight:700}},job.client_name),
             React.createElement('div',{style:{fontSize:12,color:'#6B7280'}},job.client_address),
             React.createElement('div',{style:{fontSize:12,color:'#6B7280'}},job.client_phone)
@@ -3867,7 +3869,7 @@ function DumpInvoiceTab(props) {
         )
       )
     ),
-    !job&&React.createElement('div',{style:{background:'#fff',borderRadius:12,padding:40,textAlign:'center',color:'#9CA3AF',border:'1px solid #F3F4F6'}},'Select a dump job above to generate invoice')
+    !job&&React.createElement('div',{style:{background:'#fff',borderRadius:12,padding:40,textAlign:'center',color:'#6B7280',border:'1px solid #F3F4F6'}},'Select a dump job above to generate invoice')
   );
 }
 
@@ -3887,7 +3889,7 @@ function DumpCollectionsTab(props) {
       React.createElement('div',{style:{background:'#FEF2F2',borderRadius:10,padding:'14px 16px',border:'1px solid #FCA5A5'}},React.createElement('div',{style:{fontSize:11,color:'#991B1B',fontWeight:600,textTransform:'uppercase'}},'Total Owed'),React.createElement('div',{style:{fontSize:22,fontWeight:800,color:'#DC2626'}},'$'+total.toLocaleString())),
       React.createElement('div',{style:{background:'#ECFDF5',borderRadius:10,padding:'14px 16px',border:'1px solid #A7F3D0'}},React.createElement('div',{style:{fontSize:11,color:'#065F46',fontWeight:600,textTransform:'uppercase'}},'Paid Jobs'),React.createElement('div',{style:{fontSize:26,fontWeight:800,color:'#065F46'}},dumpJobs.filter(function(j){return j.payment_status==='paid';}).length))
     ),
-    unpaid.length===0?React.createElement('div',{style:{background:'#fff',borderRadius:12,padding:40,textAlign:'center',color:'#9CA3AF'}},'No outstanding dump job balances'):
+    unpaid.length===0?React.createElement('div',{style:{background:'#fff',borderRadius:12,padding:40,textAlign:'center',color:'#6B7280'}},'No outstanding dump job balances'):
     React.createElement('div',{style:{display:'flex',flexDirection:'column',gap:10}},
       unpaid.map(function(j){
         var od=Math.floor((Date.now()-new Date(j.created_at).getTime())/86400000);
@@ -3920,7 +3922,7 @@ function DumpScheduleTab(props) {
   var picks=dumpJobs.filter(function(j){return j.scheduled_pickup&&j.scheduled_pickup>=today&&j.driver_status!=='completed';}).sort(function(a,b){return a.scheduled_pickup>b.scheduled_pickup?1:-1;});
   var out=dumpJobs.filter(function(j){return j.driver_status==='delivered'||j.driver_status==='arrived';});
   var exp=dumpJobs.filter(function(j){return j.permit_expiry&&j.permit_expiry>=today&&j.permit_expiry<=soon;});
-  var card=function(title,col,items,fn){return React.createElement('div',{style:{background:'#fff',borderRadius:12,padding:'16px 18px',border:'1px solid #E5E7EB'}},React.createElement('h3',{style:{fontSize:14,fontWeight:700,marginBottom:12,color:col}},title),items.length===0?React.createElement('p',{style:{color:'#9CA3AF',fontSize:13}},'None'):React.createElement('div',null,items.map(fn)));};
+  var card=function(title,col,items,fn){return React.createElement('div',{style:{background:'#fff',borderRadius:12,padding:'16px 18px',border:'1px solid #E5E7EB'}},React.createElement('h3',{style:{fontSize:14,fontWeight:700,marginBottom:12,color:col}},title),items.length===0?React.createElement('p',{style:{color:'#6B7280',fontSize:13}},'None'):React.createElement('div',null,items.map(fn)));};
   return React.createElement('div',null,
     React.createElement('h2',{style:{fontSize:18,fontWeight:800,marginBottom:16}},'Dump Schedule'),
     React.createElement('div',{style:{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(250px,1fr))',gap:14}},
@@ -3988,7 +3990,7 @@ function OverviewTab(props) {
       style: { textAlign:'left', cursor: list?'pointer':'default', background:'#fff', borderRadius:10, padding:'14px 16px', border:'1px solid #F3F4F6', borderLeft:'4px solid '+color } },
       React.createElement('div', { style:{ fontSize:11, color:'#6B7280', textTransform:'uppercase', fontWeight:600, marginBottom:4 } }, label),
       React.createElement('div', { style:{ fontSize:22, fontWeight:800, color:'#111827' } }, value),
-      list && React.createElement('div', { style:{ fontSize:10, color:'#9CA3AF', marginTop:2 } }, 'Tap to view')
+      list && React.createElement('div', { style:{ fontSize:10, color:'#6B7280', marginTop:2 } }, 'Tap to view')
     );
   };
 
@@ -4003,13 +4005,13 @@ function OverviewTab(props) {
     return React.createElement('div', null,
       React.createElement('button', { onClick:function(){ setDrill(null); }, style:{ marginBottom:14, padding:'8px 14px', borderRadius:8, border:'1px solid #E5E7EB', background:'#fff', cursor:'pointer', fontSize:13, fontWeight:600 } }, '\u2190 Back to Overview'),
       React.createElement('h2', { style:{ fontSize:18, fontWeight:800, marginBottom:14 } }, drill.title + ' (' + drill.list.length + ')'),
-      drill.list.length===0 ? React.createElement('div', { style:{ background:'#fff', borderRadius:12, padding:30, textAlign:'center', color:'#9CA3AF' } }, 'Nothing here right now') :
+      drill.list.length===0 ? React.createElement('div', { style:{ background:'#fff', borderRadius:12, padding:30, textAlign:'center', color:'#6B7280' } }, 'Nothing here right now') :
       React.createElement('div', { style:{ background:'#fff', borderRadius:12, border:'1px solid #F3F4F6', overflow:'hidden' } },
         drill.list.map(function(item, i){
           return React.createElement('div', { key:i, style:{ display:'flex', justifyContent:'space-between', padding:'12px 16px', borderBottom:'1px solid #F9FAFB', fontSize:13 } },
             React.createElement('div', null,
               React.createElement('div', { style:{ fontWeight:700 } }, item.client_name || item.name || '-'),
-              React.createElement('div', { style:{ fontSize:12, color:'#9CA3AF' } }, (item.asset || (item.job_type? item.job_type+' \u2014 '+item.material_type : '') || '') )
+              React.createElement('div', { style:{ fontSize:12, color:'#6B7280' } }, (item.asset || (item.job_type? item.job_type+' \u2014 '+item.material_type : '') || '') )
             ),
             React.createElement('div', { style:{ textAlign:'right' } },
               React.createElement('div', { style:{ fontWeight:700 } }, money ? money(parseFloat(item.total_price||item.price||0)) : '$'+(item.total_price||item.price||0)),
@@ -4052,17 +4054,17 @@ function OverviewTab(props) {
     ),
     ovTab==='history' && React.createElement('div', null,
       React.createElement('h3', { style:{ fontSize:14, fontWeight:800, marginBottom:12 } }, 'Saved Revenue History'),
-      hist.length===0 ? React.createElement('div', { style:{ background:'#fff', borderRadius:12, padding:30, textAlign:'center', color:'#9CA3AF' } }, 'No snapshots yet. Tap "Save This Week/Month to History" on the Live Stats tab.') :
+      hist.length===0 ? React.createElement('div', { style:{ background:'#fff', borderRadius:12, padding:30, textAlign:'center', color:'#6B7280' } }, 'No snapshots yet. Tap "Save This Week/Month to History" on the Live Stats tab.') :
       React.createElement('div', { style:{ background:'#fff', borderRadius:12, border:'1px solid #F3F4F6', overflow:'hidden' } },
         hist.map(function(h, i){
           return React.createElement('div', { key:i, style:{ display:'flex', justifyContent:'space-between', padding:'12px 16px', borderBottom:'1px solid #F9FAFB', fontSize:13 } },
             React.createElement('div', null,
               React.createElement('div', { style:{ fontWeight:700 } }, h.period_label),
-              React.createElement('div', { style:{ fontSize:11, color:'#9CA3AF', textTransform:'uppercase' } }, h.period_type)
+              React.createElement('div', { style:{ fontSize:11, color:'#6B7280', textTransform:'uppercase' } }, h.period_type)
             ),
             React.createElement('div', { style:{ textAlign:'right' } },
               React.createElement('div', { style:{ fontWeight:800, color:'#1D4ED8' } }, money?money(parseFloat(h.amount)):'$'+h.amount),
-              React.createElement('div', { style:{ fontSize:11, color:'#9CA3AF' } }, 'Dump '+(money?money(parseFloat(h.dump_amount||0)):h.dump_amount)+' \u00B7 Rental '+(money?money(parseFloat(h.rental_amount||0)):h.rental_amount))
+              React.createElement('div', { style:{ fontSize:11, color:'#6B7280' } }, 'Dump '+(money?money(parseFloat(h.dump_amount||0)):h.dump_amount)+' \u00B7 Rental '+(money?money(parseFloat(h.rental_amount||0)):h.rental_amount))
             )
           );
         })
@@ -4224,7 +4226,7 @@ function DispatchTab(_ref) {
         return React.createElement('button', { key:d, onClick:function(){ setDriverFilter(d); }, style:{ padding:'6px 14px', borderRadius:20, border:'none', cursor:'pointer', fontWeight:700, fontSize:13, background: driverFilter===d?'#1D4ED8':'#F3F4F6', color: driverFilter===d?'#fff':'#374151' } }, d==='all'?'All Drivers':d);
       })
     ),
-    stops.length === 0 ? React.createElement('div', { style:{ textAlign:'center', color:'#9CA3AF', padding:50, background:'#fff', borderRadius:12 } }, 'No jobs scheduled for this day.') :
+    stops.length === 0 ? React.createElement('div', { style:{ textAlign:'center', color:'#6B7280', padding:50, background:'#fff', borderRadius:12 } }, 'No jobs scheduled for this day.') :
     drivers.map(function(drv){
       var list = stops.filter(function(s){ return s.driver===drv; }).sort(byTime);
       if (list.length === 0) return null;
@@ -4291,8 +4293,8 @@ function BookingsInbox(_ref) {
         return React.createElement('button', { key:f, onClick:function(){ setFilter(f); }, style:{ padding:'6px 12px', fontSize:12, fontWeight:700, borderRadius:20, border:'none', cursor:'pointer', background: filter===f ? '#1D4ED8' : '#F3F4F6', color: filter===f ? '#fff' : '#374151', textTransform:'capitalize' } }, f);
       })
     ),
-    loading ? React.createElement('div', { style:{ color:'#9CA3AF', textAlign:'center', padding:40 } }, 'Loading...') :
-    shown.length === 0 ? React.createElement('div', { style:{ color:'#9CA3AF', textAlign:'center', padding:40, background:'#fff', borderRadius:12 } }, 'No ' + (filter==='all'?'':filter+' ') + 'booking requests. Share your public booking link to start receiving them.') :
+    loading ? React.createElement('div', { style:{ color:'#6B7280', textAlign:'center', padding:40 } }, 'Loading...') :
+    shown.length === 0 ? React.createElement('div', { style:{ color:'#6B7280', textAlign:'center', padding:40, background:'#fff', borderRadius:12 } }, 'No ' + (filter==='all'?'':filter+' ') + 'booking requests. Share your public booking link to start receiving them.') :
     shown.map(function(b){
       return React.createElement('div', { key:b.id, style:card },
         React.createElement('div', { style:{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8 } },
@@ -4395,7 +4397,7 @@ function BookingPage() {
         React.createElement('textarea', { style:Object.assign({}, inp, { minHeight:70, resize:'vertical' }), value:form.notes, onChange:function(e){ set('notes', e.target.value); } }),
         React.createElement('button', { onClick:submit, disabled:saving, style:{ width:'100%', marginTop:22, padding:16, borderRadius:12, border:'none', background: saving ? '#9CA3AF' : '#1D4ED8', color:'#fff', fontSize:17, fontWeight:800, cursor: saving ? 'default' : 'pointer' } }, saving ? t('Sending...','Enviando...') : t('Request Booking','Solicitar Reserva'))
       ),
-      React.createElement('p', { style:{ textAlign:'center', fontSize:12, color:'#9CA3AF', marginTop:16 } }, t('We will contact you to confirm pricing and availability.','Nos comunicaremos para confirmar precio y disponibilidad.'))
+      React.createElement('p', { style:{ textAlign:'center', fontSize:12, color:'#6B7280', marginTop:16 } }, t('We will contact you to confirm pricing and availability.','Nos comunicaremos para confirmar precio y disponibilidad.'))
     )
   );
 }
@@ -5009,7 +5011,7 @@ function App() {
       fontSize: 10,
       fontWeight: 700,
       textTransform: 'uppercase',
-      color: '#9CA3AF',
+      color:'#6B7280',
       marginBottom: 6
     }
   }, s.l), /*#__PURE__*/React.createElement("p", {
@@ -5041,7 +5043,7 @@ function App() {
         { l: '60+ days', v: b90, c: '#991B1B' }
       ].map(function(s){
         return /*#__PURE__*/React.createElement("div", { key: s.l, style: { background: '#F9FAFB', borderRadius: 8, padding: '10px 12px', borderLeft: '3px solid ' + s.c } },
-          /*#__PURE__*/React.createElement("div", { style: { fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', marginBottom: 4 } }, s.l),
+          /*#__PURE__*/React.createElement("div", { style: { fontSize: 10, fontWeight: 700, color:'#6B7280', textTransform: 'uppercase', marginBottom: 4 } }, s.l),
           /*#__PURE__*/React.createElement("div", { style: { fontSize: 15, fontWeight: 700, color: s.c } }, money(s.v)));
       })));
   })(), dumpJobs.length > 0 && /*#__PURE__*/React.createElement("div", {style:{marginBottom:20}},
@@ -5107,7 +5109,7 @@ function App() {
     style: {
       padding: 40,
       textAlign: 'center',
-      color: '#9CA3AF'
+      color:'#6B7280'
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -5135,7 +5137,7 @@ function App() {
       fontSize: 10,
       fontWeight: 700,
       textTransform: 'uppercase',
-      color: '#9CA3AF',
+      color:'#6B7280',
       borderBottom: '1px solid #F3F4F6',
       whiteSpace: 'nowrap'
     }
@@ -5165,7 +5167,7 @@ function App() {
     }, r.asset), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 10,
-        color: '#9CA3AF'
+        color:'#6B7280'
       }
     }, r.category)), /*#__PURE__*/React.createElement("td", {
       style: {
@@ -5194,7 +5196,7 @@ function App() {
     })), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 10,
-        color: '#9CA3AF'
+        color:'#6B7280'
       }
     }, r.client_phone), r.portal_confirmed ? /*#__PURE__*/React.createElement("div", {
       style: {
@@ -5227,7 +5229,7 @@ function App() {
         padding: '2px 7px',
         fontSize: 10,
         fontWeight: 600,
-        color: '#9CA3AF'
+        color:'#6B7280'
       }
     }, "\u23F3 Not confirmed")), /*#__PURE__*/React.createElement("td", {
       style: {
@@ -5446,7 +5448,7 @@ function App() {
         padding: '3px 10px',
         borderRadius: 20,
         fontSize: 11,
-        color: '#9CA3AF'
+        color:'#6B7280'
       }
     }, jobs.length, " jobs")), /*#__PURE__*/React.createElement("div", {
       style: {
@@ -5456,7 +5458,7 @@ function App() {
       style: {
         textAlign: 'center',
         padding: 20,
-        color: '#9CA3AF',
+        color:'#6B7280',
         fontSize: 12
       }
     }, "No active jobs") : jobs.map(r => {
@@ -5610,7 +5612,7 @@ function App() {
     }), /*#__PURE__*/React.createElement("span", {
       style: {
         fontSize: 11,
-        color: '#9CA3AF',
+        color:'#6B7280',
         fontFamily: 'monospace'
       }
     }, r._isDump ? ('DMP-' + (r.ticket_no || '')) : ('INV-' + String(r.id).slice(0,6).toUpperCase())), /*#__PURE__*/React.createElement("span", {
@@ -5756,7 +5758,7 @@ function App() {
       fontSize: 11,
       fontWeight: 700,
       textTransform: 'uppercase',
-      color: '#9CA3AF',
+      color:'#6B7280',
       borderBottom: '1px solid #F3F4F6',
       whiteSpace: 'nowrap'
     }
@@ -5781,7 +5783,7 @@ function App() {
   }, r.client_name), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: '#9CA3AF'
+      color:'#6B7280'
     }
   }, r.client_phone), r.client_tag && /*#__PURE__*/React.createElement(TagBadge, {
     tag: r.client_tag
@@ -6078,7 +6080,7 @@ function ClientPortal({
     style: {
       fontSize: 13,
       fontWeight: 700,
-      color: '#9CA3AF',
+      color:'#6B7280',
       textTransform: 'uppercase',
       marginBottom: 6
     }
@@ -6164,7 +6166,7 @@ function ClientPortal({
   }, es ? ('CONFIRMO QUE DEBO ' + money(rental.price)) : ('I CONFIRM I OWE ' + money(rental.price))), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
-      color: '#9CA3AF',
+      color:'#6B7280',
       textAlign: 'center'
     }
   }, es ? 'Al confirmar, se registrara la hora de su confirmacion.' : 'By confirming, the time of your confirmation will be recorded.')), /*#__PURE__*/React.createElement("div", {
@@ -6200,7 +6202,7 @@ function ClientPortal({
   }, "SAMS CONSTRUCTION SERVICES LTD"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 10,
-      color: '#9CA3AF'
+      color:'#6B7280'
     }
   }, "188-16 Woodhull Ave, Hollis NY 11423")), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -6379,7 +6381,7 @@ function ClientPortal({
       fontSize: 13,
       lineHeight: 1.8,
       marginBottom: 12,
-      color: '#9CA3AF'
+      color:'#6B7280'
     }
   }, es ? (rental.client_name + ', su cuenta ha sido PERMANENTEMENTE cerrada. Gravamen mecanico presentado. Equipo retirado. Usted esta en lista negra de Sams Construction.') : (rental.client_name + ', your account is PERMANENTLY closed. Mechanic Lien filed. Equipment removed. You are blacklisted from Sams Construction.')), /*#__PURE__*/React.createElement("a", {
     href: "tel:+19176636369",
@@ -6397,7 +6399,7 @@ function ClientPortal({
   }, "\uD83D\uDCDE +1 (917) 663-6369")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 13,
-      color: '#9CA3AF'
+      color:'#6B7280'
     }
   }, es ? 'Hola,' : 'Hello,'), /*#__PURE__*/React.createElement("h1", {
     style: {
@@ -6430,7 +6432,7 @@ function ClientPortal({
         display: 'flex',
         justifyContent: 'space-between',
         fontSize: 11,
-        color: '#9CA3AF',
+        color:'#6B7280',
         marginBottom: 6
       }
     }, /*#__PURE__*/React.createElement("span", null, es ? 'Inicio:' : 'Start:', " ", fmtD(rental.start_date)), /*#__PURE__*/React.createElement("span", null, es ? 'Vence:' : 'Due:', " ", fmtD(rental.due_date))), /*#__PURE__*/React.createElement("div", {
@@ -6584,7 +6586,7 @@ function ClientPortal({
     }
   }, /*#__PURE__*/React.createElement("span", {
     style: {
-      color: '#9CA3AF'
+      color:'#6B7280'
     }
   }, l), /*#__PURE__*/React.createElement("span", {
     style: {
@@ -6913,7 +6915,7 @@ function ClientPortal({
     style: {
       textAlign: 'center',
       padding: '14px',
-      color: '#9CA3AF',
+      color:'#6B7280',
       fontSize: 13
     }
   }, es ? 'Seleccione un metodo de pago arriba' : 'Select a payment method above'))), /*#__PURE__*/React.createElement("div", {
@@ -7045,7 +7047,7 @@ function ClientPortal({
   }, "\u2709 Email")), /*#__PURE__*/React.createElement("div", {style:{textAlign:'center'}},
     showTerms && /*#__PURE__*/React.createElement(TermsPopup, {onClose:function(){setShowTerms(false);}, es:es}),
     /*#__PURE__*/React.createElement("button", {onClick:function(){setShowTerms(true);}, style:{background:'none',border:'none',color:'#2563EB',fontSize:12,cursor:'pointer',textDecoration:'underline',display:'block',margin:'4px auto'}}, es?'Ver Terminos y Condiciones':'View Terms & Conditions'),
-    /*#__PURE__*/React.createElement("p", {style:{fontSize:11,color:'#9CA3AF'}}, es?'Esta factura es privada y solo accesible via este enlace.':'This invoice is private and only accessible via this link.')
+    /*#__PURE__*/React.createElement("p", {style:{fontSize:11,color:'#6B7280'}}, es?'Esta factura es privada y solo accesible via este enlace.':'This invoice is private and only accessible via this link.')
   )));
 }
 
@@ -7205,7 +7207,7 @@ function DriverAppInner({
   }, "\uD83D\uDC77 ", name), /*#__PURE__*/React.createElement("p", {
     style: {
       fontSize: 12,
-      color: '#9CA3AF'
+      color:'#6B7280'
     }
   }, jobs.length, " trabajos activos \xB7 Sams Construction"))), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -7218,7 +7220,7 @@ function DriverAppInner({
     style: {
       textAlign: 'center',
       padding: 60,
-      color: '#9CA3AF'
+      color:'#6B7280'
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -7383,7 +7385,7 @@ function DriverAppInner({
       return /*#__PURE__*/React.createElement("div", { key: (r._isDump?'d':'r')+r.id, style: { background: '#fff', borderRadius: 10, padding: '12px 14px', marginBottom: 8, border: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
         /*#__PURE__*/React.createElement("div", null,
           /*#__PURE__*/React.createElement("div", { style: { fontWeight: 600, fontSize: 14 } }, r.asset || r.client_name),
-          /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, color: '#9CA3AF' } }, r.client_name)
+          /*#__PURE__*/React.createElement("div", { style: { fontSize: 12, color:'#6B7280' } }, r.client_name)
         ),
         /*#__PURE__*/React.createElement("button", { onClick: function(){ recoverJob(r); }, style: { padding: '8px 14px', borderRadius: 8, border: 'none', background: '#F59E0B', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' } }, "Recuperar")
       );
