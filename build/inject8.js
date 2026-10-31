@@ -26,3 +26,6 @@
     for (var k = 0; k < E.length; k++) { h += '<li><span class="dot">' + icon(E[k][0]) + '</span><div><b>' + E[k][1] + '</b><span>' + E[k][2] + '</span></div></li>'; }
     return h + '</ol><p class="note">A full minute-by-minute activity log is planned for after the pilot.</p>';
   }
+  document.getElementById('pane').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-act="rattach"]'); if (b) openForm('rattach');
+  });
