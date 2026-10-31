@@ -20,7 +20,7 @@
   }, 60000);
 
   function sendLoc() {
-    if (!navigator.geolocation || !ME || NET_OFF || document.body.className.indexOf('drvmode') < 0) return;
+    if (LOCOK === false || !navigator.geolocation || !ME || NET_OFF || document.body.className.indexOf('drvmode') < 0) return;
     navigator.geolocation.getCurrentPosition(function (p) {
       var w = ME.driver_name || ME.full_name;
       SB.from('app_records').upsert({ kind: 'loc', id: w, data: { id: w, who: w, lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy, at: new Date().toISOString() } });

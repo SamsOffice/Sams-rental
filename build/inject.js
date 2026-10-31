@@ -110,7 +110,7 @@
   async function enter(me) {
     ME = me; document.getElementById('gate').hidden = true;
     await loadAll(); paintAll();
-    if (me.role === 'driver') obInit(me, function (n) { startDriverMode(me); if (n && navigator.onLine !== false) { NET_OFF = true; goOnline(); setTimeout(syncSoon, 2600); } });
+    if (me.role === 'driver') obInit(me, function (n) { startDriverMode(me); locNotice(); if (n && navigator.onLine !== false) { NET_OFF = true; goOnline(); setTimeout(syncSoon, 2600); } });
   }
   async function gateGo(e) {
     e.preventDefault();
