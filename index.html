@@ -3660,7 +3660,7 @@ body.drvmode .app{display:none!important}
   async function enter(me) {
     ME = me; document.getElementById('gate').hidden = true;
     await loadAll(); paintAll();
-    if (me.role === 'driver') obInit(me, function (n) { startDriverMode(me); locNotice(); if (n && navigator.onLine !== false) { NET_OFF = true; goOnline(); setTimeout(syncSoon, 2600); } });
+    if (me.role === 'driver') obInit(me, function (n) { startDriverMode(me); pinInit(); locNotice(); if (n && navigator.onLine !== false) { NET_OFF = true; goOnline(); setTimeout(syncSoon, 2600); } });
   }
   async function gateGo(e) {
     e.preventDefault();
@@ -4278,6 +4278,58 @@ body.drvmode .app{display:none!important}
       LOCOK = true; d.parentNode && d.parentNode.removeChild(d); sendLoc();
     });
     document.getElementById('locOk').focus();
+  }
+  /* ---- drivers set their own PIN ("Cambiar PIN") ---- */
+  function pinDialog(first) {
+    if (document.getElementById('pinDlg')) return;
+    var d = document.createElement('div');
+    d.id = 'pinDlg'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); d.setAttribute('aria-labelledby', 'pinT');
+    d.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(17,24,39,.75);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto';
+    var inp = 'width:100%;height:56px;box-sizing:border-box;border:1.5px solid #6B7280;border-radius:10px;font-size:22px;letter-spacing:6px;text-align:center;margin:6px 0 14px;color:#111827;background:#fff';
+    d.innerHTML = '<form id="pinF" style="background:#fff;color:#111827;border-radius:14px;max-width:420px;width:100%;padding:22px;font:17px/1.5 system-ui,-apple-system,sans-serif"><b id="pinT" style="font-size:21px">Cambiar PIN</b>' +
+      '<p style="margin:10px 0 14px;color:#374151">' + (first ? 'Elige tu propio PIN de 6 n&uacute;meros. Solo t&uacute; lo sabr&aacute;s. No se lo des a nadie.' : 'Escribe tu nuevo PIN de 6 n&uacute;meros.') + '</p>' +
+      '<label for="pinA">Nuevo PIN</label><input id="pinA" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" style="' + inp + '">' +
+      '<label for="pinB">Repite el PIN</label><input id="pinB" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="new-password" style="' + inp + '">' +
+      '<div id="pinE" role="alert" hidden style="background:#FEF2F2;border:1px solid #FCA5A5;color:#B91C1C;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:15px"></div>' +
+      '<button id="pinGo" type="submit" style="width:100%;height:56px;border:none;border-radius:10px;background:#1D4ED8;color:#fff;font-size:18px;font-weight:700;cursor:pointer">Guardar PIN</button>' +
+      '<button id="pinNo" type="button" style="width:100%;height:48px;margin-top:10px;border:2px solid #1D4ED8;border-radius:10px;background:#fff;color:#1D4ED8;font-size:16px;font-weight:700;cursor:pointer">' + (first ? 'M&aacute;s tarde' : 'Cancelar') + '</button></form>';
+    document.body.appendChild(d);
+    var er = d.querySelector('#pinE'), go = d.querySelector('#pinGo');
+    function bad(t) { er.textContent = t; er.hidden = false; }
+    function close() { if (d.parentNode) d.parentNode.removeChild(d); }
+    d.querySelector('#pinNo').addEventListener('click', close);
+    d.querySelector('#pinF').addEventListener('submit', function (e) {
+      e.preventDefault(); er.hidden = true;
+      var a = d.querySelector('#pinA').value, b = d.querySelector('#pinB').value;
+      if (!/^[0-9]{6}$/.test(a)) { bad('El PIN debe ser exactamente 6 números.'); return; }
+      if (a !== b) { bad('Los dos PIN no son iguales.'); return; }
+      if (/^(\d)\1{5}$/.test(a) || a === '123456' || a === '654321' || a === '012345') { bad('Ese PIN es muy fácil de adivinar. Elige otro.'); return; }
+      if (NET_OFF || navigator.onLine === false) { bad('Necesitas señal para cambiar el PIN.'); return; }
+      go.disabled = true; go.textContent = 'Guardando...';
+      SB.auth.updateUser({ password: a, data: { pin_changed: true } }).then(function (r) {
+        if (r && r.error) { go.disabled = false; go.textContent = 'Guardar PIN'; bad('No se pudo cambiar el PIN: ' + r.error.message); return; }
+        close(); var pb = document.getElementById('pinBanner'); if (pb && pb.parentNode) pb.parentNode.removeChild(pb);
+        toast('PIN cambiado. Úsalo la próxima vez que entres.');
+      }).catch(function (er2) { go.disabled = false; go.textContent = 'Guardar PIN'; bad('No se pudo cambiar el PIN. Intenta de nuevo.'); });
+    });
+    d.querySelector('#pinA').focus();
+  }
+  function pinInit() {
+    var bar = document.querySelector('#drvApp .dabar'), cb = document.getElementById('drvClose');
+    if (bar && cb && !document.getElementById('pinBtn')) {
+      var b = document.createElement('button'); b.className = 'btn sm'; b.id = 'pinBtn'; b.type = 'button'; b.textContent = 'Cambiar PIN';
+      b.addEventListener('click', function () { pinDialog(false); }); bar.insertBefore(b, cb);
+    }
+    SB.auth.getSession().then(function (g) {
+      var u = g && g.data && g.data.session && g.data.session.user, done = u && u.user_metadata && u.user_metadata.pin_changed;
+      if (done || document.getElementById('pinBanner')) return;
+      var body = document.getElementById('drvBody'); if (!body || !body.parentNode) return;
+      var n = document.createElement('div'); n.id = 'pinBanner';
+      n.style.cssText = 'background:#FEF3C7;border:1px solid #FCD34D;color:#92400E;padding:12px 14px;font:16px/1.4 system-ui,sans-serif;display:flex;gap:10px;align-items:center;justify-content:space-between';
+      n.innerHTML = '<span><b>Elige tu propio PIN.</b> El PIN que te dieron lo conocen otras personas.</span><button type="button" class="btn sm" id="pinNow">Cambiar</button>';
+      body.parentNode.insertBefore(n, body);
+      document.getElementById('pinNow').addEventListener('click', function () { pinDialog(true); });
+    });
   }
 </script>
 
