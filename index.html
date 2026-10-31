@@ -2014,11 +2014,11 @@ body.drvmode .app{display:none!important}
     var f = document.getElementById('theForm'), h = '', t = '';
     if (kind === 'rental') {
       var R0 = id ? rentalById(id) : null; ERID = R0 ? R0.id : '';
-      var E0 = EQUIP[0] || { n: (typeof PRESET_M !== 'undefined' && PRESET_M[0]) || '', p: '' };
+      var E0 = { n: '', p: '' };
       var d0 = R0 || { asset: E0.n, client: '', phone: '', email: '', addr: '', tag: 'New Client', si: TODAYISO(), di: addDays(TODAYISO(), 1), price: E0.p, del: '', pick: '', trailer: '', diesel: '', ptype: 'delivery', pay: 'Unpaid', method: '', status: 'Active', driver: 'Sams', notes: '', sd: '', sdt: '', sp: '', spt: '' };
       var days0 = Math.max(1, Math.round((invParse(d0.di) - invParse(d0.si)) / 86400000));
       t = R0 ? 'Edit Rental' : 'New Rental';
-      var opts = '<optgroup label="Your equipment">', seen = {}, kq;
+      var opts = (R0 ? '' : '<option value="" selected>Choose equipment</option>') + '<optgroup label="Your equipment">', seen = {}, kq;
       for (kq = 0; kq < EQUIP.length; kq++) { seen[EQUIP[kq].n] = 1; opts += '<option' + (EQUIP[kq].n === d0.asset ? ' selected' : '') + '>' + invEsc(EQUIP[kq].n) + '</option>'; }
       opts += '</optgroup><optgroup label="Machines">';
       for (kq = 0; kq < PRESET_M.length; kq++) { if (!seen[PRESET_M[kq]]) opts += '<option' + (PRESET_M[kq] === d0.asset ? ' selected' : '') + '>' + PRESET_M[kq] + '</option>'; }
@@ -2280,6 +2280,7 @@ body.drvmode .app{display:none!important}
     if (FKIND === 'rental') {
       var st = fv('fStart'), nd = parseInt(fv('fDays'), 10) || 1;
       if (!st) { err.textContent = 'Pick the start date.'; return; }
+      if (!fv('fAsset')) { err.textContent = 'Choose the equipment.'; return; }
       var di = addDays(st, nd), stt = fv('fStat'), pay = fv('fPay');
       var rec = { asset: fv('fAsset'), client: client, phone: fv('fPhone'), email: fv('fEmail'), addr: fv('fAddr'), tag: fv('fTag'), si: st, di: di, price: fn('fPrice'), del: fn('fDel'), pick: fn('fPick'), trailer: fn('fTrl'), diesel: fn('fDie'), ptype: fv('fPType'), pay: pay, method: fv('fMeth') === '-' ? '' : fv('fMeth'), driver: fv('fDrv'), mid: fv('fMach'), notes: fv('fNotes'), sd: fv('fSD'), sdt: fv('fSDT'), sp: fv('fSP'), spt: fv('fSPT'), dl: shortD(di) };
       var status = stt === 'Completed' ? 'Returned' : (stt === 'Cancelled' ? 'Cancelled' : (invParse(di) < TODAY ? 'Overdue' : 'Active'));

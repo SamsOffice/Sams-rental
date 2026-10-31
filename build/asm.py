@@ -149,5 +149,8 @@ R("if (a === 'scan') { tab = 'docs'; scanState = 'scanning'; drawPane(); setTime
 R("setView('dashboard'); tab = 'docs'; scanState = 'scanning'; drawPane();\n      setTimeout(function () { scanState = 'done'; if (tab === 'docs' && curView === 'dashboard') drawPane(); }, 1800);","setView('dashboard'); tab = 'docs'; scanState = 'idle'; drawPane();")
 R("var d0 = R0 || { asset: EQUIP[0].n,","var E0 = EQUIP[0] || { n: (typeof PRESET_M !== 'undefined' && PRESET_M[0]) || '', p: '' };\n      var d0 = R0 || { asset: E0.n,")
 R("price: EQUIP[0].p, del: ''","price: E0.p, del: ''")
+R("var E0 = EQUIP[0] || { n: (typeof PRESET_M !== 'undefined' && PRESET_M[0]) || '', p: '' };\n      var d0 = R0 || { asset: E0.n,","var E0 = { n: '', p: '' };\n      var d0 = R0 || { asset: E0.n,")
+R("var opts = '<optgroup label=\"Your equipment\">', seen = {}, kq;","var opts = (R0 ? '' : '<option value=\"\" selected>Choose equipment</option>') + '<optgroup label=\"Your equipment\">', seen = {}, kq;")
+R("if (!st) { err.textContent = 'Pick the start date.'; return; }","if (!st) { err.textContent = 'Pick the start date.'; return; }\n      if (!fv('fAsset')) { err.textContent = 'Choose the equipment.'; return; }")
 open('app.html','w').write(s)
 print(len(s))
