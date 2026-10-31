@@ -85,7 +85,7 @@
     for (k = 0; k < DBROWS.inv.length; k++) { if (DBROWS.inv[k].kind === 'container') cont += DBROWS.inv[k].total_qty || 0; }
     document.getElementById('sAD').textContent = ad; document.getElementById('sAR').textContent = ar;
     document.getElementById('sCA').textContent = Math.max(0, cont - ad);
-    document.getElementById('sUN').textContent = '$' + un.toLocaleString('en-US');
+    document.getElementById('sUN').textContent = '$' + un.toLocaleString('en-US'); var to = document.getElementById('topOver'); if (to) { to.textContent = pd + ' overdue'; to.hidden = !pd; }
     var sm = document.querySelectorAll('.stats .stat small'); if (sm.length >= 4) { sm[0].textContent = 'dumps on the road or scheduled'; sm[1].textContent = 'out with clients now'; sm[2].textContent = cont ? 'of ' + cont + ' in the yard' : 'set your container count in Settings'; sm[3].textContent = pd + (pd === 1 ? ' invoice' : ' invoices') + ' past due'; }
   };
   async function loadAll() {

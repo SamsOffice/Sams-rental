@@ -739,16 +739,16 @@ body.drvmode .app{display:none!important}
       <label class="search"><span data-i="search"></span><input id="q" type="search" placeholder="Search jobs, clients, tickets" aria-label="Search" autocomplete="off"><div id="qres" class="qres" hidden role="listbox"></div></label>
       <div class="seg" id="langSeg" role="group" aria-label="Screen language"><button data-lang="en" aria-pressed="true">EN</button><button data-lang="es" aria-pressed="false">ES</button></div>
       <button class="btn theme" id="themeBtn" aria-label="Switch light or dark"><span data-i="moon"></span></button>
-      <span id="topActions" class="topact"><span class="pill bad">3 overdue</span><button class="btn tbtn" data-form="equip"><span data-i="gear"></span>Equipment</button><button class="btn primary tbtn" data-form="rental"><span data-i="plus"></span>New Rental</button><button class="btn primary tbtn" data-form="dump"><span data-i="plus"></span>New Dumping</button></span>
+      <span id="topActions" class="topact"><span class="pill bad" id="topOver" hidden>0 overdue</span><button class="btn tbtn" data-form="equip"><span data-i="gear"></span>Equipment</button><button class="btn primary tbtn" data-form="rental"><span data-i="plus"></span>New Rental</button><button class="btn primary tbtn" data-form="dump"><span data-i="plus"></span>New Dumping</button></span>
       <button class="btn tbtn" id="signBtn" data-msg="">Sign out</button>
     </div>
 
     <div id="v-overview" class="view">
     <section class="stats" aria-label="Summary">
-      <div class="stat"><div class="row">Active dumps<span class="ic" data-i="truck"></span></div><b id="sAD">14</b><small>5 out for pickup today</small></div>
-      <div class="stat"><div class="row">Active rentals<span class="ic" data-i="box"></span></div><b id="sAR">9</b><small>2 due back this week</small></div>
-      <div class="stat"><div class="row">Containers available<span class="ic" data-i="check"></span></div><b id="sCA">11</b><small>of 25 in the yard</small></div>
-      <div class="stat alert"><div class="row">Unpaid<span class="ic" data-i="alert"></span></div><b id="sUN">$6,840</b><small>4 invoices past due</small></div>
+      <div class="stat"><div class="row">Active dumps<span class="ic" data-i="truck"></span></div><b id="sAD">-</b><small>&nbsp;</small></div>
+      <div class="stat"><div class="row">Active rentals<span class="ic" data-i="box"></span></div><b id="sAR">-</b><small>&nbsp;</small></div>
+      <div class="stat"><div class="row">Containers available<span class="ic" data-i="check"></span></div><b id="sCA">-</b><small>&nbsp;</small></div>
+      <div class="stat alert"><div class="row">Unpaid<span class="ic" data-i="alert"></span></div><b id="sUN">-</b><small>&nbsp;</small></div>
     </section>
 
     <section class="work">
@@ -1507,13 +1507,13 @@ body.drvmode .app{display:none!important}
       '<div class="actions"><button class="btn primary" data-act="openinv">' + icon('receipt') + 'Open invoice</button><button class="btn" data-act="xlsinv">' + icon('download') + 'Download Excel</button><button class="btn" data-act="sendinv">' + icon('mail') + 'Send to client</button>' + (cur && cur.no >= 900 ? '<button class="btn" data-act="xinvpaid">' + icon('check') + 'Mark paid or unpaid</button>' : '') + '</div>';
   }
   function vCenter() {
-    var late = [['Hollis Demo Corp', 1980, 13], ['Delgado Roofing', 2724, 9], ['Stallion Construction', 1496, 2], ['Parkview Builders', 640, 0]], h = '', tot = 0;
+    var late = [], h = '', tot = 0;
     for (var k = 0; k < late.length; k++) {
       var x = late[k]; tot += x[1];
       h += '<div class="li"><span class="ic2">' + icon('wallet') + '</span><div class="grow"><b>' + x[0] + '</b><span class="sub">' + (x[2] > 0 ? x[2] + ' days past due' : 'Due this week') + '</span></div>' + pillH(x[2] > 7 ? 'Past due' : 'Unpaid', x[2] > 7 ? 'bad' : 'warn') + '<b class="num">' + money(x[1]) + '</b><button class="btn sm" data-act="toast" data-msg="Example only. Reminder not sent.">' + icon('mail') + 'Remind</button></div>';
     }
     return '<section class="stats"><div class="stat alert"><div class="row">Total unpaid<span class="ic">' + icon('alert') + '</span></div><b>' + money(tot) + '</b><small>4 clients</small></div>' +
-      '<div class="stat"><div class="row">Collected this month<span class="ic">' + icon('check') + '</span></div><b>$18,260</b><small>22 invoices paid</small></div></section>' +
+      '<div class="stat"><div class="row">Collected this month<span class="ic">' + icon('check') + '</span></div><b>-</b><small>&nbsp;</small></div></section>' +
       '<div class="card"><header><h2>Who owes you</h2></header>' + h + '</div>';
   }
 
@@ -1532,12 +1532,12 @@ body.drvmode .app{display:none!important}
     drawRental();
   }
   function vOverview() {
-    var top = [['Hollis Demo Corp', 3810], ['Stallion Construction', 3296], ['Rivera Masonry', 2270], ['Delgado Roofing', 2724]], h = '';
+    var top = [], h = '';
     for (var k = 0; k < top.length; k++) h += '<div class="li"><span class="avatar">' + initials(top[k][0]) + '</span><div class="grow"><b>' + top[k][0] + '</b></div><b class="num">' + money(top[k][1]) + '</b></div>';
-    return '<section class="stats"><div class="stat"><div class="row">Revenue this month<span class="ic">' + icon('dollar') + '</span></div><b>$18,260</b><small>All rentals and dumping</small></div>' +
-      '<div class="stat"><div class="row">Rental revenue<span class="ic">' + icon('box') + '</span></div><b>$7,410</b><small>9 active rentals</small></div>' +
-      '<div class="stat"><div class="row">Dumping revenue<span class="ic">' + icon('truck') + '</span></div><b>$10,850</b><small>31 jobs</small></div>' +
-      '<div class="stat alert"><div class="row">Outstanding<span class="ic">' + icon('alert') + '</span></div><b>$6,840</b><small>4 invoices past due</small></div></section>' +
+    return '<section class="stats"><div class="stat"><div class="row">Revenue this month<span class="ic">' + icon('dollar') + '</span></div><b>-</b><small>&nbsp;</small></div>' +
+      '<div class="stat"><div class="row">Rental revenue<span class="ic">' + icon('box') + '</span></div><b>-</b><small>&nbsp;</small></div>' +
+      '<div class="stat"><div class="row">Dumping revenue<span class="ic">' + icon('truck') + '</span></div><b>-</b><small>&nbsp;</small></div>' +
+      '<div class="stat alert"><div class="row">Outstanding<span class="ic">' + icon('alert') + '</span></div><b>-</b><small>&nbsp;</small></div></section>' +
       '<div class="card"><header><h2>Top clients this month</h2></header>' + h + '</div>';
   }
   var CAL = { y: new Date().getFullYear(), m: new Date().getMonth() };
@@ -1774,11 +1774,11 @@ body.drvmode .app{display:none!important}
         '<td>' + (c.ok ? '<span class="pill good ic">' + icon('check') + 'Confirmed</span>' : '<span class="pill warn ic">' + icon('clock') + 'Waiting</span>') + '</td>' +
         '<td>' + (c.ok ? '<span class="okat">' + c.d + '</span><span class="sub">' + c.t + '</span>' : '<span class="sub">-</span>') + '</td></tr>';
     }
-    return head('Only the client can confirm, from their own link. Tap a row to open that client portal.', 'Open sample portal', 'link', '').replace('data-act="toast"', 'data-act="portal" data-c="Stallion Construction"') +
+    return head('Only the client can confirm, from their own link. Tap a row to open that client portal.', 'Open sample portal', 'link', '').replace('data-act="toast"', 'data-act="portal" data-c=""') +
       '<div class="card dkt"><div class="tablewrap"><table style="min-width:640px"><thead><tr><th>CLIENT</th><th>EQUIPMENT</th><th>AMOUNT</th><th>DUE DATE</th><th>STATUS</th><th>CONFIRMED AT</th></tr></thead><tbody>' + r + '</tbody></table></div></div>';
   }
   function vCollections() {
-    var B = [['Not due', 'info', [['Parkview Builders', 640, 'Due Oct 15']]], ['Overdue', 'warn', [['Stallion Construction', 1496, '2 days']]], ['Final notice', 'bad', [['Delgado Roofing', 2724, '9 days']]], ['Lien stage', 'bad', [['Hollis Demo Corp', 1980, '16 days']]]], h = '';
+    var B = [['Not due', 'info', []], ['Overdue', 'warn', []], ['Final notice', 'bad', []], ['Lien stage', 'bad', []]], h = '';
     for (var k = 0; k < B.length; k++) {
       var rows = '';
       for (var m = 0; m < B[k][2].length; m++) { rows += colRow(B[k][2][m]); }
@@ -3636,7 +3636,7 @@ body.drvmode .app{display:none!important}
     for (k = 0; k < DBROWS.inv.length; k++) { if (DBROWS.inv[k].kind === 'container') cont += DBROWS.inv[k].total_qty || 0; }
     document.getElementById('sAD').textContent = ad; document.getElementById('sAR').textContent = ar;
     document.getElementById('sCA').textContent = Math.max(0, cont - ad);
-    document.getElementById('sUN').textContent = '$' + un.toLocaleString('en-US');
+    document.getElementById('sUN').textContent = '$' + un.toLocaleString('en-US'); var to = document.getElementById('topOver'); if (to) { to.textContent = pd + ' overdue'; to.hidden = !pd; }
     var sm = document.querySelectorAll('.stats .stat small'); if (sm.length >= 4) { sm[0].textContent = 'dumps on the road or scheduled'; sm[1].textContent = 'out with clients now'; sm[2].textContent = cont ? 'of ' + cont + ' in the yard' : 'set your container count in Settings'; sm[3].textContent = pd + (pd === 1 ? ' invoice' : ' invoices') + ' past due'; }
   };
   async function loadAll() {
