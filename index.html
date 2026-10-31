@@ -973,7 +973,7 @@ body.drvmode .app{display:none!important}
   });
   document.getElementById('pane').addEventListener('click', function (e) {
     var b = e.target.closest('[data-a]'); if (!b) return; var a = b.getAttribute('data-a');
-    if (a === 'scan') { tab = 'docs'; scanState = 'scanning'; drawPane(); setTimeout(function () { scanState = 'done'; if (tab === 'docs') drawPane(); }, 1800); }
+    if (a === 'scan') { tab = 'docs'; scanState = 'idle'; drawPane(); }
     else if (a === 'save') { scanState = 'idle'; tab = 'history'; drawPane(); toast('Saved to ticket #' + sel); }
     else if (a === 'reset') { scanState = 'idle'; drawPane(); }
     else if (a === 'invoice') openInv(dataFromJob(find(sel)));
@@ -2014,7 +2014,8 @@ body.drvmode .app{display:none!important}
     var f = document.getElementById('theForm'), h = '', t = '';
     if (kind === 'rental') {
       var R0 = id ? rentalById(id) : null; ERID = R0 ? R0.id : '';
-      var d0 = R0 || { asset: EQUIP[0].n, client: '', phone: '', email: '', addr: '', tag: 'New Client', si: TODAYISO(), di: addDays(TODAYISO(), 1), price: EQUIP[0].p, del: '', pick: '', trailer: '', diesel: '', ptype: 'delivery', pay: 'Unpaid', method: '', status: 'Active', driver: 'Sams', notes: '', sd: '', sdt: '', sp: '', spt: '' };
+      var E0 = EQUIP[0] || { n: (typeof PRESET_M !== 'undefined' && PRESET_M[0]) || '', p: '' };
+      var d0 = R0 || { asset: E0.n, client: '', phone: '', email: '', addr: '', tag: 'New Client', si: TODAYISO(), di: addDays(TODAYISO(), 1), price: E0.p, del: '', pick: '', trailer: '', diesel: '', ptype: 'delivery', pay: 'Unpaid', method: '', status: 'Active', driver: 'Sams', notes: '', sd: '', sdt: '', sp: '', spt: '' };
       var days0 = Math.max(1, Math.round((invParse(d0.di) - invParse(d0.si)) / 86400000));
       t = R0 ? 'Edit Rental' : 'New Rental';
       var opts = '<optgroup label="Your equipment">', seen = {}, kq;
@@ -2515,8 +2516,7 @@ body.drvmode .app{display:none!important}
     else if (a === 'portal') { var rr0 = b.getAttribute('data-r'); if (rr0) openPortal(rentalAsJob(rentalById(rr0))); else openPortal(jobByClient(b.getAttribute('data-c'))); }
     else if (a === 'inv') { invSel = parseInt(b.getAttribute('data-no'), 10); setView('invoice'); }
     else if (a === 'goscan') {
-      setView('dashboard'); tab = 'docs'; scanState = 'scanning'; drawPane();
-      setTimeout(function () { scanState = 'done'; if (tab === 'docs' && curView === 'dashboard') drawPane(); }, 1800);
+      setView('dashboard'); tab = 'docs'; scanState = 'idle'; drawPane();
     }
   });
 
