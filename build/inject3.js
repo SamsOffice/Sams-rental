@@ -5,7 +5,7 @@
     for (n in DMSG) { if (DMSG.hasOwnProperty(n)) { a = DMSG[n]; for (k = 0; k < a.length; k++) { a[k].who = n; if (!a[k].ts) a[k].ts = Date.now() - k; o.push(a[k]); } } }
     return o;
   }
-  function cfgList() { return [{ id: 'prices', rows: PRICES }, { id: 'equip', rows: EQUIP }, { id: 'rem', on: REM.on, log: REM.log }]; }
+  function cfgList() { return [{ id: 'prices', rows: PRICES }, { id: 'equip', rows: EQUIP }, { id: 'priv', jobs: Object.keys(PRIV).filter(function (q) { return PRIV[q]; }) }, { id: 'rem', on: REM.on, log: REM.log }]; }
   var RECS = [
     { k: 'wait', arr: function () { return WAITS; }, drv: 1 },
     { k: 'rcpt', arr: function () { return RCPTS; }, drv: 1 },
@@ -38,6 +38,7 @@
       if (rk.k === 'cfg') {
         for (i = 0; i < rows.length; i++) {
           if (rows[i].id === 'prices' && rows[i].rows) { PRICES.length = 0; for (mx = 0; mx < rows[i].rows.length; mx++) PRICES.push(rows[i].rows[mx]); }
+          if (rows[i].id === 'priv' && rows[i].jobs) { var pk; for (pk in PRIV) { if (PRIV.hasOwnProperty(pk)) delete PRIV[pk]; } for (mx = 0; mx < rows[i].jobs.length; mx++) PRIV[rows[i].jobs[mx]] = true; }
           if (rows[i].id === 'equip' && rows[i].rows) { EQUIP.length = 0; for (mx = 0; mx < rows[i].rows.length; mx++) EQUIP.push(rows[i].rows[mx]); }
           if (rows[i].id === 'rem') { REM.on = rows[i].on !== false; REM.log = rows[i].log || {}; }
           RSNAP['cfg|' + rows[i].id] = JSON.stringify(rows[i]);

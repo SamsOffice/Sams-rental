@@ -2721,7 +2721,7 @@ body.drvmode .app{display:none!important}
   }, 1500);
   /* ---- Permits, dump site hours, containers sitting too long ---- */
   var PERMITS = [];
-  var PRIV = { 1036: true }, PCNT = 6, PMS = { del: '' }, OVL = 7;
+  var PRIV = {}, PCNT = 6, PMS = { del: '' }, OVL = 7;
   function anyJob(id) { var all = JOBS.concat(EXTRA); for (var k = 0; k < all.length; k++) { if (all[k].id === id) return all[k]; } return null; }
   function jobActive(j) { return !!j && (j.status === 'Scheduled' || j.status === 'Delivered' || j.status === 'Out for pickup' || j.status === 'Past due'); }
   function permExp(p) { return addDays(p.start, p.days); }
@@ -3790,7 +3790,7 @@ body.drvmode .app{display:none!important}
     for (n in DMSG) { if (DMSG.hasOwnProperty(n)) { a = DMSG[n]; for (k = 0; k < a.length; k++) { a[k].who = n; if (!a[k].ts) a[k].ts = Date.now() - k; o.push(a[k]); } } }
     return o;
   }
-  function cfgList() { return [{ id: 'prices', rows: PRICES }, { id: 'equip', rows: EQUIP }, { id: 'rem', on: REM.on, log: REM.log }]; }
+  function cfgList() { return [{ id: 'prices', rows: PRICES }, { id: 'equip', rows: EQUIP }, { id: 'priv', jobs: Object.keys(PRIV).filter(function (q) { return PRIV[q]; }) }, { id: 'rem', on: REM.on, log: REM.log }]; }
   var RECS = [
     { k: 'wait', arr: function () { return WAITS; }, drv: 1 },
     { k: 'rcpt', arr: function () { return RCPTS; }, drv: 1 },
@@ -3823,6 +3823,7 @@ body.drvmode .app{display:none!important}
       if (rk.k === 'cfg') {
         for (i = 0; i < rows.length; i++) {
           if (rows[i].id === 'prices' && rows[i].rows) { PRICES.length = 0; for (mx = 0; mx < rows[i].rows.length; mx++) PRICES.push(rows[i].rows[mx]); }
+          if (rows[i].id === 'priv' && rows[i].jobs) { var pk; for (pk in PRIV) { if (PRIV.hasOwnProperty(pk)) delete PRIV[pk]; } for (mx = 0; mx < rows[i].jobs.length; mx++) PRIV[rows[i].jobs[mx]] = true; }
           if (rows[i].id === 'equip' && rows[i].rows) { EQUIP.length = 0; for (mx = 0; mx < rows[i].rows.length; mx++) EQUIP.push(rows[i].rows[mx]); }
           if (rows[i].id === 'rem') { REM.on = rows[i].on !== false; REM.log = rows[i].log || {}; }
           RSNAP['cfg|' + rows[i].id] = JSON.stringify(rows[i]);
