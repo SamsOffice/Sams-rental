@@ -178,5 +178,7 @@ R("      opts += '</optgroup><optgroup label=\"Tools\">';","      if (R0 && R0.a
 R("<h3 class=\"fsec\">Equipment and driver</h3>","<h3 class=\"fsec\">Equipment and driver</h3>' + (EQUIP.length || R0 ? '' : '<p class=\"note\" style=\"grid-column:1/-1\">You have not added any equipment yet. Close this, tap Equipment, add your machines, then come back.</p>') + '")
 R("bar + ban + '<div class=\"card livecard\" id=\"live\">'","bar + ban + driverLinkCard() + '<div class=\"card livecard\" id=\"live\">'")
 R("    if (a === 'toast') toast(b.getAttribute('data-msg'));\n    else if (a === 'assign')","    if (a === 'dlcopy') { copyText(DRV_LINK); toast('Driver link copied'); }\n    else if (a === 'dlmsg') { copyText(drvMsgText(b.getAttribute('data-l'), b.getAttribute('data-w'))); toast('Message copied. Paste it into a text.'); }\n    else if (a === 'toast') toast(b.getAttribute('data-msg'));\n    else if (a === 'assign')")
+R("    r.setAttribute('data-theme', dark ? 'light' : 'dark');\n  });","    r.setAttribute('data-theme', dark ? 'light' : 'dark');\n    try { localStorage.setItem('so-theme', dark ? 'light' : 'dark'); } catch (er) {}\n  });")
+R("</head>","<script>try { document.documentElement.setAttribute('data-theme', localStorage.getItem('so-theme') === 'dark' ? 'dark' : 'light'); } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }</script></head>")
 open('app.html','w').write(s)
 print(len(s))

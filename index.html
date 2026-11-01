@@ -694,7 +694,7 @@
 body.drvmode .app{display:none!important}
 </style>
 
-</head><body>
+<script>try { document.documentElement.setAttribute('data-theme', localStorage.getItem('so-theme') === 'dark' ? 'dark' : 'light'); } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }</script></head><body>
 <div id="gate" style="position:fixed;inset:0;z-index:9999;background:#fff;overflow:auto;font-family:inherit;color:#111827">
   <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:14px 18px;border-bottom:1px solid #E5E7EB;min-height:60px"><img src="/Sams-rental/logo.png" alt="" style="width:36px;height:36px;border-radius:50%"><span style="font-size:20px;font-weight:700">Sams Office</span></div>
   <form id="gF" style="max-width:520px;margin:0 auto;padding:clamp(28px,5vw,44px) 22px 40px">
@@ -1017,6 +1017,7 @@ body.drvmode .app{display:none!important}
   document.getElementById('themeBtn').addEventListener('click', function () {
     var r = document.documentElement, dark = r.getAttribute('data-theme') === 'dark' || (!r.getAttribute('data-theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
     r.setAttribute('data-theme', dark ? 'light' : 'dark');
+    try { localStorage.setItem('so-theme', dark ? 'light' : 'dark'); } catch (er) {}
   });
 
   /* ---- Other pages (example data) ---- */
