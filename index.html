@@ -2401,7 +2401,7 @@ body.drvmode .app{display:none!important}
   document.getElementById('rentalsHost').addEventListener('change', function (e) { if (e.target.id === 'rStep') { var r = rentalById(RS.id); r.step = parseInt(e.target.value, 10); r.rd = r.step === 5 ? 1 : 0; toast('Delivery status updated. The client portal shows it.'); drawRental(); } });
   document.getElementById('rentalsHost').addEventListener('click', function (e) {
     var ib = e.target.closest('[data-inv]'); if (ib) { openInvKey(ib.getAttribute('data-inv')); return; }
-    var tr = e.target.closest('tr[data-r]'); if (tr) { openRental(tr.getAttribute('data-r')); return; }
+    var tr = e.target.closest('tr[data-r]'); if (tr) { var rd0 = document.getElementById('rentalDetail'); if (RS && RS.id === tr.getAttribute('data-r') && rd0 && !rd0.hidden) { closeRental(); return; } openRental(tr.getAttribute('data-r')); return; }
     var mo = e.target.closest('[data-more]'); if (mo) { setView('allrent'); return; }
     var t = e.target.closest('[data-rt]'); if (t) { RS.tab = t.getAttribute('data-rt'); RS.del = false; drawRental(); return; }
     var b = e.target.closest('[data-ra]'); if (!b) return; var a = b.getAttribute('data-ra'), r = rentalById(RS.id);
