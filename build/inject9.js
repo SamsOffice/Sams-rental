@@ -77,7 +77,7 @@
 
   function liveTick() { }
   /* ---- Dispatch: card with the driver app link and ready-to-send messages ---- */
-  var DRV_LINK = 'https://samsoffice.github.io/Sams-rental/';
+  var DRV_LINK = 'https://samsoffice.github.io/Sams-rental/#conductores';
   var DRV_USERS = [['Sams', 'sams'], ['Gustavo', 'gustavo'], ['Jose Luis', 'jose luis']];
   function drvMsgText(lang, who) {
     var u = ''; for (var k = 0; k < DRV_USERS.length; k++) { if (DRV_USERS[k][0] === who) u = DRV_USERS[k][1]; }
@@ -94,3 +94,14 @@
       '<p class="note" style="padding:10px 14px;word-break:break-all"><b>' + DRV_LINK + '</b></p>' + rows +
       '<p class="note" style="padding:10px 14px">Paste the copied message into a text. Give each driver their PIN in a separate message, never in the same one as the link.</p></div>';
   }
+
+  /* ---- driver sign-in wording: the link ending in #conductores shows a Spanish, PIN-based sign-in ---- */
+  function applyDriverGate() {
+    var on = /^#(conductores|driver)$/i.test(location.hash || '');
+    var set = function (id, t) { var e = document.getElementById(id); if (e) e.textContent = t; };
+    if (!on) return;
+    set('gT', 'Bienvenido a Sams Office'); set('gS', 'Entra con tu usuario y tu PIN de 6 n\u00fameros.');
+    set('gB', 'Continuar'); set('gUL', 'Usuario'); set('gPL', 'PIN'); set('gN', 'Esta app es para los conductores de Sams Construction Services LTD. Se queda abierta en tu tel\u00e9fono hasta que toques Cerrar sesi\u00f3n. Si olvidaste tu PIN, llama a la oficina.');
+    var p = document.getElementById('gP'); if (p) { p.setAttribute('inputmode', 'numeric'); p.setAttribute('autocomplete', 'off'); }
+  }
+  applyDriverGate(); window.addEventListener('hashchange', applyDriverGate);
