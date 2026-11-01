@@ -160,5 +160,6 @@ R("sel = parseInt(tr.getAttribute('data-id'), 10); scanState = 'idle'; DS.del = 
 R("    var j = find(sel), el = document.getElementById('pane');\n","    var j = find(sel), el = document.getElementById('pane'), dt1 = document.getElementById('detail'); if (dt1) dt1.hidden = false;\n")
 R("<button class=\"tab\" role=\"tab\" data-t=\"history\" aria-selected=\"false\">History</button>\n","<button class=\"tab\" role=\"tab\" data-t=\"history\" aria-selected=\"false\">History</button>\n          <button class=\"btn sm\" id=\"dClose\" style=\"margin-left:auto\">Close</button>\n")
 R("var tr = e.target.closest('tr[data-r]'); if (tr) { openRental(tr.getAttribute('data-r')); return; }","var tr = e.target.closest('tr[data-r]'); if (tr) { var rd0 = document.getElementById('rentalDetail'); if (RS && RS.id === tr.getAttribute('data-r') && rd0 && !rd0.hidden) { closeRental(); return; } openRental(tr.getAttribute('data-r')); return; }")
+R("    if (a === 'dtab') { DAPP.tab = key; drawDrv(); return; }","    if (a === 'dtab') { DAPP.tab = key; DAPP.open = ''; drawDrv(); return; }\n    if (a === 'dopen') { DAPP.open = DAPP.open === key ? '' : key; drawDrv(); return; }")
 open('app.html','w').write(s)
 print(len(s))

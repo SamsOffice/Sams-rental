@@ -18,7 +18,17 @@
     for (k = 0; k < all.length; k++) {
       var d = all[k], day = String(d.time || 'Sin fecha').split(',')[0], tk = drvDayKey(d.time);
       if (day !== last) { last = day; h += '<div class="dasec">' + invEsc(day) + (tk === tk0 ? ' (Hoy)' : '') + '</div>'; }
-      h += '<div class="dadone"><div><b>' + invEsc(d.title) + '</b><small>' + (onlyMine ? '' : invEsc(d.who) + ' &middot; ') + invEsc(d.client) + ' &middot; ' + invEsc(d.time || '') + (d.addr ? ' &middot; ' + invEsc(d.addr) : '') + '</small></div></div>';
+      var op = DAPP.open === d.key;
+      h += '<div class="dacard" style="padding:0"><button data-d="dopen" data-k="' + d.key + '" aria-expanded="' + op + '" style="all:unset;box-sizing:border-box;display:block;width:100%;padding:16px;cursor:pointer"><b style="display:block;font-size:16px">' + invEsc(d.title) + '</b><small style="display:block;margin-top:4px;opacity:.75">' + (onlyMine ? '' : invEsc(d.who) + ' &middot; ') + invEsc(d.client) + ' &middot; ' + invEsc(d.time || '') + '</small><small style="display:block;margin-top:6px;color:#1D6FEF;font-weight:600">' + (op ? 'Toca para cerrar' : 'Toca para ver todo') + '</small></button>';
+      if (op) {
+        h += '<div style="padding:0 16px 16px"><div class="dacl">' + invEsc(d.client) + (d.ph ? ' &middot; ' + d.ph : '') + '</div><div class="daaddr">' + icon('pin') + '<span>' + invEsc(d.addr || 'Sin direcci\u00f3n') + '</span></div>' +
+          '<div class="dacl" style="margin-top:8px">' + (onlyMine ? 'Tuyo' : 'Chofer: ' + invEsc(d.who)) + ' &middot; ' + invEsc(d.time || '') + '</div>' +
+          (d.off ? '<div class="daoff"><b>Notas de la oficina</b>' + invEsc(d.off) + '</div>' : '') +
+          (d.paid === null || d.paid === undefined ? '' : '<span class="dapay ' + (d.paid ? 'y' : 'n') + '">' + (d.paid ? 'PAGADO' : 'NO PAGADO') + '</span>') +
+          (d.amt ? '<div class="dacl" style="margin-top:8px">Total: ' + money(d.amt) + '</div>' : '') +
+          '<div class="dacalls"><a class="dacall" href="tel:' + d.ph + '">' + icon('phone') + 'Llamar</a><a class="damap" href="https://maps.google.com?q=' + encodeURIComponent(d.addr || '') + '" target="_blank" rel="noopener">' + icon('map') + 'Mapa</a></div></div>';
+      }
+      h += '</div>';
     }
     return h;
   }
