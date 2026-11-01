@@ -1672,7 +1672,7 @@ body.drvmode .app{display:none!important}
       h += '<div class="drv"><div class="drvh"><span class="av">' + names[c].charAt(0) + '</span><b>' + names[c] + '</b><span class="jc">' + its.length + ' jobs</span></div><div class="drvb">' + jobs + '</div>' +
         '<div class="drvf">' + dmStatus(names[c]) + drvWaitLine(names[c]) + drvNetLine(names[c]) + '<button data-act="dnote" data-n="' + names[c] + '">Leave a note</button><button data-act="drvapp" data-n="' + names[c] + '">Open Driver App &rarr;</button></div></div>';
     }
-    return '<div class="drvgrid">' + h + '</div>';
+    return '<div class="card livecard" id="live">' + liveInner() + '</div><div class="drvgrid">' + h + '</div>';
   }
   var DAPP = { name: '', undo: '', scan: null };
   function openDrv(n) { DAPP = { name: n, undo: '', scan: null }; document.getElementById('drvApp').hidden = false; drawDrv(); document.getElementById('drvApp').scrollTop = 0; }
@@ -4165,9 +4165,9 @@ body.drvmode .app{display:none!important}
     return '<header><h2>Where the drivers are</h2>' + pillH(any ? 'From their phones' : 'Waiting', any ? 'good' : 'warn') + '</header>' + rows + '<p class="note" style="padding:10px 14px">Each driver shares their place while the driver app is open on their phone.</p>';
   }
   setInterval(function () {
-    if (!ME || isDrv() || curView !== 'dispatch') return;
+    if (!ME || isDrv() || (curView !== 'dispatch' && curView !== 'drivers')) return;
     var ae = document.activeElement; if (ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;
-    loadRecs().then(function () { setView('dispatch'); });
+    var cv0 = curView; loadRecs().then(function () { if (curView === cv0) setView(cv0); });
   }, 60000);
   /* ---- receipt photos in Supabase Storage (private bucket 'receipts') ---- */
   var PHC = {}, PHPEND = {}, PH_BLANK = 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="240" height="120"><rect width="240" height="120" fill="#F3F4F6"/><text x="120" y="64" font-size="14" text-anchor="middle" fill="#6B7280" font-family="sans-serif">Loading photo...</text></svg>');

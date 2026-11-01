@@ -188,5 +188,7 @@ R('<img src="/Sams-rental/logo.png" alt="" style="width:36px;height:36px;border-
 R('margin-bottom:10px" id="gT">Welcome to Sams Office</div>','margin-bottom:10px" id="gT">Welcome</div>')
 R('This system is for Sams Construction Services LTD staff only.','This system is for authorized staff only.')
 R('<title>Sams Office Dashboard</title>','<title>Sign in</title><meta name="robots" content="noindex,nofollow">')
+R("    return '<div class=\"drvgrid\">' + h + '</div>';","    return '<div class=\"card livecard\" id=\"live\">' + liveInner() + '</div><div class=\"drvgrid\">' + h + '</div>';")
+R("    if (!ME || isDrv() || curView !== 'dispatch') return;\n    var ae = document.activeElement; if (ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;\n    loadRecs().then(function () { setView('dispatch'); });","    if (!ME || isDrv() || (curView !== 'dispatch' && curView !== 'drivers')) return;\n    var ae = document.activeElement; if (ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;\n    var cv0 = curView; loadRecs().then(function () { if (curView === cv0) setView(cv0); });")
 open('app.html','w').write(s)
 print(len(s))
