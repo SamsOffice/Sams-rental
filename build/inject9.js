@@ -68,7 +68,7 @@
       if (l) { any = true; mins = Math.max(0, Math.round((Date.now() - new Date(l.at).getTime()) / 60000)); }
       rows += '<div class="lvrow"><span class="lvdot" style="background:' + DCOL[n] + '"></span><div class="grow"><b>' + invEsc(n) + '</b><span class="sub">' + (l ? 'Updated ' + (mins < 1 ? 'just now' : mins + ' min ago') : 'Not sharing yet') + (nx ? ' &middot; Next stop: ' + invEsc(nx.client) + ', ' + invEsc(nx.addr || '') : ' &middot; No active job') + '</span></div>' + (l ? '<a class="btn sm" target="_blank" rel="noopener" href="https://maps.apple.com/?ll=' + l.lat + ',' + l.lng + '&q=' + encodeURIComponent(n) + '">' + icon('map') + 'Open map</a>' : '') + '</div>';
     }
-    setTimeout(function () { lvLoadLib(function () { try { lvDrawMap(); } catch (e) { var m = document.getElementById('lvmapL'); if (m) m.innerHTML = '<p class="note" style="padding:14px">The map could not draw. The list below still shows each driver.</p>'; } }); }, 60);
+    setTimeout(lvStart, 60);
     return '<header><h2>Where the drivers are</h2>' + pillH(any ? 'From their phones' : 'Waiting', any ? 'good' : 'warn') + '</header>' +
       '<div id="lvmapL" style="height:300px;margin:0 14px 10px;border-radius:12px;overflow:hidden;background:#1b2433"></div>' + (any ? '' : '<p class="note" style="padding:0 14px 6px">No drivers sharing right now. Pins show up here when a driver signs in and taps Entendido.</p>') + rows +
       '<p class="note" style="padding:10px 14px">Each driver shares their place while the driver app is open on their phone. Pins update about every minute.</p>';
@@ -123,3 +123,46 @@
   }
   applyDriverGate(); window.addEventListener('hashchange', applyDriverGate);
   setInterval(function () { var g = document.getElementById('gate'); if (g && g.hidden && document.title !== 'Office') document.title = 'Office'; }, 1000);
+
+  /* ---- Google Maps (used when the owner saves a Google map key in Settings; otherwise the free map above is used) ---- */
+  var MAPKEY = '', GLOAD = 0, GMAP = null, GMARK = {};
+  function lvFail(msg) { var m = document.getElementById('lvmapL'); if (m) m.innerHTML = '<p class="note" style="padding:14px">' + msg + ' The list below still shows each driver.</p>'; }
+  function lvStart() {
+    try {
+      if (MAPKEY) { lvLoadG(function () { try { lvDrawG(); } catch (e) { lvFail('The map could not draw.'); } }); }
+      else { lvLoadLib(function () { try { lvDrawMap(); } catch (e) { lvFail('The map could not draw.'); } }); }
+    } catch (e2) { lvFail('The map could not load.'); }
+  }
+  function lvLoadG(cb) {
+    if (window.google && google.maps && google.maps.Map) { cb(); return; }
+    if (GLOAD === 1) { setTimeout(function () { lvLoadG(cb); }, 400); return; }
+    if (GLOAD === 2) { lvFail('Google would not load the map.'); return; }
+    GLOAD = 1;
+    window.gm_authFailure = function () { GLOAD = 2; lvFail('Google rejected the map key. Check the key in Settings.'); };
+    window.__gmInit = function () { GLOAD = 3; cb(); };
+    var sc = document.createElement('script'); sc.async = true; sc.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(MAPKEY) + '&callback=__gmInit';
+    sc.onerror = function () { GLOAD = 2; lvFail('Google would not load the map.'); };
+    document.head.appendChild(sc);
+  }
+  function lvDrawG() {
+    var el = document.getElementById('lvmapL'); if (!el || !window.google) return;
+    if (GMAP && GMAP.getDiv() !== el) { if (el.parentNode) { el.parentNode.replaceChild(GMAP.getDiv(), el); el = GMAP.getDiv(); } else { GMAP = null; GMARK = {}; } }
+    if (!GMAP) {
+      GMAP = new google.maps.Map(el, { center: { lat: 40.7282, lng: -73.7949 }, zoom: 13, disableDefaultUI: true, zoomControl: true, gestureHandling: 'greedy',
+        styles: [{ featureType: 'poi', stylers: [{ visibility: 'off' }] }, { featureType: 'transit', stylers: [{ visibility: 'off' }] }, { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] }] });
+    }
+    var b = new google.maps.LatLngBounds(), cnt = 0, k, n, l, pos;
+    for (k = 0; k < LNAMES.length; k++) {
+      n = LNAMES[k]; l = LOCS[n]; if (!l || typeof l.lat !== 'number') continue;
+      pos = { lat: l.lat, lng: l.lng };
+      if (GMARK[n]) { GMARK[n].setPosition(pos); }
+      else { GMARK[n] = new google.maps.Marker({ position: pos, map: GMAP, title: n, label: { text: n.charAt(0), color: '#fff', fontWeight: '700' }, icon: { path: google.maps.SymbolPath.CIRCLE, scale: 15, fillColor: DCOL[n], fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2 } }); }
+      b.extend(pos); cnt++;
+    }
+    if (cnt) { GMAP.fitBounds(b, 60); if (cnt === 1) { var z = GMAP.getZoom(); if (z > 15) GMAP.setZoom(15); } }
+  }
+  function mapKeyCard() {
+    return '<div class="card"><header><h2>Map</h2></header><div style="padding:0 14px 14px"><p class="note" style="padding:6px 0">' + (MAPKEY ? 'A Google map key is saved. The live map uses Google Maps.' : 'The live map uses the free map. To use Google Maps, paste your Google map key here.') + '</p>' +
+      '<div class="fld"><label for="fMapKey">Google map key</label><input id="fMapKey" type="password" autocomplete="off" autocapitalize="none" placeholder="' + (MAPKEY ? 'Saved. Paste a new one to replace it.' : 'Paste the key here') + '"></div>' +
+      '<div class="actions"><button class="btn primary" data-act="mapkey">Save map key</button>' + (MAPKEY ? '<button class="btn" data-act="mapkeyrm">Remove key</button>' : '') + '</div></div></div>';
+  }

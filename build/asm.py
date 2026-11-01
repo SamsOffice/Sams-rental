@@ -190,5 +190,6 @@ R('This system is for Sams Construction Services LTD staff only.','This system i
 R('<title>Sams Office Dashboard</title>','<title>Sign in</title><meta name="robots" content="noindex,nofollow">')
 R("    return '<div class=\"drvgrid\">' + h + '</div>';","    return '<div class=\"card livecard\" id=\"live\">' + liveInner() + '</div><div class=\"drvgrid\">' + h + '</div>';")
 R("    if (!ME || isDrv() || curView !== 'dispatch') return;\n    var ae = document.activeElement; if (ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;\n    loadRecs().then(function () { setView('dispatch'); });","    if (!ME || isDrv() || (curView !== 'dispatch' && curView !== 'drivers')) return;\n    var ae = document.activeElement; if (ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;\n    var cv0 = curView; loadRecs().then(function () { if (curView === cv0) setView(cv0); });")
+R("    if (a === 'dlcopy') {","    if (a === 'mapkey') { var mk0 = (document.getElementById('fMapKey') || {}).value || ''; mk0 = mk0.trim(); if (!mk0) { toast('Paste the key first'); return; } MAPKEY = mk0; GLOAD = 0; GMAP = null; GMARK = {}; toast('Map key saved'); setView('settings'); }\n    else if (a === 'mapkeyrm') { MAPKEY = ''; GMAP = null; GMARK = {}; toast('Map key removed'); setView('settings'); }\n    else if (a === 'dlcopy') {")
 open('app.html','w').write(s)
 print(len(s))
