@@ -1991,8 +1991,8 @@ body.drvmode .app{display:none!important}
   ];
   var MATS = ['Clean concrete', 'Mixed debris', 'Dirt', 'Heavy debris', 'Clean wood', 'Roofing shingles'];
   var RFILE = '', made = { rent: 0, dump: 0, unpaid: 0 }, FKIND = '', ERID = '', EDID = 0, DCNT = 0, SEND = null, RCNT = 0, BASEURL = 'https://samsoffice.github.io/Sams-rental/';
-  var PRESET_M = ['Caterpillar Excavator CAT 320', 'Caterpillar Excavator CAT 336', 'Mini Excavator', 'Kubota Skid Steer', 'Bobcat Skid Steer', 'Backhoe Loader', 'Wheel Loader', 'Bulldozer D6', 'Dump Truck', 'Scissor Lift 26ft', 'Scissor Lift 32ft', 'Boom Lift 45ft', 'Telescopic Forklift', 'Crane 30 Ton', 'Compact Track Loader', 'Trencher', 'Rough Terrain Forklift'];
-  var PRESET_T = ['Demolition Hammer Set', 'Jackhammer', 'Concrete Mixer', 'Concrete Saw', 'Plate Compactor', 'Pressure Washer', 'Generator 10kW', 'Generator 20kW', 'Air Compressor', 'Pipe Threader', 'Welding Machine', 'Water Pump', 'Light Tower', 'Floor Grinder', 'Core Drill'];
+  var PRESET_M = [];
+  var PRESET_T = [];
   var CLIENT_TAGS = ['Good Standing', 'Paying Client', 'Chronically Delinquent', 'Cash Only', 'New Client', 'VIP Client', 'Do Not Rent', 'Payment Plan', 'Blacklisted'];
   function eqRows() {
     var h = '';
@@ -2031,6 +2031,7 @@ body.drvmode .app{display:none!important}
       for (kq = 0; kq < EQUIP.length; kq++) { seen[EQUIP[kq].n] = 1; opts += '<option' + (EQUIP[kq].n === d0.asset ? ' selected' : '') + '>' + invEsc(EQUIP[kq].n) + '</option>'; }
       opts += '</optgroup><optgroup label="Machines">';
       for (kq = 0; kq < PRESET_M.length; kq++) { if (!seen[PRESET_M[kq]]) opts += '<option' + (PRESET_M[kq] === d0.asset ? ' selected' : '') + '>' + PRESET_M[kq] + '</option>'; }
+      if (R0 && R0.asset && !seen[R0.asset]) opts += '<option selected>' + invEsc(R0.asset) + '</option>';
       opts += '</optgroup><optgroup label="Tools">';
       for (kq = 0; kq < PRESET_T.length; kq++) { if (!seen[PRESET_T[kq]]) opts += '<option' + (PRESET_T[kq] === d0.asset ? ' selected' : '') + '>' + PRESET_T[kq] + '</option>'; }
       opts += '</optgroup>';
@@ -2040,7 +2041,7 @@ body.drvmode .app{display:none!important}
         '<div class="fld wide"><label for="fSearch">Search existing client</label><input id="fSearch" list="fClients" type="text" placeholder="Start typing a name" autocomplete="off">' + dl + '</div>' +
         fld('fClient', 'Client name', 'text', d0.client, 'Who is renting', true) + fld('fPhone', 'Phone', 'tel', ph0, '+1 (718) 555-0100') + fld('fEmail', 'Email', 'email', d0.email, 'name@email.com') + fld('fAddr', 'Address', 'text', d0.addr, 'Street, City') +
         selF('fTag', 'Client tag', CLIENT_TAGS, d0.tag) + '</div>' +
-        '<h3 class="fsec">Equipment and driver</h3><div class="fgrid"><div class="fld"><label for="fAsset">Equipment *</label><select id="fAsset">' + opts + '</select></div>' +
+        '<h3 class="fsec">Equipment and driver</h3>' + (EQUIP.length || R0 ? '' : '<p class="note" style="grid-column:1/-1">You have not added any equipment yet. Close this, tap Equipment, add your machines, then come back.</p>') + '<div class="fgrid"><div class="fld"><label for="fAsset">Equipment *</label><select id="fAsset">' + opts + '</select></div>' +
         selF('fDrv', 'Driver', ['Sams', 'Gustavo', 'Jose Luis'], d0.driver) + '<div class="fld wide"><label for="fMach">Specific machine (optional)</label><select id="fMach">' + machOpts(d0.mid) + '</select></div>' +
         '<div class="fld wide"><label for="fNotes">Notes for driver</label><textarea id="fNotes" placeholder="Special delivery instructions...">' + invEsc(d0.notes) + '</textarea></div></div>' +
         '<h3 class="fsec">Timeframe</h3><div class="fgrid">' + fld('fStart', 'Start date', 'date', d0.si, '', true) + fld('fDays', 'Duration (days)', 'number', days0, '', true) + fld('fDue', 'Due date (auto)', 'date', d0.di) + '</div>' +
@@ -2168,7 +2169,7 @@ body.drvmode .app{display:none!important}
       t = 'Equipment';
       var list = '';
       for (var q = 0; q < EQUIP.length; q++) list += '<div class="eqrow"><span class="ic2">' + icon('box') + '</span><div class="grow"><b>' + invEsc(EQUIP[q].n) + '</b><div class="sub">$' + invMoney(EQUIP[q].p) + ' per ' + invEsc(EQUIP[q].u) + '</div></div><button type="button" class="btn sm" data-fa="eqed" data-ix="' + q + '">Change price</button> <button type="button" class="btn sm" data-fa="rm" data-ix="' + q + '">Remove</button></div>';
-      if (!list) list = '<p class="note">No equipment added yet. Add what you rent out below, or tap a suggestion.</p>';
+      if (!list) list = '<p class="note">No equipment added yet. Type the name and price of a machine below and tap Add equipment.</p>';
       var sg = '', sq, have = {}; for (sq = 0; sq < EQUIP.length; sq++) have[EQUIP[sq].n] = 1;
       for (sq = 0; sq < PRESET_M.length; sq++) { if (!have[PRESET_M[sq]]) sg += '<button type="button" class="btn sm" style="margin:3px" data-fa="sugg" data-n="' + invEsc(PRESET_M[sq]) + '">' + invEsc(PRESET_M[sq]) + '</button>'; }
       for (sq = 0; sq < PRESET_T.length; sq++) { if (!have[PRESET_T[sq]]) sg += '<button type="button" class="btn sm" style="margin:3px" data-fa="sugg" data-n="' + invEsc(PRESET_T[sq]) + '">' + invEsc(PRESET_T[sq]) + '</button>'; }
