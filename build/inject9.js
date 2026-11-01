@@ -49,7 +49,7 @@
     if (LMAP && LMAP._container !== el) { if (el.parentNode) { el.parentNode.replaceChild(LMAP._container, el); el = LMAP._container; } else { try { LMAP.remove(); } catch (e) {} LMAP = null; LMARK = {}; } }
     if (!LMAP) {
       LMAP = L.map(el, { zoomControl: true, attributionControl: true }).setView([40.7282, -73.7949], 13);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OpenStreetMap contributors &copy; CARTO' }).addTo(LMAP);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OpenStreetMap contributors &copy; CARTO' }).addTo(LMAP);
     }
     var pts = [], k, n, l;
     for (k = 0; k < LNAMES.length; k++) {
@@ -64,9 +64,9 @@
   function liveInner() {
     var rows = '', k, n, l, mins, any = false;
     for (k = 0; k < LNAMES.length; k++) {
-      n = LNAMES[k]; l = LOCS[n];
+      n = LNAMES[k]; l = LOCS[n]; var nx = drvItems(n, false)[0];
       if (l) { any = true; mins = Math.max(0, Math.round((Date.now() - new Date(l.at).getTime()) / 60000)); }
-      rows += '<div class="lvrow"><span class="lvdot" style="background:' + DCOL[n] + '"></span><div class="grow"><b>' + invEsc(n) + '</b><span class="sub">' + (l ? (mins < 1 ? 'Just now' : mins + ' min ago') : 'Not sharing yet') + '</span></div>' + (l ? '<a class="btn sm" target="_blank" rel="noopener" href="https://maps.apple.com/?ll=' + l.lat + ',' + l.lng + '&q=' + encodeURIComponent(n) + '">' + icon('map') + 'Open map</a>' : '') + '</div>';
+      rows += '<div class="lvrow"><span class="lvdot" style="background:' + DCOL[n] + '"></span><div class="grow"><b>' + invEsc(n) + '</b><span class="sub">' + (l ? 'Updated ' + (mins < 1 ? 'just now' : mins + ' min ago') : 'Not sharing yet') + (nx ? ' &middot; Next stop: ' + invEsc(nx.client) + ', ' + invEsc(nx.addr || '') : ' &middot; No active job') + '</span></div>' + (l ? '<a class="btn sm" target="_blank" rel="noopener" href="https://maps.apple.com/?ll=' + l.lat + ',' + l.lng + '&q=' + encodeURIComponent(n) + '">' + icon('map') + 'Open map</a>' : '') + '</div>';
     }
     if (any) setTimeout(function () { lvLoadLib(function () { try { lvDrawMap(); } catch (e) { var m = document.getElementById('lvmapL'); if (m) m.innerHTML = '<p class="note" style="padding:14px">The map could not draw. The list below still shows each driver.</p>'; } }); }, 60);
     return '<header><h2>Where the drivers are</h2>' + pillH(any ? 'From their phones' : 'Waiting', any ? 'good' : 'warn') + '</header>' +
