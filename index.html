@@ -1700,10 +1700,11 @@ body.drvmode .app{display:none!important}
   }
   function drawDrv() {
     DV = true;
-    var n = DAPP.name, act = drvItems(n, false), dn = drvItems(n, true), h = '', k;
+    var n = DAPP.name, act = drvItems(n, false), dn = drvItems(n, true), h = '', k, hid = 0;
     act.sort(function (a, b) { return dKey(a.time) - dKey(b.time); });
+    if (!DAPP.all) { var tdk = drvTodayKey(), keep = [], q; for (q = 0; q < act.length; q++) { if (drvDayKey(act[q].time) <= tdk || dKey(act[q].time) >= 1e9) keep.push(act[q]); } hid = act.length - keep.length; act = keep; }
     h += drvNetBar() + '<div class="dahead"><span class="dalogo"></span><div><h1>' + greetEs() + ', ' + n + '</h1><p>' + act.length + (act.length === 1 ? ' trabajo activo' : ' trabajos activos') + ' &middot; Sams Construction</p></div></div>' + drvMsgs(n);
-    if (!act.length) h += '<div class="daempty"><b>Sin trabajos activos</b>Todos los trabajos completados</div>';
+    if (!act.length && !DAPP.all) h += '<div class="daempty"><b>' + (hid ? 'No tienes trabajos para hoy' : 'Sin trabajos activos') + '</b>' + (hid ? 'Toca el boton de abajo para ver otros dias' : 'Todos los trabajos completados') + '</div>';
     for (k = 0; k < act.length; k++) {
       var d = act[k], cls = d.type === 'PULL' || d.type === 'PICKUP' ? 'pull' : (d.type === 'SWAP' ? 'swap' : (d.type === 'RENTAL' ? 'rent' : ''));
       h += '<div class="dacard"><div class="datop"><b>' + invEsc(d.title) + '</b><span class="dabadge ' + cls + '">' + d.type + '</span></div>' +
@@ -1722,6 +1723,7 @@ body.drvmode .app{display:none!important}
       h += '<div class="dasec">Completados Recientemente</div>';
       for (k = 0; k < dn.length; k++) h += '<div class="dadone"><div><b>' + invEsc(dn[k].title) + '</b><small>' + invEsc(dn[k].client) + '</small></div><button data-d="undo2" data-k="' + dn[k].key + '">Recuperar</button></div>';
     }
+    h += '<button class="danext" style="background:#fff;color:#1D6FEF;border:2px solid #1D6FEF;margin-top:12px" data-d="dall">' + (DAPP.all ? 'Volver a solo hoy' : 'Ver otros dias y trabajos de companeros' + (hid ? ' (' + hid + ' tuyos mas)' : '')) + '</button>' + (DAPP.all ? drvAllList(n) : '');
     h += drvSites() + '<div class="dafoot"><b>Sams Office</b> &middot; Renta y Descargas</div>';
     document.getElementById('drvBody').innerHTML = h;
     paintIcons(document.getElementById('drvBody'));
@@ -1735,6 +1737,7 @@ body.drvmode .app{display:none!important}
   document.getElementById('drvBody').addEventListener('click', function (e) {
     var b = e.target.closest('[data-d]'); if (!b) return; var a = b.getAttribute('data-d'), key = b.getAttribute('data-k');
     if (a === 'msgread') { msgRead(DAPP.name, key); drawDrv(); return; }
+    if (a === 'dall') { DAPP.all = !DAPP.all; drawDrv(); return; }
     if (a === 'undo' && DAPP.undo !== key) { DAPP.undo = key; drawDrv(); return; }
     if (a === 'note') {
       var ta = document.getElementById('dn_' + key);
@@ -4363,6 +4366,21 @@ body.drvmode .app{display:none!important}
   document.getElementById('pane').addEventListener('click', function (e) {
     var b = e.target.closest('[data-act="rattach"]'); if (b) openForm('rattach');
   });
+  /* ---- driver app: show only today (plus anything overdue) by default; button for other days and coworkers ---- */
+  function drvTodayKey() { var t = TODAYISO().split('-'); return (parseInt(t[1], 10) - 1) * 100 + parseInt(t[2], 10); }
+  function drvDayKey(t) { return Math.floor(dKey(t) / 10000); }
+  function drvAllList(me) {
+    var all = [], k, j, items, h = '', last = '';
+    for (k = 0; k < LNAMES.length; k++) { items = drvItems(LNAMES[k], false); for (j = 0; j < items.length; j++) { items[j].who = LNAMES[k]; all.push(items[j]); } }
+    all.sort(function (a, b) { return dKey(a.time) - dKey(b.time); });
+    if (!all.length) return '<div class="daempty"><b>No hay trabajos</b>Nadie tiene trabajos activos</div>';
+    for (k = 0; k < all.length; k++) {
+      var d = all[k], day = String(d.time || 'Sin fecha').split(',')[0], tk = drvDayKey(d.time);
+      if (day !== last) { last = day; h += '<div class="dasec">' + invEsc(day) + (tk === drvTodayKey() ? ' (Hoy)' : '') + '</div>'; }
+      h += '<div class="dadone"><div><b>' + invEsc(d.title) + '</b><small>' + invEsc(d.client) + ' &middot; ' + invEsc(d.time || '') + ' &middot; ' + (d.who === me ? 'Tuyo' : invEsc(d.who)) + '</small></div></div>';
+    }
+    return h;
+  }
 </script>
 
 </body></html>

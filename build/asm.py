@@ -35,7 +35,7 @@ s=s.replace('src="logo.png"','src="/Sams-rental/logo.png"')
 # kill simulated trucks
 rep('function liveInner() {','function liveInner() {\n    return \'<div class="card"><div class="sub" style="padding:20px">Live truck tracking is not connected yet. Dispatch shows the real stops below.</div></div>\';\n  }\n  function liveInnerDemo() {')
 s=s.replace("f: { site: smp.site, ticket: smp.ticket, lb: smp.lb, fee: smp.fee }","f: { site: '', ticket: '', lb: 0, fee: 0 }")
-inj=open('inject.js').read()+open('inject2.js').read()+open('inject3.js').read()+open('inject4.js').read()+open('inject5.js').read()+open('inject6.js').read()+open('inject7.js').read()+open('inject8.js').read()
+inj=open('inject.js').read()+open('inject2.js').read()+open('inject3.js').read()+open('inject4.js').read()+open('inject5.js').read()+open('inject6.js').read()+open('inject7.js').read()+open('inject8.js').read()+open('inject9.js').read()
 inj=inj.replace('    mapAll(); takeSnap();\n  }','    mapAll(); takeSnap(); await loadRecs();\n  }',1)
 assert 'await loadRecs' in inj
 inj=inj.replace('    SYNCING = false;\n    if (err) {','    try { var e2 = await syncRecs(); if (e2) err = e2; } catch (e) { err = String(e && e.message || e); }\n    SYNCING = false;\n    if (err) {',1)
@@ -153,5 +153,9 @@ R("var E0 = EQUIP[0] || { n: (typeof PRESET_M !== 'undefined' && PRESET_M[0]) ||
 R("var opts = '<optgroup label=\"Your equipment\">', seen = {}, kq;","var opts = (R0 ? '' : '<option value=\"\" selected>Choose equipment</option>') + '<optgroup label=\"Your equipment\">', seen = {}, kq;")
 R("if (!st) { err.textContent = 'Pick the start date.'; return; }","if (!st) { err.textContent = 'Pick the start date.'; return; }\n      if (!fv('fAsset')) { err.textContent = 'Choose the equipment.'; return; }")
 R("  .dabar .btn { border-radius: 99px; padding: 8px 16px; font-weight: 600; }","  .dabar .btn { border-radius: 99px; padding: 8px 16px; font-weight: 600; background: #fff; color: #1F2937; border: 1px solid #94A3B8; }")
+R("var n = DAPP.name, act = drvItems(n, false), dn = drvItems(n, true), h = '', k;\n    act.sort(function (a, b) { return dKey(a.time) - dKey(b.time); });","var n = DAPP.name, act = drvItems(n, false), dn = drvItems(n, true), h = '', k, hid = 0;\n    act.sort(function (a, b) { return dKey(a.time) - dKey(b.time); });\n    if (!DAPP.all) { var tdk = drvTodayKey(), keep = [], q; for (q = 0; q < act.length; q++) { if (drvDayKey(act[q].time) <= tdk || dKey(act[q].time) >= 1e9) keep.push(act[q]); } hid = act.length - keep.length; act = keep; }")
+R("if (!act.length) h += '<div class=\"daempty\"><b>Sin trabajos activos</b>Todos los trabajos completados</div>';","if (!act.length && !DAPP.all) h += '<div class=\"daempty\"><b>' + (hid ? 'No tienes trabajos para hoy' : 'Sin trabajos activos') + '</b>' + (hid ? 'Toca el boton de abajo para ver otros dias' : 'Todos los trabajos completados') + '</div>';")
+R("    h += drvSites() + '<div class=\"dafoot\"><b>Sams Office</b>","    h += '<button class=\"danext\" style=\"background:#fff;color:#1D6FEF;border:2px solid #1D6FEF;margin-top:12px\" data-d=\"dall\">' + (DAPP.all ? 'Volver a solo hoy' : 'Ver otros dias y trabajos de companeros' + (hid ? ' (' + hid + ' tuyos mas)' : '')) + '</button>' + (DAPP.all ? drvAllList(n) : '');\n    h += drvSites() + '<div class=\"dafoot\"><b>Sams Office</b>")
+R("if (a === 'msgread') { msgRead(DAPP.name, key); drawDrv(); return; }","if (a === 'msgread') { msgRead(DAPP.name, key); drawDrv(); return; }\n    if (a === 'dall') { DAPP.all = !DAPP.all; drawDrv(); return; }")
 open('app.html','w').write(s)
 print(len(s))
