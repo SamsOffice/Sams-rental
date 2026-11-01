@@ -36,7 +36,7 @@
   }
   function lvDrawMap() {
     var el = document.getElementById('lvmapL'); if (!el || !window.L) return;
-    if (LMAP && LMAP._container !== el) { try { LMAP.remove(); } catch (e) {} LMAP = null; LMARK = {}; }
+    if (LMAP && LMAP._container !== el) { if (el.parentNode) { el.parentNode.replaceChild(LMAP._container, el); el = LMAP._container; } else { try { LMAP.remove(); } catch (e) {} LMAP = null; LMARK = {}; } }
     if (!LMAP) {
       LMAP = L.map(el, { zoomControl: true, attributionControl: true }).setView([40.7128, -73.9], 11);
       L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }).addTo(LMAP);
@@ -64,3 +64,5 @@
       '<p class="note" style="padding:10px 14px">Each driver shares their place while the driver app is open on their phone. Pins update about every minute.</p>';
   }
   document.getElementById('dClose').addEventListener('click', function () { document.getElementById('detail').hidden = true; });
+
+  function liveTick() { }
