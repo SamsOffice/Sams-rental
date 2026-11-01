@@ -3,7 +3,7 @@
 <script>(function(){var h=location.hash;if(/^#\/(book|portal|dump|combined|driver)(\/|$)/.test(h)){location.replace('/Sams-rental/legacy.html'+h);}})();</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<title>Sams Office Dashboard</title>
+<title>Sign in</title><meta name="robots" content="noindex,nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -696,9 +696,9 @@ body.drvmode .app{display:none!important}
 
 <script>try { document.documentElement.setAttribute('data-theme', localStorage.getItem('so-theme') === 'dark' ? 'dark' : 'light'); } catch (e) { document.documentElement.setAttribute('data-theme', 'light'); }</script></head><body>
 <div id="gate" style="position:fixed;inset:0;z-index:9999;background:#fff;overflow:auto;font-family:inherit;color:#111827">
-  <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:14px 18px;border-bottom:1px solid #E5E7EB;min-height:60px"><img src="/Sams-rental/logo.png" alt="" style="width:36px;height:36px;border-radius:50%"><span style="font-size:20px;font-weight:700">Sams Office</span></div>
+  <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding:14px 18px;border-bottom:1px solid #E5E7EB;min-height:60px"><span style="font-size:20px;font-weight:700">Staff sign-in</span></div>
   <form id="gF" style="max-width:520px;margin:0 auto;padding:clamp(28px,5vw,44px) 22px 40px">
-    <div style="font-size:clamp(24px,3vw,30px);font-weight:700;line-height:1.15;margin-bottom:10px" id="gT">Welcome to Sams Office</div>
+    <div style="font-size:clamp(24px,3vw,30px);font-weight:700;line-height:1.15;margin-bottom:10px" id="gT">Welcome</div>
     <div style="font-size:16px;color:#4B5563;margin-bottom:26px" id="gS">Enter your username and password to log in.</div>
     <label for="gU" id="gUL" style="display:block;font-size:15px;font-weight:600;margin-bottom:8px">Username</label>
     <div style="display:flex;align-items:center;height:56px;border:1.5px solid #9CA3AF;border-radius:8px;padding:0 16px"><input id="gU" type="text" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username" style="flex:1;min-width:0;border:none;outline:none;font-size:17px;background:transparent;height:100%;color:#111827"><span id="gUok" hidden style="color:#16A34A;font-size:22px;font-weight:700">&#10003;</span></div>
@@ -706,7 +706,7 @@ body.drvmode .app{display:none!important}
     <div style="display:flex;align-items:center;height:56px;border:1.5px solid #9CA3AF;border-radius:8px;padding:0 16px"><input id="gP" type="password" autocomplete="current-password" style="flex:1;min-width:0;border:none;outline:none;font-size:17px;background:transparent;height:100%;color:#111827"><span id="gPok" hidden style="color:#16A34A;font-size:22px;font-weight:700;margin-right:8px">&#10003;</span><button type="button" id="gEye" aria-label="Show or hide password" style="background:none;border:none;cursor:pointer;font-size:14px;font-weight:600;color:#374151;padding:8px">Show</button></div>
     <div id="gE" hidden style="margin-top:16px;background:#FEF2F2;border:1px solid #FCA5A5;border-radius:8px;padding:12px 14px;font-size:14px;color:#B91C1C"></div>
     <button id="gB" type="submit" disabled style="width:100%;height:56px;margin-top:26px;border:none;border-radius:8px;font-size:17px;font-weight:700;cursor:pointer;background:#2563EB;color:#fff">Continue</button>
-    <div id="gN" style="margin-top:26px;font-size:14px;color:#4B5563;line-height:1.55">This system is for Sams Construction Services LTD staff only. Your account stays signed in on this device until you tap Sign out. Forgot your password? Ask the owner to reset it.</div>
+    <div id="gN" style="margin-top:26px;font-size:14px;color:#4B5563;line-height:1.55">This system is for authorized staff only. Your account stays signed in on this device until you tap Sign out. Forgot your password? Ask the owner to reset it.</div>
   </form>
 </div>
 <div class="app">
@@ -4504,8 +4504,8 @@ body.drvmode .app{display:none!important}
     var on = /^#(conductores|driver)$/i.test(location.hash || '');
     var set = function (id, t) { var e = document.getElementById(id); if (e) e.textContent = t; };
     if (!on) return;
-    set('gT', 'Bienvenido a Sams Office'); set('gS', 'Toca tu nombre y escribe tu PIN.');
-    set('gB', 'Continuar'); set('gPL', 'PIN'); set('gN', 'Esta app es para los conductores de Sams Construction Services LTD. Se queda abierta en tu tel\u00e9fono hasta que toques Cerrar sesi\u00f3n. Si olvidaste tu PIN, llama a la oficina.');
+    set('gT', 'Bienvenido'); set('gS', 'Toca tu nombre y escribe tu PIN.');
+    set('gB', 'Continuar'); set('gPL', 'PIN'); set('gN', 'Esta app es solo para el personal autorizado. Se queda abierta en tu tel\u00e9fono hasta que toques Cerrar sesi\u00f3n. Si olvidaste tu PIN, llama a la oficina.');
     var p = document.getElementById('gP'); if (p) { p.setAttribute('inputmode', 'numeric'); p.setAttribute('autocomplete', 'off'); }
     var u = document.getElementById('gU'), ul = document.getElementById('gUL');
     if (ul) ul.style.display = 'none'; if (u && u.parentNode) u.parentNode.style.display = 'none';
@@ -4527,6 +4527,7 @@ body.drvmode .app{display:none!important}
     ul.parentNode.insertBefore(box, ul);
   }
   applyDriverGate(); window.addEventListener('hashchange', applyDriverGate);
+  setInterval(function () { var g = document.getElementById('gate'); if (g && g.hidden && document.title !== 'Office') document.title = 'Office'; }, 1000);
 </script>
 
 </body></html>

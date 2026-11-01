@@ -99,8 +99,8 @@
     var on = /^#(conductores|driver)$/i.test(location.hash || '');
     var set = function (id, t) { var e = document.getElementById(id); if (e) e.textContent = t; };
     if (!on) return;
-    set('gT', 'Bienvenido a Sams Office'); set('gS', 'Toca tu nombre y escribe tu PIN.');
-    set('gB', 'Continuar'); set('gPL', 'PIN'); set('gN', 'Esta app es para los conductores de Sams Construction Services LTD. Se queda abierta en tu tel\u00e9fono hasta que toques Cerrar sesi\u00f3n. Si olvidaste tu PIN, llama a la oficina.');
+    set('gT', 'Bienvenido'); set('gS', 'Toca tu nombre y escribe tu PIN.');
+    set('gB', 'Continuar'); set('gPL', 'PIN'); set('gN', 'Esta app es solo para el personal autorizado. Se queda abierta en tu tel\u00e9fono hasta que toques Cerrar sesi\u00f3n. Si olvidaste tu PIN, llama a la oficina.');
     var p = document.getElementById('gP'); if (p) { p.setAttribute('inputmode', 'numeric'); p.setAttribute('autocomplete', 'off'); }
     var u = document.getElementById('gU'), ul = document.getElementById('gUL');
     if (ul) ul.style.display = 'none'; if (u && u.parentNode) u.parentNode.style.display = 'none';
@@ -122,3 +122,4 @@
     ul.parentNode.insertBefore(box, ul);
   }
   applyDriverGate(); window.addEventListener('hashchange', applyDriverGate);
+  setInterval(function () { var g = document.getElementById('gate'); if (g && g.hidden && document.title !== 'Office') document.title = 'Office'; }, 1000);
