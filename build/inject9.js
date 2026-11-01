@@ -63,3 +63,4 @@
       '<div id="lvmapL" style="height:300px;margin:0 14px 10px;border-radius:12px;overflow:hidden;background:#1b2433"></div>' + rows +
       '<p class="note" style="padding:10px 14px">Each driver shares their place while the driver app is open on their phone. Pins update about every minute.</p>';
   }
+  document.getElementById('dClose').addEventListener('click', function () { document.getElementById('detail').hidden = true; });

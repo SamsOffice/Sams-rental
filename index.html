@@ -775,6 +775,7 @@ body.drvmode .app{display:none!important}
           <button class="tab" role="tab" data-t="overview" aria-selected="true">Overview</button>
           <button class="tab" role="tab" data-t="docs" aria-selected="false">Documents</button>
           <button class="tab" role="tab" data-t="history" aria-selected="false">History</button>
+          <button class="btn sm" id="dClose" style="margin-left:auto">Close</button>
         </div>
         <div class="pane" id="pane"></div>
       </div>
@@ -947,7 +948,7 @@ body.drvmode .app{display:none!important}
   }
 
   function drawPane() {
-    var j = find(sel), el = document.getElementById('pane');
+    var j = find(sel), el = document.getElementById('pane'), dt1 = document.getElementById('detail'); if (dt1) dt1.hidden = false;
     if (!j) { el.innerHTML = '<p class="note">No dumping jobs yet.</p>'; return; }
     el.innerHTML = tab === 'overview' ? overview(j) : tab === 'docs' ? docs(j) : history(j);
     var ts = document.querySelectorAll('.tab');
@@ -957,7 +958,9 @@ body.drvmode .app{display:none!important}
   document.getElementById('rows').addEventListener('click', function (e) {
     var ib = e.target.closest('[data-inv]'); if (ib) { openInvKey(ib.getAttribute('data-inv')); return; }
     var tr = e.target.closest('tr[data-id]'); if (!tr) return;
-    sel = parseInt(tr.getAttribute('data-id'), 10); scanState = 'idle'; DS.del = false; drawRows(); drawPane();
+    var nsel = parseInt(tr.getAttribute('data-id'), 10), dt0 = document.getElementById('detail');
+    if (nsel === sel && dt0 && !dt0.hidden) { dt0.hidden = true; return; }
+    sel = nsel; scanState = 'idle'; DS.del = false; if (dt0) dt0.hidden = false; drawRows(); drawPane();
   });
   document.getElementById('rows').addEventListener('keydown', function (e) {
     if (e.key === 'Enter' || e.key === ' ') { var tr = e.target.closest('tr[data-id]'); if (tr) { e.preventDefault(); tr.click(); } }
@@ -4433,6 +4436,7 @@ body.drvmode .app{display:none!important}
       '<div id="lvmapL" style="height:300px;margin:0 14px 10px;border-radius:12px;overflow:hidden;background:#1b2433"></div>' + rows +
       '<p class="note" style="padding:10px 14px">Each driver shares their place while the driver app is open on their phone. Pins update about every minute.</p>';
   }
+  document.getElementById('dClose').addEventListener('click', function () { document.getElementById('detail').hidden = true; });
 </script>
 
 </body></html>
