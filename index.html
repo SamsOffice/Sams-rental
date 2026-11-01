@@ -1136,7 +1136,7 @@ body.drvmode .app{display:none!important}
     var bar = '<div class="daybar"><button class="btn sm iconbtn" data-act="dday" data-d="-1" aria-label="Day before">&lsaquo;</button><div class="daymid"><b>' + lab + '</b><span class="sub">' + longD(DDAY) + '</span></div><button class="btn sm iconbtn" data-act="dday" data-d="1" aria-label="Next day">&rsaquo;</button><input type="date" id="dDay" data-dday="1" value="' + DDAY + '" aria-label="Pick a day"></div><div class="sortbar daystrip" style="margin:10px 0 12px">' + strip + '</div>';
     var ban = isOff(DDAY) ? '<div class="card offbanner"><b>This day is turned off' + (offWhy(DDAY) ? ': ' + invEsc(offWhy(DDAY)) : '') + '.</b> You can still assign jobs, but check that you meant to schedule work on this day.</div>' : '';
     var bulk = unas ? '<div class="bulkbar"><span><b>' + unas + '</b> not assigned. Give them all to:</span><button class="btn sm" data-act="assignall" data-d="Sams">Sams</button><button class="btn sm" data-act="assignall" data-d="Gustavo">Gustavo</button><button class="btn sm" data-act="assignall" data-d="Jose Luis">Jose Luis</button></div>' : '';
-    return head('Pick a day, then assign each job to a driver.', 'New job', 'plus', '').replace('data-act="toast"', 'data-act="form" data-f="dump"') + bar + ban + driverLinkCard() + '<div class="card livecard" id="live">' + liveInner() + '</div>' + bulk + '<div class="board">' + h + '</div>';
+    return head('Pick a day, then assign each job to a driver.', 'New job', 'plus', '').replace('data-act="toast"', 'data-act="form" data-f="dump"') + bar + ban + '<div class="card livecard" id="live">' + liveInner() + '</div>' + bulk + '<div class="board">' + h + '</div>';
   }
   function vRentals() {
     var r = '', sr = monFilter('rent', rentalsSorted()), last = '';
@@ -4076,6 +4076,7 @@ body.drvmode .app{display:none!important}
       '<div class="card"><header><h2>Equipment and prices</h2><button class="btn sm" data-act="form" data-f="equip">' + icon('gear') + 'Edit</button></header>' + (eqRows() || '<p class="note" style="padding:14px">No equipment yet. Tap Edit to add what you rent out.</p>') + '</div>' +
       '<div class="card"><header><h2>Dump container prices</h2><button class="btn sm" data-act="form" data-f="prices">' + icon('gear') + 'Edit prices</button></header>' + (PRICES.length ? PRICES.map(function (p) { return row(invEsc(p[0]) + ' ' + invEsc(p[1]) + (p[3] ? ' (' + p[3] + ' tons incl.)' : ''), money(p[2])); }).join('') : '<p class="note" style="padding:14px">No prices yet. Tap Edit prices to add them.</p>') + '</div>' +
       '<div class="card"><header><h2>People</h2></header>' + row('Keilah', 'Owner') + row('Office', 'Secretary') + row('Sams, Gustavo, Jose Luis', 'Drivers') + '</div>' +
+      driverLinkCard() +
       '<div class="card"><header><h2>Your account</h2></header><div style="padding:14px"><button class="btn" id="chgPw">' + icon('gear') + 'Change my password</button></div></div>';
   }
   /* Excel, send invoice */

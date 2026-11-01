@@ -138,6 +138,7 @@
       '<div class="card"><header><h2>Equipment and prices</h2><button class="btn sm" data-act="form" data-f="equip">' + icon('gear') + 'Edit</button></header>' + (eqRows() || '<p class="note" style="padding:14px">No equipment yet. Tap Edit to add what you rent out.</p>') + '</div>' +
       '<div class="card"><header><h2>Dump container prices</h2><button class="btn sm" data-act="form" data-f="prices">' + icon('gear') + 'Edit prices</button></header>' + (PRICES.length ? PRICES.map(function (p) { return row(invEsc(p[0]) + ' ' + invEsc(p[1]) + (p[3] ? ' (' + p[3] + ' tons incl.)' : ''), money(p[2])); }).join('') : '<p class="note" style="padding:14px">No prices yet. Tap Edit prices to add them.</p>') + '</div>' +
       '<div class="card"><header><h2>People</h2></header>' + row('Keilah', 'Owner') + row('Office', 'Secretary') + row('Sams, Gustavo, Jose Luis', 'Drivers') + '</div>' +
+      driverLinkCard() +
       '<div class="card"><header><h2>Your account</h2></header><div style="padding:14px"><button class="btn" id="chgPw">' + icon('gear') + 'Change my password</button></div></div>';
   }
   /* Excel, send invoice */
