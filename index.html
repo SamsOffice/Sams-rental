@@ -2151,6 +2151,13 @@ body.drvmode .app{display:none!important}
       t = 'Add client';
       h = '<div class="fgrid">' + fld('fCName', 'Client name', 'text', '', '', true) + fld('fCPh', 'Phone', 'tel', '', '', false) + fld('fCEm', 'Email', 'email', '', '', false) + fld('fCAd', 'Address', 'text', '', '', false) + '</div><p class="ferr" id="fErr"></p>' +
         '<div class="actions"><button type="submit" class="btn primary">' + icon('check') + 'Save client</button><button type="button" class="btn" data-fa="close">Cancel</button></div>';
+    } else if (kind === 'prices') {
+      t = 'Dump container prices';
+      var pl = '', pq;
+      for (pq = 0; pq < PRICES.length; pq++) pl += '<div class="eqrow" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 0"><div class="grow" style="min-width:140px"><b>' + invEsc(PRICES[pq][0]) + ' ' + invEsc(PRICES[pq][1]) + '</b></div><label style="font-size:12px">Price $<input type="number" min="0" step="1" id="fPr' + pq + '" value="' + PRICES[pq][2] + '" style="width:90px"></label><label style="font-size:12px">Tons included <input type="number" min="0" step="1" id="fTn' + pq + '" value="' + (PRICES[pq][3] || 0) + '" style="width:70px"></label><button type="button" class="btn sm" data-fa="prrm" data-ix="' + pq + '">Remove</button></div>';
+      if (!pl) pl = '<p class="note">No prices yet. Add one below.</p>';
+      h = '<div><b>Your container prices</b><div class="sub">Change any price, then tap Save prices.</div>' + pl + '</div><div style="margin-top:14px"><b>Add a price</b></div><div class="fgrid">' + fld('fNM', 'Material', 'text', '', 'Example: Dirt / mix', false) + fld('fNS', 'Container size', 'text', '', 'Example: 20 yd', false) + fld('fNP', 'Price ($)', 'number', '') + fld('fNT', 'Tons included', 'number', '0') + '</div><p class="ferr" id="fErr"></p>' +
+        '<div class="actions"><button type="submit" class="btn primary">' + icon('check') + 'Save prices</button><button type="button" class="btn" data-fa="close">Cancel</button></div>';
     } else if (kind === 'send') {
       SEND = ctx; t = 'Send to client';
       h = '<div><b>' + invEsc(SEND.name) + '</b><div class="sub">' + invEsc(SEND.ph || '') + (SEND.email ? ' - ' + invEsc(SEND.email) : '') + '</div></div>' + selF('fSL', 'Language', ['English', 'Espanol'], 'English') +
@@ -2160,7 +2167,7 @@ body.drvmode .app{display:none!important}
     } else {
       t = 'Equipment';
       var list = '';
-      for (var q = 0; q < EQUIP.length; q++) list += '<div class="eqrow"><span class="ic2">' + icon('box') + '</span><div class="grow"><b>' + invEsc(EQUIP[q].n) + '</b><div class="sub">$' + invMoney(EQUIP[q].p) + ' per ' + invEsc(EQUIP[q].u) + '</div></div><button type="button" class="btn sm" data-fa="rm" data-i="' + q + '">Remove</button></div>';
+      for (var q = 0; q < EQUIP.length; q++) list += '<div class="eqrow"><span class="ic2">' + icon('box') + '</span><div class="grow"><b>' + invEsc(EQUIP[q].n) + '</b><div class="sub">$' + invMoney(EQUIP[q].p) + ' per ' + invEsc(EQUIP[q].u) + '</div></div><button type="button" class="btn sm" data-fa="eqed" data-ix="' + q + '">Change price</button> <button type="button" class="btn sm" data-fa="rm" data-ix="' + q + '">Remove</button></div>';
       if (!list) list = '<p class="note">No equipment added yet. Add what you rent out below, or tap a suggestion.</p>';
       var sg = '', sq, have = {}; for (sq = 0; sq < EQUIP.length; sq++) have[EQUIP[sq].n] = 1;
       for (sq = 0; sq < PRESET_M.length; sq++) { if (!have[PRESET_M[sq]]) sg += '<button type="button" class="btn sm" style="margin:3px" data-fa="sugg" data-n="' + invEsc(PRESET_M[sq]) + '">' + invEsc(PRESET_M[sq]) + '</button>'; }
@@ -2192,7 +2199,9 @@ body.drvmode .app{display:none!important}
     else if (a === 'doedit') openForm('dayoff', null, { id: b.getAttribute('data-id') });
     else if (a === 'dorm') { doRemove(b.getAttribute('data-id')); closeForm(); setView('schedule'); toast('Day turned back on'); }
     else if (a === 'sugg') { var fe = document.getElementById('fEq'); if (fe) { fe.value = b.getAttribute('data-n'); var fp = document.getElementById('fEqP'); if (fp) fp.focus(); } }
-    else if (a === 'rm') { EQUIP.splice(parseInt(b.getAttribute('data-i'), 10), 1); openForm('equip'); toast('Equipment removed'); }
+    else if (a === 'prrm') { var pi0 = parseInt(b.getAttribute('data-ix'), 10); var kp; for (kp = 0; kp < PRICES.length; kp++) { var e1 = document.getElementById('fPr' + kp), e2 = document.getElementById('fTn' + kp); if (e1) PRICES[kp][2] = parseFloat(e1.value) || 0; if (e2) PRICES[kp][3] = parseFloat(e2.value) || 0; } PRICES.splice(pi0, 1); openForm('prices'); toast('Price removed'); }
+    else if (a === 'eqed') { var ei = parseInt(b.getAttribute('data-ix'), 10), fe2 = document.getElementById('fEq'); if (fe2 && EQUIP[ei]) { fe2.value = EQUIP[ei].n; document.getElementById('fEqP').value = EQUIP[ei].p; document.getElementById('fEqU').value = EQUIP[ei].u; document.getElementById('fEqP').focus(); } }
+    else if (a === 'rm') { EQUIP.splice(parseInt(b.getAttribute('data-ix'), 10), 1); openForm('equip'); toast('Equipment removed'); }
   });
   document.getElementById('theForm').addEventListener('input', function () {
     if (FKIND === 'mailfb') { mailUpd(); return; }
@@ -2215,8 +2224,16 @@ body.drvmode .app{display:none!important}
   document.getElementById('theForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var err = document.getElementById('fErr'), client = fv('fClient').trim();
+    if (FKIND === 'prices') {
+      var kq2; for (kq2 = 0; kq2 < PRICES.length; kq2++) { var g1 = document.getElementById('fPr' + kq2), g2 = document.getElementById('fTn' + kq2); if (g1) PRICES[kq2][2] = parseFloat(g1.value) || 0; if (g2) PRICES[kq2][3] = parseFloat(g2.value) || 0; }
+      var nm1 = fv('fNM').trim(), ns1 = fv('fNS').trim();
+      if (nm1 || ns1 || fv('fNP')) { if (!nm1 || !ns1) { err.textContent = 'To add a price, type the material and the container size.'; return; } PRICES.push([nm1, ns1, fn('fNP'), fn('fNT')]); }
+      openForm('prices'); toast('Prices saved'); return;
+    }
     if (FKIND === 'equip') {
       var nm = fv('fEq').trim(); if (!nm) { err.textContent = 'Type the equipment name.'; return; }
+      var ex0 = -1, xq; for (xq = 0; xq < EQUIP.length; xq++) { if (EQUIP[xq].n === nm) ex0 = xq; }
+      if (ex0 >= 0) { EQUIP[ex0].p = fn('fEqP'); EQUIP[ex0].u = fv('fEqU'); openForm('equip'); toast(nm + ' updated'); return; }
       EQUIP.push({ n: nm, p: fn('fEqP'), u: fv('fEqU') }); openForm('equip'); toast(nm + ' added to your equipment'); return;
     }
     if (FKIND === 'rattach') {
@@ -3776,6 +3793,7 @@ body.drvmode .app{display:none!important}
       for (var rid in SNAP.rent) { if (SNAP.rent.hasOwnProperty(rid) && !seenR[rid]) { res = await SB.from('rentals').update({ deleted: true }).eq('id', rid); if (res.error) err = res.error.message; else delete SNAP.rent[rid]; } }
       for (k = 0; k < INBOX.length; k++) { var b = INBOX[k]; if (b._id && SNAP.book[b._id] !== b.s) { res = await SB.from('booking_requests').update({ status: b.s }).eq('id', b._id); if (res.error) err = res.error.message; else SNAP.book[b._id] = b.s; } }
     } catch (e) { err = String(e && e.message || e); }
+    try { var e2 = await syncRecs(); if (e2) err = e2; } catch (e) { err = String(e && e.message || e); }
     SYNCING = false; SYNC_FAIL = !!err;
     if (err) { toast('Could not save: ' + err); }
     if (reload) { await loadAll(); paintAll(); toast('Saved'); }
@@ -4051,7 +4069,8 @@ body.drvmode .app{display:none!important}
     for (k = 0; k < PRICES.length; k++) { var key = PRICES[k][1]; if (!seen[key] || PRICES[k][2] < seen[key]) seen[key] = PRICES[k][2]; }
     for (k in seen) { if (seen.hasOwnProperty(k)) pr += row('Dump container ' + k, money(seen[k]) + ' and up'); }
     return '<div class="card"><header><h2>Company</h2></header>' + row('Name', 'Sams Construction Services LTD') + row('Address', '188-16 Woodhull Ave, Hollis NY 11423') + row('Phone', '+1 (917) 663-6369') + row('BIC', 'BIC#4376') + '</div>' +
-      '<div class="card"><header><h2>Equipment and prices</h2><button class="btn sm" data-act="form" data-f="equip">' + icon('gear') + 'Edit</button></header>' + eqRows() + pr + '</div>' +
+      '<div class="card"><header><h2>Equipment and prices</h2><button class="btn sm" data-act="form" data-f="equip">' + icon('gear') + 'Edit</button></header>' + (eqRows() || '<p class="note" style="padding:14px">No equipment yet. Tap Edit to add what you rent out.</p>') + '</div>' +
+      '<div class="card"><header><h2>Dump container prices</h2><button class="btn sm" data-act="form" data-f="prices">' + icon('gear') + 'Edit prices</button></header>' + (PRICES.length ? PRICES.map(function (p) { return row(invEsc(p[0]) + ' ' + invEsc(p[1]) + (p[3] ? ' (' + p[3] + ' tons incl.)' : ''), money(p[2])); }).join('') : '<p class="note" style="padding:14px">No prices yet. Tap Edit prices to add them.</p>') + '</div>' +
       '<div class="card"><header><h2>People</h2></header>' + row('Keilah', 'Owner') + row('Office', 'Secretary') + row('Sams, Gustavo, Jose Luis', 'Drivers') + '</div>' +
       '<div class="card"><header><h2>Your account</h2></header><div style="padding:14px"><button class="btn" id="chgPw">' + icon('gear') + 'Change my password</button></div></div>';
   }

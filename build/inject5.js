@@ -135,7 +135,8 @@
     for (k = 0; k < PRICES.length; k++) { var key = PRICES[k][1]; if (!seen[key] || PRICES[k][2] < seen[key]) seen[key] = PRICES[k][2]; }
     for (k in seen) { if (seen.hasOwnProperty(k)) pr += row('Dump container ' + k, money(seen[k]) + ' and up'); }
     return '<div class="card"><header><h2>Company</h2></header>' + row('Name', 'Sams Construction Services LTD') + row('Address', '188-16 Woodhull Ave, Hollis NY 11423') + row('Phone', '+1 (917) 663-6369') + row('BIC', 'BIC#4376') + '</div>' +
-      '<div class="card"><header><h2>Equipment and prices</h2><button class="btn sm" data-act="form" data-f="equip">' + icon('gear') + 'Edit</button></header>' + eqRows() + pr + '</div>' +
+      '<div class="card"><header><h2>Equipment and prices</h2><button class="btn sm" data-act="form" data-f="equip">' + icon('gear') + 'Edit</button></header>' + (eqRows() || '<p class="note" style="padding:14px">No equipment yet. Tap Edit to add what you rent out.</p>') + '</div>' +
+      '<div class="card"><header><h2>Dump container prices</h2><button class="btn sm" data-act="form" data-f="prices">' + icon('gear') + 'Edit prices</button></header>' + (PRICES.length ? PRICES.map(function (p) { return row(invEsc(p[0]) + ' ' + invEsc(p[1]) + (p[3] ? ' (' + p[3] + ' tons incl.)' : ''), money(p[2])); }).join('') : '<p class="note" style="padding:14px">No prices yet. Tap Edit prices to add them.</p>') + '</div>' +
       '<div class="card"><header><h2>People</h2></header>' + row('Keilah', 'Owner') + row('Office', 'Secretary') + row('Sams, Gustavo, Jose Luis', 'Drivers') + '</div>' +
       '<div class="card"><header><h2>Your account</h2></header><div style="padding:14px"><button class="btn" id="chgPw">' + icon('gear') + 'Change my password</button></div></div>';
   }
