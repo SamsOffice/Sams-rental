@@ -4485,14 +4485,13 @@ body.drvmode .app{display:none!important}
   var DRV_LINK = 'https://samsoffice.github.io/Sams-rental/#conductores';
   var DRV_USERS = [['Sams', 'sams'], ['Gustavo', 'gustavo'], ['Jose Luis', 'jose luis']];
   function drvMsgText(lang, who) {
-    var u = ''; for (var k = 0; k < DRV_USERS.length; k++) { if (DRV_USERS[k][0] === who) u = DRV_USERS[k][1]; }
-    if (lang === 'es') return 'Hola ' + who + '. Esta es la app de trabajo de Sams Office: ' + DRV_LINK + '\nTu usuario es: ' + u + '\nTe doy tu PIN por separado. Abre el enlace en tu telefono, toca el boton de compartir y elige Agregar a pantalla de inicio. Cuando pida permiso para compartir tu ubicacion, toca Entendido. Luego toca Cambiar PIN y pon el tuyo.';
-    return 'Hi ' + who + '. This is the Sams Office work app: ' + DRV_LINK + '\nYour username is: ' + u + '\nI will give you your PIN separately. Open the link on your phone, tap the share button and choose Add to Home Screen. When it asks to share your location, tap Entendido. Then tap Cambiar PIN and set your own.';
+    if (lang === 'es') return 'Hola ' + who + '. Esta es la app de trabajo de Sams Office: ' + DRV_LINK + '\nAbre el enlace, toca tu nombre y escribe tu PIN. Te doy tu PIN por separado. Despues toca el boton de compartir y elige Agregar a pantalla de inicio para tenerla como una app. Cuando pida permiso para compartir tu ubicacion, toca Entendido. Luego toca Cambiar PIN y pon el tuyo.';
+    return 'Hi ' + who + '. This is the Sams Office work app: ' + DRV_LINK + '\nOpen the link, tap your name and type your PIN. I will give you your PIN separately. Then tap the share button and choose Add to Home Screen to keep it as an app. When it asks to share your location, tap Entendido. Then tap Cambiar PIN and set your own.';
   }
   function driverLinkCard() {
     var rows = '', k;
     for (k = 0; k < DRV_USERS.length; k++) {
-      rows += '<div class="lvrow"><span class="lvdot" style="background:' + DCOL[DRV_USERS[k][0]] + '"></span><div class="grow"><b>' + DRV_USERS[k][0] + '</b><span class="sub">Username: ' + DRV_USERS[k][1] + '</span></div>' +
+      rows += '<div class="lvrow"><span class="lvdot" style="background:' + DCOL[DRV_USERS[k][0]] + '"></span><div class="grow"><b>' + DRV_USERS[k][0] + '</b><span class="sub">Taps their name, then types their PIN</span></div>' +
         '<button class="btn sm" data-act="dlmsg" data-w="' + DRV_USERS[k][0] + '" data-l="es">Copy message (Spanish)</button> <button class="btn sm" data-act="dlmsg" data-w="' + DRV_USERS[k][0] + '" data-l="en">English</button></div>';
     }
     return '<div class="card"><header><h2>Send the driver app</h2><button class="btn sm primary" data-act="dlcopy">Copy link</button></header>' +
@@ -4505,9 +4504,27 @@ body.drvmode .app{display:none!important}
     var on = /^#(conductores|driver)$/i.test(location.hash || '');
     var set = function (id, t) { var e = document.getElementById(id); if (e) e.textContent = t; };
     if (!on) return;
-    set('gT', 'Bienvenido a Sams Office'); set('gS', 'Entra con tu usuario y tu PIN de 6 n\u00fameros.');
-    set('gB', 'Continuar'); set('gUL', 'Usuario'); set('gPL', 'PIN'); set('gN', 'Esta app es para los conductores de Sams Construction Services LTD. Se queda abierta en tu tel\u00e9fono hasta que toques Cerrar sesi\u00f3n. Si olvidaste tu PIN, llama a la oficina.');
+    set('gT', 'Bienvenido a Sams Office'); set('gS', 'Toca tu nombre y escribe tu PIN.');
+    set('gB', 'Continuar'); set('gPL', 'PIN'); set('gN', 'Esta app es para los conductores de Sams Construction Services LTD. Se queda abierta en tu tel\u00e9fono hasta que toques Cerrar sesi\u00f3n. Si olvidaste tu PIN, llama a la oficina.');
     var p = document.getElementById('gP'); if (p) { p.setAttribute('inputmode', 'numeric'); p.setAttribute('autocomplete', 'off'); }
+    var u = document.getElementById('gU'), ul = document.getElementById('gUL');
+    if (ul) ul.style.display = 'none'; if (u && u.parentNode) u.parentNode.style.display = 'none';
+    if (document.getElementById('gNames') || !ul) return;
+    var box = document.createElement('div'); box.id = 'gNames'; box.style.cssText = 'display:flex;flex-direction:column;gap:10px;margin-bottom:6px';
+    var names = [['Sams', 'sams'], ['Gustavo', 'gustavo'], ['Jose Luis', 'jose luis']], k;
+    for (k = 0; k < names.length; k++) {
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = names[k][0]; b.setAttribute('data-u', names[k][1]);
+      b.style.cssText = 'height:60px;border:2px solid #2563EB;border-radius:10px;background:#fff;color:#2563EB;font-size:20px;font-weight:700;cursor:pointer';
+      b.addEventListener('click', function (e) {
+        var x = e.currentTarget, all = box.querySelectorAll('button'), q;
+        for (q = 0; q < all.length; q++) { all[q].style.background = '#fff'; all[q].style.color = '#2563EB'; }
+        x.style.background = '#2563EB'; x.style.color = '#fff';
+        u.value = x.getAttribute('data-u'); u.dispatchEvent(new Event('input', { bubbles: true }));
+        if (p) p.focus();
+      });
+      box.appendChild(b);
+    }
+    ul.parentNode.insertBefore(box, ul);
   }
   applyDriverGate(); window.addEventListener('hashchange', applyDriverGate);
 </script>
