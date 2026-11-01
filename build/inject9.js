@@ -68,9 +68,9 @@
       if (l) { any = true; mins = Math.max(0, Math.round((Date.now() - new Date(l.at).getTime()) / 60000)); }
       rows += '<div class="lvrow"><span class="lvdot" style="background:' + DCOL[n] + '"></span><div class="grow"><b>' + invEsc(n) + '</b><span class="sub">' + (l ? 'Updated ' + (mins < 1 ? 'just now' : mins + ' min ago') : 'Not sharing yet') + (nx ? ' &middot; Next stop: ' + invEsc(nx.client) + ', ' + invEsc(nx.addr || '') : ' &middot; No active job') + '</span></div>' + (l ? '<a class="btn sm" target="_blank" rel="noopener" href="https://maps.apple.com/?ll=' + l.lat + ',' + l.lng + '&q=' + encodeURIComponent(n) + '">' + icon('map') + 'Open map</a>' : '') + '</div>';
     }
-    if (any) setTimeout(function () { lvLoadLib(function () { try { lvDrawMap(); } catch (e) { var m = document.getElementById('lvmapL'); if (m) m.innerHTML = '<p class="note" style="padding:14px">The map could not draw. The list below still shows each driver.</p>'; } }); }, 60);
+    setTimeout(function () { lvLoadLib(function () { try { lvDrawMap(); } catch (e) { var m = document.getElementById('lvmapL'); if (m) m.innerHTML = '<p class="note" style="padding:14px">The map could not draw. The list below still shows each driver.</p>'; } }); }, 60);
     return '<header><h2>Where the drivers are</h2>' + pillH(any ? 'From their phones' : 'Waiting', any ? 'good' : 'warn') + '</header>' +
-      (any ? '<div id="lvmapL" style="height:300px;margin:0 14px 10px;border-radius:12px;overflow:hidden;background:#1b2433"></div>' : '<p class="note" style="padding:6px 14px">No drivers sharing right now.</p>') + rows +
+      '<div id="lvmapL" style="height:300px;margin:0 14px 10px;border-radius:12px;overflow:hidden;background:#1b2433"></div>' + (any ? '' : '<p class="note" style="padding:0 14px 6px">No drivers sharing right now. Pins show up here when a driver signs in and taps Entendido.</p>') + rows +
       '<p class="note" style="padding:10px 14px">Each driver shares their place while the driver app is open on their phone. Pins update about every minute.</p>';
   }
   document.getElementById('dClose').addEventListener('click', function () { document.getElementById('detail').hidden = true; });
