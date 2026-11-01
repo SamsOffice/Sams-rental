@@ -2161,7 +2161,11 @@ body.drvmode .app{display:none!important}
       t = 'Equipment';
       var list = '';
       for (var q = 0; q < EQUIP.length; q++) list += '<div class="eqrow"><span class="ic2">' + icon('box') + '</span><div class="grow"><b>' + invEsc(EQUIP[q].n) + '</b><div class="sub">$' + invMoney(EQUIP[q].p) + ' per ' + invEsc(EQUIP[q].u) + '</div></div><button type="button" class="btn sm" data-fa="rm" data-i="' + q + '">Remove</button></div>';
-      h = '<div><b>Your equipment</b>' + list + '</div><div class="fgrid">' + fld('fEq', 'New equipment name', 'text', '', 'Example: Dump trailer', false) + fld('fEqP', 'Price ($)', 'number', '') + selF('fEqU', 'Per', ['day', 'week', '2 weeks', 'month'], '2 weeks') + '</div><p class="ferr" id="fErr"></p>' +
+      if (!list) list = '<p class="note">No equipment added yet. Add what you rent out below, or tap a suggestion.</p>';
+      var sg = '', sq, have = {}; for (sq = 0; sq < EQUIP.length; sq++) have[EQUIP[sq].n] = 1;
+      for (sq = 0; sq < PRESET_M.length; sq++) { if (!have[PRESET_M[sq]]) sg += '<button type="button" class="btn sm" style="margin:3px" data-fa="sugg" data-n="' + invEsc(PRESET_M[sq]) + '">' + invEsc(PRESET_M[sq]) + '</button>'; }
+      for (sq = 0; sq < PRESET_T.length; sq++) { if (!have[PRESET_T[sq]]) sg += '<button type="button" class="btn sm" style="margin:3px" data-fa="sugg" data-n="' + invEsc(PRESET_T[sq]) + '">' + invEsc(PRESET_T[sq]) + '</button>'; }
+      h = '<div><b>Your equipment (' + EQUIP.length + ')</b>' + list + '</div>' + (sg ? '<div style="margin-top:14px"><b>Tap one to add it</b><div class="sub">Then type the price and tap Add equipment.</div><div style="margin-top:6px">' + sg + '</div></div>' : '') + '<div class="fgrid">' + fld('fEq', 'New equipment name', 'text', '', 'Example: Dump trailer', false) + fld('fEqP', 'Price ($)', 'number', '') + selF('fEqU', 'Per', ['day', 'week', '2 weeks', 'month'], '2 weeks') + '</div><p class="ferr" id="fErr"></p>' +
         '<div class="actions"><button type="submit" class="btn primary">' + icon('plus') + 'Add equipment</button><button type="button" class="btn" data-fa="close">Done</button></div>';
     }
     f.innerHTML = h;
@@ -2187,6 +2191,7 @@ body.drvmode .app{display:none!important}
     else if (a === 'dooff') openForm('dayoff', null, { iso: b.getAttribute('data-iso') });
     else if (a === 'doedit') openForm('dayoff', null, { id: b.getAttribute('data-id') });
     else if (a === 'dorm') { doRemove(b.getAttribute('data-id')); closeForm(); setView('schedule'); toast('Day turned back on'); }
+    else if (a === 'sugg') { var fe = document.getElementById('fEq'); if (fe) { fe.value = b.getAttribute('data-n'); var fp = document.getElementById('fEqP'); if (fp) fp.focus(); } }
     else if (a === 'rm') { EQUIP.splice(parseInt(b.getAttribute('data-i'), 10), 1); openForm('equip'); toast('Equipment removed'); }
   });
   document.getElementById('theForm').addEventListener('input', function () {
@@ -3785,7 +3790,7 @@ body.drvmode .app{display:none!important}
     for (n in DMSG) { if (DMSG.hasOwnProperty(n)) { a = DMSG[n]; for (k = 0; k < a.length; k++) { a[k].who = n; if (!a[k].ts) a[k].ts = Date.now() - k; o.push(a[k]); } } }
     return o;
   }
-  function cfgList() { return [{ id: 'prices', rows: PRICES }, { id: 'rem', on: REM.on, log: REM.log }]; }
+  function cfgList() { return [{ id: 'prices', rows: PRICES }, { id: 'equip', rows: EQUIP }, { id: 'rem', on: REM.on, log: REM.log }]; }
   var RECS = [
     { k: 'wait', arr: function () { return WAITS; }, drv: 1 },
     { k: 'rcpt', arr: function () { return RCPTS; }, drv: 1 },
@@ -3818,6 +3823,7 @@ body.drvmode .app{display:none!important}
       if (rk.k === 'cfg') {
         for (i = 0; i < rows.length; i++) {
           if (rows[i].id === 'prices' && rows[i].rows) { PRICES.length = 0; for (mx = 0; mx < rows[i].rows.length; mx++) PRICES.push(rows[i].rows[mx]); }
+          if (rows[i].id === 'equip' && rows[i].rows) { EQUIP.length = 0; for (mx = 0; mx < rows[i].rows.length; mx++) EQUIP.push(rows[i].rows[mx]); }
           if (rows[i].id === 'rem') { REM.on = rows[i].on !== false; REM.log = rows[i].log || {}; }
           RSNAP['cfg|' + rows[i].id] = JSON.stringify(rows[i]);
         }
