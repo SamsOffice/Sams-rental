@@ -76,3 +76,21 @@
   document.getElementById('dClose').addEventListener('click', function () { document.getElementById('detail').hidden = true; });
 
   function liveTick() { }
+  /* ---- Dispatch: card with the driver app link and ready-to-send messages ---- */
+  var DRV_LINK = 'https://samsoffice.github.io/Sams-rental/';
+  var DRV_USERS = [['Sams', 'sams'], ['Gustavo', 'gustavo'], ['Jose Luis', 'jose luis']];
+  function drvMsgText(lang, who) {
+    var u = ''; for (var k = 0; k < DRV_USERS.length; k++) { if (DRV_USERS[k][0] === who) u = DRV_USERS[k][1]; }
+    if (lang === 'es') return 'Hola ' + who + '. Esta es la app de trabajo de Sams Office: ' + DRV_LINK + '\nTu usuario es: ' + u + '\nTe doy tu PIN por separado. Abre el enlace en tu telefono, toca el boton de compartir y elige Agregar a pantalla de inicio. Cuando pida permiso para compartir tu ubicacion, toca Entendido. Luego toca Cambiar PIN y pon el tuyo.';
+    return 'Hi ' + who + '. This is the Sams Office work app: ' + DRV_LINK + '\nYour username is: ' + u + '\nI will give you your PIN separately. Open the link on your phone, tap the share button and choose Add to Home Screen. When it asks to share your location, tap Entendido. Then tap Cambiar PIN and set your own.';
+  }
+  function driverLinkCard() {
+    var rows = '', k;
+    for (k = 0; k < DRV_USERS.length; k++) {
+      rows += '<div class="lvrow"><span class="lvdot" style="background:' + DCOL[DRV_USERS[k][0]] + '"></span><div class="grow"><b>' + DRV_USERS[k][0] + '</b><span class="sub">Username: ' + DRV_USERS[k][1] + '</span></div>' +
+        '<button class="btn sm" data-act="dlmsg" data-w="' + DRV_USERS[k][0] + '" data-l="es">Copy message (Spanish)</button> <button class="btn sm" data-act="dlmsg" data-w="' + DRV_USERS[k][0] + '" data-l="en">English</button></div>';
+    }
+    return '<div class="card"><header><h2>Send the driver app</h2><button class="btn sm primary" data-act="dlcopy">Copy link</button></header>' +
+      '<p class="note" style="padding:10px 14px;word-break:break-all"><b>' + DRV_LINK + '</b></p>' + rows +
+      '<p class="note" style="padding:10px 14px">Paste the copied message into a text. Give each driver their PIN in a separate message, never in the same one as the link.</p></div>';
+  }

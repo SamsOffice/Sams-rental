@@ -176,5 +176,7 @@ assert "var PRESET_M = [];" in s and "var PRESET_T = [];" in s
 R("No equipment added yet. Add what you rent out below, or tap a suggestion.","No equipment added yet. Type the name and price of a machine below and tap Add equipment.")
 R("      opts += '</optgroup><optgroup label=\"Tools\">';","      if (R0 && R0.asset && !seen[R0.asset]) opts += '<option selected>' + invEsc(R0.asset) + '</option>';\n      opts += '</optgroup><optgroup label=\"Tools\">';")
 R("<h3 class=\"fsec\">Equipment and driver</h3>","<h3 class=\"fsec\">Equipment and driver</h3>' + (EQUIP.length || R0 ? '' : '<p class=\"note\" style=\"grid-column:1/-1\">You have not added any equipment yet. Close this, tap Equipment, add your machines, then come back.</p>') + '")
+R("bar + ban + '<div class=\"card livecard\" id=\"live\">'","bar + ban + driverLinkCard() + '<div class=\"card livecard\" id=\"live\">'")
+R("    if (a === 'toast') toast(b.getAttribute('data-msg'));\n    else if (a === 'assign')","    if (a === 'dlcopy') { copyText(DRV_LINK); toast('Driver link copied'); }\n    else if (a === 'dlmsg') { copyText(drvMsgText(b.getAttribute('data-l'), b.getAttribute('data-w'))); toast('Message copied. Paste it into a text.'); }\n    else if (a === 'toast') toast(b.getAttribute('data-msg'));\n    else if (a === 'assign')")
 open('app.html','w').write(s)
 print(len(s))
