@@ -2063,7 +2063,7 @@ body.drvmode .app{display:none!important}
       t = J0 ? 'Edit Dumping' : 'New Dumping';
       h = '<div class="fgrid">' + fld('fClient', 'Client name', 'text', e0.client, 'Who is the job for', true) + fld('fPhone', 'Phone', 'tel', e0.phone === '-' ? '' : e0.phone, '+1 (718) 555-0100') + fld('fEmail', 'Email', 'email', e0.email, 'name@email.com') + fld('fAddr', 'Job address', 'text', e0.addr, 'Street, City', true) +
         selF('fType', 'Job type', ['DROP', 'PULL', 'SWAP'], e0.jt || 'DROP') + selF('fMat', 'Material', MATS, e0.mat) + selF('fSize', 'Container size', ['10 yd', '20 yd', '30 yd'], e0.size) +
-        fld('fDrop', 'Drop-off date', 'date', dIso) + fld('fPickD', 'Pickup date', 'date', pIso) + selF('fDrv', 'Driver', ['Unassigned', 'Sams', 'Gustavo', 'Jose Luis'], e0.driver) +
+        fld('fDrop', 'Drop-off date', 'date', dIso) + fld('fDropT', 'Drop-off time', 'time', dispT(J0 ? J0.id : 0, 'd')) + fld('fPickD', 'Pickup date', 'date', pIso) + fld('fPickT', 'Pickup time', 'time', dispT(J0 ? J0.id : 0, 'p')) + selF('fDrv', 'Driver', ['Unassigned', 'Sams', 'Gustavo', 'Jose Luis'], e0.driver) +
         fld('fBase', 'Base price ($)', 'number', base0) + fld('fOw', 'Overweight charge ($)', 'number', dx.ow || '') + fld('fPf', 'Permit fee ($)', 'number', dx.pf || '') +
         selF('fPay', 'Payment status', ['Unpaid', 'Paid'], e0.pay) + selF('fMeth', 'Payment method', ['-', 'Zelle', 'Cash', 'Check', 'Venmo', 'Credit Card', 'Bank Transfer'], e0.method || '-') +
         '<div class="fld wide"><label for="fNotes">Notes for driver</label><textarea id="fNotes" placeholder="Gate code, where to place the container...">' + invEsc(e0.notes) + '</textarea></div></div>' +
@@ -2337,12 +2337,12 @@ body.drvmode .app{display:none!important}
       if (!drop || !pick) { err.textContent = 'Pick the drop-off and pickup dates.'; return; }
       var DT = { client: client, phone: fv('fPhone') || '-', addr: addr, mat: fv('fMat'), size: fv('fSize'), jt: fv('fType'), total: tot, driver: drv, ow: ow, pf: pf, email: fv('fEmail'), notes: fv('fNotes'), pay: fv('fPay') === 'Paid' ? 'Paid' : 'Unpaid', method: fv('fMeth') === '-' ? '' : fv('fMeth'), date: invLong(drop), dueIso: pick };
       var what = DT.jt + ' - ' + DT.mat + ' (' + DT.size + ')', its = [[what, tot - ow - pf]]; if (ow) its.push(['Overweight Charge', ow]); if (pf) its.push(['Permit Fee', pf]);
-      var dph = String(DT.phone).replace(/[^0-9]/g, ''), dtime = shortD(drop) + ', 8:00 AM', dassign = drv === 'Unassigned' ? '' : drv, k9, id;
+      var dph = String(DT.phone).replace(/[^0-9]/g, ''), dtime = shortD(drop) + ', ' + t12(fv('fDropT')), ptime = shortD(pick) + ', ' + t12(fv('fPickT')), dassign = drv === 'Unassigned' ? '' : drv, k9, id;
       if (EDID) {
         id = EDID; var oj = find(id); for (var key2 in DT) { oj[key2] = DT[key2]; }
         ISO[id] = drop; ISO[id - 710] = drop;
         for (k9 = 0; k9 < INVS.length; k9++) { if (INVS[k9].no === id - 710) { var I2 = INVS[k9]; I2.client = client; I2.date = longD(drop); I2.amt = tot; I2.items = its; I2.addr = addr; I2.ph = String(DT.phone); I2.st = DT.pay === 'Paid' ? 'Paid' : (I2.st === 'Past due' ? 'Past due' : 'Unpaid'); I2.tone = I2.st === 'Paid' ? 'good' : (I2.st === 'Past due' ? 'bad' : 'warn'); } }
-        for (k9 = 0; k9 < DISP.length; k9++) { if (DISP[k9].jid === id) { DISP[k9].client = client; DISP[k9].what = what; DISP[k9].addr = addr; DISP[k9].ph = dph; DISP[k9].time = dtime; DISP[k9].driver = dassign; } }
+        for (k9 = 0; k9 < DISP.length; k9++) { if (DISP[k9].jid === id) { var ip9 = /^PULL/.test(DISP[k9].what); DISP[k9].client = client; DISP[k9].what = ip9 ? 'PULL - ' + DT.mat + ' (' + DT.size + ')' : what; DISP[k9].addr = addr; DISP[k9].ph = dph; DISP[k9].time = ip9 ? ptime : dtime; DISP[k9].driver = dassign; } }
         for (k9 = CAL_EV.length - 1; k9 >= 0; k9--) { if (CAL_EV[k9][3] === 'J' + id) CAL_EV.splice(k9, 1); }
         CAL_EV.push([drop, 'Drop: ' + client, 'drop', 'J' + id], [pick, 'Pickup: ' + client, 'cpick', 'J' + id]);
         closeForm(); showDump(id); drawRows(); drawPane(); toast('Dumping updated');
@@ -2352,7 +2352,7 @@ body.drvmode .app{display:none!important}
         ISO[id] = drop; ISO[id - 710] = drop;
         JOBS.unshift(job);
         INVS.unshift({ no: id - 710, client: client, date: longD(drop), amt: tot, st: DT.pay === 'Paid' ? 'Paid' : 'Unpaid', tone: DT.pay === 'Paid' ? 'good' : 'warn', items: its, addr: addr, ph: String(DT.phone) });
-        DISP.push({ id: 100 + id, jid: id, client: client, what: what, addr: addr, ph: dph, time: dtime, driver: dassign, st: 'Scheduled' });
+        DISP.push({ id: 100 + id, jid: id, client: client, what: what, addr: addr, ph: dph, time: dtime, driver: dassign, st: 'Scheduled' }); DISP.push({ id: 5000 + id, jid: id, client: client, what: 'PULL - ' + DT.mat + ' (' + DT.size + ')', addr: addr, ph: dph, time: ptime, driver: dassign, st: 'Scheduled' });
         CAL_EV.push([drop, 'Drop: ' + client, 'drop', 'J' + id], [pick, 'Pickup: ' + client, 'cpick', 'J' + id]);
         made.dump++; if (DT.pay !== 'Paid') made.unpaid += tot; addClientIfNew(client, fv('fPhone'), DT.pay === 'Paid' ? 0 : tot); sel = id; scanState = 'idle'; tab = 'overview'; invSel = id - 710; DS.del = false; showDump(id);
         closeForm(); updateStats(); setView('dashboard'); drawRows(); drawPane(); toast('Dumping created. Open its portal link or invoice from the job panel.');
@@ -4866,6 +4866,20 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
         '<div class="actions"><button type="button" class="btn primary" data-sc="save">' + icon('check') + 'Save machine</button><button type="button" class="btn" data-sc="retake">' + icon('refresh') + 'Retake photo</button><button type="button" class="btn" data-sc="cancel">Cancel</button></div>';
     }
     document.getElementById('scBody').innerHTML = h; paintIcons(document.getElementById('scBody'));
+  }
+
+  /* ---- dump job times: drop-off and pickup times in the form ---- */
+  function t12(v) {
+    var m = /^(\d{1,2}):(\d{2})/.exec(v || ''); if (!m) return '8:00 AM';
+    var h = parseInt(m[1], 10), ap = h >= 12 ? 'PM' : 'AM'; h = h % 12; if (h === 0) h = 12; return h + ':' + m[2] + ' ' + ap;
+  }
+  function dispT(jid, which) {
+    var st = jid ? stopsOf(jid) : [], k, pr;
+    for (k = 0; k < st.length; k++) {
+      var isP = /^PULL/.test(st[k].what);
+      if ((which === 'p') === isP) { pr = parseDisp(st[k].time); if (pr && pr.t) return pr.t; }
+    }
+    return '08:00';
   }
 </script>
 

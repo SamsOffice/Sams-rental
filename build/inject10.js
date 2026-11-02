@@ -115,3 +115,17 @@
     }
     document.getElementById('scBody').innerHTML = h; paintIcons(document.getElementById('scBody'));
   }
+
+  /* ---- dump job times: drop-off and pickup times in the form ---- */
+  function t12(v) {
+    var m = /^(\d{1,2}):(\d{2})/.exec(v || ''); if (!m) return '8:00 AM';
+    var h = parseInt(m[1], 10), ap = h >= 12 ? 'PM' : 'AM'; h = h % 12; if (h === 0) h = 12; return h + ':' + m[2] + ' ' + ap;
+  }
+  function dispT(jid, which) {
+    var st = jid ? stopsOf(jid) : [], k, pr;
+    for (k = 0; k < st.length; k++) {
+      var isP = /^PULL/.test(st[k].what);
+      if ((which === 'p') === isP) { pr = parseDisp(st[k].time); if (pr && pr.t) return pr.t; }
+    }
+    return '08:00';
+  }
