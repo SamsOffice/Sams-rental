@@ -129,3 +129,43 @@
     }
     return '08:00';
   }
+
+  /* ---- driver location: visible status bar with a button that always works (a tap is needed on iPhones and iPads) ---- */
+  var LOCST = { s: 'idle', at: 0, msg: '' };
+  function sendLoc(force) {
+    if (!navigator.geolocation || !ME || document.body.className.indexOf('drvmode') < 0) return;
+    if (force === true) { LOCOK = true; try { localStorage.setItem('sams-loc-ok:' + OBX.slug, '1'); } catch (e) { } }
+    else if (LOCOK === false || NET_OFF) return;
+    navigator.geolocation.getCurrentPosition(function (p) {
+      var w = ME.driver_name || ME.full_name;
+      var pr = SB.from('app_records').upsert({ kind: 'loc', id: w, data: { id: w, who: w, lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy, at: new Date().toISOString() } });
+      Promise.resolve(pr).then(function (r) {
+        if (r && r.error) { LOCST = { s: 'saveerr', at: 0, msg: r.error.message || '' }; } else { LOCST = { s: 'ok', at: Date.now(), msg: '' }; }
+        locPaint();
+      }, function () { LOCST = { s: 'saveerr', at: 0, msg: 'red' }; locPaint(); });
+    }, function (er) {
+      LOCST = { s: er && er.code === 1 ? 'denied' : 'error', at: 0, msg: er && er.message || '' }; locPaint();
+    }, { enableHighAccuracy: true, maximumAge: 30000, timeout: 20000 });
+  }
+  function locPaint() {
+    var inDrv = document.body.className.indexOf('drvmode') >= 0, el = document.getElementById('locBar');
+    if (!inDrv) { if (el) el.style.display = 'none'; return; }
+    if (!el) {
+      el = document.createElement('div'); el.id = 'locBar';
+      el.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9000;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;align-items:center;justify-content:space-between;font:15px/1.35 system-ui,-apple-system,sans-serif;border-top:1px solid rgba(0,0,0,.15)';
+      el.innerHTML = '<span id="locTxt" style="flex:1"></span><button id="locGo" type="button" style="border:0;border-radius:10px;padding:10px 14px;font:600 15px system-ui;background:#1D6FEF;color:#fff">Compartir ubicación</button>';
+      document.body.appendChild(el);
+      document.getElementById('locGo').addEventListener('click', function () { LOCST = { s: 'idle', at: 0, msg: '' }; sendLoc(true); locPaint(); });
+    }
+    el.style.display = 'flex'; var db0 = document.getElementById('drvBody'); if (db0) db0.style.paddingBottom = '120px';
+    var t = document.getElementById('locTxt'), bg = '#FEF3C7', fg = '#92400E', tx, btn = document.getElementById('locGo');
+    if (LOCST.s === 'ok') { var mn = Math.max(0, Math.round((Date.now() - LOCST.at) / 60000)); tx = 'Ubicación compartida con la oficina (' + (mn < 1 ? 'ahora' : 'hace ' + mn + ' min') + ')'; bg = '#DCFCE7'; fg = '#166534'; btn.textContent = 'Actualizar'; }
+    else if (LOCST.s === 'denied') { tx = 'Ubicación bloqueada. En Ajustes del teléfono, activa Ubicación para este navegador y para este sitio. Luego toca el botón.'; bg = '#FEE2E2'; fg = '#991B1B'; btn.textContent = 'Intentar de nuevo'; }
+    else if (LOCST.s === 'error') { tx = 'No se pudo obtener tu ubicación. Sal al aire libre o activa el GPS y toca el botón.'; bg = '#FEE2E2'; fg = '#991B1B'; btn.textContent = 'Intentar de nuevo'; }
+    else if (LOCST.s === 'saveerr') { tx = 'Se obtuvo tu ubicación pero no se pudo enviar a la oficina.'; bg = '#FEE2E2'; fg = '#991B1B'; btn.textContent = 'Intentar de nuevo'; }
+    else { tx = 'Toca el botón para compartir tu ubicación con la oficina.'; btn.textContent = 'Compartir ubicación'; }
+    t.textContent = tx; el.style.background = bg; el.style.color = fg;
+  }
+  setInterval(function () { sendLoc(); }, 45000);
+  setInterval(locPaint, 15000);
+  var LOCBOOT = setInterval(function () { if (document.body.className.indexOf('drvmode') >= 0 && ME) { clearInterval(LOCBOOT); locPaint(); setTimeout(function () { sendLoc(); }, 2500); } }, 800);
