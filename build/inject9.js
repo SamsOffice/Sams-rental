@@ -198,7 +198,7 @@
     if (MBMAP && MBMAP.getContainer() !== el) { if (el.parentNode) { el.parentNode.replaceChild(MBMAP.getContainer(), el); el = MBMAP.getContainer(); try { MBMAP.resize(); } catch (e) {} } else { try { MBMAP.remove(); } catch (e2) {} MBMAP = null; MBMARK = {}; MBYM = []; } }
     if (!MBMAP) {
       mapboxgl.accessToken = MAPKEY;
-      MBMAP = new mapboxgl.Map({ container: el, style: 'mapbox://styles/mapbox/light-v11', center: [-73.7949, 40.7282], zoom: 12 });
+      MBMAP = new mapboxgl.Map({ container: el, style: 'mapbox://styles/mapbox/streets-v12', center: [-73.7949, 40.7282], zoom: 12 });
       MBMAP.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
       MBMAP.on('error', function (ev) { var st = ev && ev.error && ev.error.status; if (st === 401 || st === 403) lvFail('Mapbox rejected the token. Check it in Settings.'); });
     }
