@@ -1998,7 +1998,7 @@ body.drvmode .app{display:none!important}
   var CLIENT_TAGS = ['Good Standing', 'Paying Client', 'Chronically Delinquent', 'Cash Only', 'New Client', 'VIP Client', 'Do Not Rent', 'Payment Plan', 'Blacklisted'];
   function eqRows() {
     var h = '';
-    for (var k = 0; k < EQUIP.length; k++) h += '<div class="formrow"><span>' + invEsc(EQUIP[k].n) + '</span><b>$' + invMoney(EQUIP[k].p).replace('.00', '') + ' per ' + invEsc(EQUIP[k].u) + '</b></div>';
+    for (var k = 0; k < EQUIP.length; k++) h += '<div class="formrow"><span>' + invEsc(EQUIP[k].n) + '</span><b>$' + invMoney(EQUIP[k].p).replace('.00', '') + (EQUIP[k].u ? ' per ' + invEsc(EQUIP[k].u) : ' usual price') + '</b></div>';
     return h;
   }
   function shortD(iso) { var d = invParse(iso); return d ? INV_MONTHS[d.getMonth()].slice(0, 3) + ' ' + d.getDate() : iso; }
@@ -2170,12 +2170,12 @@ body.drvmode .app{display:none!important}
     } else {
       t = 'Equipment';
       var list = '';
-      for (var q = 0; q < EQUIP.length; q++) list += '<div class="eqrow"><span class="ic2">' + icon('box') + '</span><div class="grow"><b>' + invEsc(EQUIP[q].n) + '</b><div class="sub">$' + invMoney(EQUIP[q].p) + ' per ' + invEsc(EQUIP[q].u) + '</div></div><button type="button" class="btn sm" data-fa="eqed" data-ix="' + q + '">Change price</button> <button type="button" class="btn sm" data-fa="rm" data-ix="' + q + '">Remove</button></div>';
+      for (var q = 0; q < EQUIP.length; q++) list += '<div class="eqrow"><span class="ic2">' + icon('box') + '</span><div class="grow"><b>' + invEsc(EQUIP[q].n) + '</b><div class="sub">$' + invMoney(EQUIP[q].p) + (EQUIP[q].u ? ' per ' + invEsc(EQUIP[q].u) : ' usual price') + '</div></div><button type="button" class="btn sm" data-fa="eqed" data-ix="' + q + '">Change price</button> <button type="button" class="btn sm" data-fa="rm" data-ix="' + q + '">Remove</button></div>';
       if (!list) list = '<p class="note">No equipment added yet. Type the name and price of a machine below and tap Add equipment.</p>';
       var sg = '', sq, have = {}; for (sq = 0; sq < EQUIP.length; sq++) have[EQUIP[sq].n] = 1;
       for (sq = 0; sq < PRESET_M.length; sq++) { if (!have[PRESET_M[sq]]) sg += '<button type="button" class="btn sm" style="margin:3px" data-fa="sugg" data-n="' + invEsc(PRESET_M[sq]) + '">' + invEsc(PRESET_M[sq]) + '</button>'; }
       for (sq = 0; sq < PRESET_T.length; sq++) { if (!have[PRESET_T[sq]]) sg += '<button type="button" class="btn sm" style="margin:3px" data-fa="sugg" data-n="' + invEsc(PRESET_T[sq]) + '">' + invEsc(PRESET_T[sq]) + '</button>'; }
-      h = '<div><b>Your equipment (' + EQUIP.length + ')</b>' + list + '</div>' + (sg ? '<div style="margin-top:14px"><b>Tap one to add it</b><div class="sub">Then type the price and tap Add equipment.</div><div style="margin-top:6px">' + sg + '</div></div>' : '') + '<div class="fgrid">' + fld('fEq', 'New equipment name', 'text', '', 'Example: Dump trailer', false) + fld('fEqP', 'Price ($)', 'number', '') + selF('fEqU', 'Per', ['day', 'week', '2 weeks', 'month'], '2 weeks') + '</div><p class="ferr" id="fErr"></p>' +
+      h = '<div><b>Your equipment (' + EQUIP.length + ')</b>' + list + '</div>' + (sg ? '<div style="margin-top:14px"><b>Tap one to add it</b><div class="sub">Then type the price and tap Add equipment.</div><div style="margin-top:6px">' + sg + '</div></div>' : '') + '<div class="fgrid">' + fld('fEq', 'New equipment name', 'text', '', 'Example: Dump trailer', false) + fld('fEqP', 'Usual price ($)', 'number', '') + '<input type="hidden" id="fEqU" value="">' + '</div><p class="ferr" id="fErr"></p>' +
         '<div class="actions"><button type="submit" class="btn primary">' + icon('plus') + 'Add equipment</button><button type="button" class="btn" data-fa="close">Done</button></div>';
     }
     f.innerHTML = h;
@@ -2997,7 +2997,7 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
     'Not due': 'No vencido', 'Remind': 'Recordar', 'Final notice': 'Aviso final', 'Lien stage': 'Etapa de gravamen',
     'Total unpaid': 'Total sin pagar', 'Collected this month': 'Cobrado este mes', 'Who owes you': 'Quién te debe', 'Due this week': 'Vence esta semana', 'Example only. Reminder not sent.': 'Solo ejemplo. Recordatorio no enviado.',
     'Company': 'Empresa', 'Name': 'Nombre', 'Equipment and prices': 'Equipos y precios', 'Dump container 20 yd': 'Contenedor de descarga 20 yd', 'Dump container 30 yd': 'Contenedor de descarga 30 yd', 'People': 'Personas', 'Owner': 'Dueño', 'Office': 'Oficina', 'Secretary': 'Secretaria',
-    'Your equipment': 'Tu equipo', 'New equipment name': 'Nombre del equipo nuevo', 'Price ($)': 'Precio ($)', 'Per': 'Por', 'day': 'día', 'week': 'semana', '2 weeks': '2 semanas', 'month': 'mes', 'Add equipment': 'Agregar equipo', 'Done': 'Listo', 'Example: Dump trailer': 'Ejemplo: Remolque de volteo',
+    'Your equipment': 'Tu equipo', 'New equipment name': 'Nombre del equipo nuevo', 'Price ($)': 'Precio ($)', 'Per': 'Por', 'Usual price ($)': 'Precio normal ($)', ' usual price': ' precio normal', 'day': 'día', 'week': 'semana', '2 weeks': '2 semanas', 'month': 'mes', 'Add equipment': 'Agregar equipo', 'Done': 'Listo', 'Example: Dump trailer': 'Ejemplo: Remolque de volteo',
     'Client information': 'Información del cliente', 'Search existing client': 'Buscar cliente existente', 'Client name *': 'Nombre del cliente *', 'Equipment and driver': 'Equipo y chofer', 'Equipment *': 'Equipo *',
     'Caterpillar Excavator CAT 320': 'Excavadora Caterpillar CAT 320', 'Caterpillar Excavator CAT 336': 'Excavadora Caterpillar CAT 336', 'Mini Excavator': 'Miniexcavadora', 'Kubota Skid Steer': 'Minicargador Kubota', 'Bobcat Skid Steer': 'Minicargador Bobcat', 'Backhoe Loader': 'Retroexcavadora', 'Wheel Loader': 'Cargadora de ruedas', 'Bulldozer D6': 'Bulldozer D6', 'Dump Truck': 'Camión de volteo',
     'Scissor Lift 26ft': 'Plataforma de tijera 26 pies', 'Scissor Lift 32ft': 'Plataforma de tijera 32 pies', 'Boom Lift 45ft': 'Plataforma articulada 45 pies', 'Telescopic Forklift': 'Montacargas telescópico', 'Crane 30 Ton': 'Grúa 30 toneladas', 'Compact Track Loader': 'Cargadora compacta de orugas', 'Trencher': 'Zanjadora', 'Rough Terrain Forklift': 'Montacargas todo terreno',
