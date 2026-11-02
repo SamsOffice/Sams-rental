@@ -132,7 +132,14 @@
 
   /* ---- driver location: visible status bar with a button that always works (a tap is needed on iPhones and iPads) ---- */
   var LOCST = { s: 'idle', at: 0, msg: '' };
+  function locOff() { try { return localStorage.getItem('sams-loc-off:' + OBX.slug) === '1'; } catch (e) { return false; } }
+  function locSetOff(v) {
+    try { if (v) localStorage.setItem('sams-loc-off:' + OBX.slug, '1'); else localStorage.removeItem('sams-loc-off:' + OBX.slug); } catch (e) { }
+    if (v && ME) { var w = ME.driver_name || ME.full_name; try { Promise.resolve(SB.from('app_records').upsert({ kind: 'loc', id: w, data: { id: w, who: w, off: true, at: new Date().toISOString() } })); } catch (e) { } }
+    locPaint(); if (!v) { LOCST = { s: 'idle', at: 0, msg: '' }; sendLoc(true); }
+  }
   function sendLoc(force) {
+    if (locOff()) return;
     if (!navigator.geolocation || !ME || document.body.className.indexOf('drvmode') < 0) return;
     if (force === true) { LOCOK = true; try { localStorage.setItem('sams-loc-ok:' + OBX.slug, '1'); } catch (e) { } }
     else if (LOCOK === false || NET_OFF) return;
@@ -158,10 +165,16 @@
       document.getElementById('locGo').addEventListener('click', function () { LOCST = { s: 'idle', at: 0, msg: '' }; sendLoc(true); locPaint(); });
     }
     el.style.display = 'flex'; var db0 = document.getElementById('drvBody'); if (db0) db0.style.paddingBottom = LOCST.s === 'ok' ? '70px' : '120px';
+    if (locOff()) {
+      el.style.cssText = 'position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));left:auto;z-index:9000;padding:6px 12px;display:flex;gap:8px;align-items:center;font:600 13px system-ui,-apple-system,sans-serif;border-radius:99px;border:1px solid #D1D5DB;background:#F3F4F6;color:#374151;box-shadow:0 1px 4px rgba(0,0,0,.2)';
+      document.getElementById('locTxt').style.flex = '0 0 auto'; document.getElementById('locGo').style.display = 'none';
+      document.getElementById('locTxt').textContent = '\u25CB Ubicaci\u00f3n apagada. Toca para encender'; el.onclick = function () { locSetOff(false); };
+      if (db0) db0.style.paddingBottom = '70px'; return;
+    }
     if (LOCST.s === 'ok') {
       el.style.cssText = 'position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));left:auto;z-index:9000;padding:6px 12px;display:flex;gap:8px;align-items:center;font:600 13px system-ui,-apple-system,sans-serif;border-radius:99px;border:1px solid #86EFAC;background:#DCFCE7;color:#166534;box-shadow:0 1px 4px rgba(0,0,0,.2)';
       document.getElementById('locTxt').style.flex = '0 0 auto'; document.getElementById('locGo').style.display = 'none';
-      document.getElementById('locTxt').textContent = '\u25CF Ubicaci\u00f3n activa'; el.onclick = function () { sendLoc(true); };
+      document.getElementById('locTxt').textContent = '\u25CF Ubicaci\u00f3n activa. Toca para apagar'; el.onclick = function () { locSetOff(true); };
       return;
     }
     el.onclick = null; document.getElementById('locGo').style.display = '';

@@ -29,7 +29,7 @@
     if (r.error) { toast('Could not load saved records: ' + r.error.message); return; }
     var by = {}, i, k, a, mx, rk, rows, drv = isDrv();
     for (i = 0; i < r.data.length; i++) { (by[r.data[i].kind] = by[r.data[i].kind] || []).push(r.data[i].data); }
-    LOCS = {}; var lr = by.loc || []; for (i = 0; i < lr.length; i++) LOCS[lr[i].who] = lr[i];
+    LOCS = {}; var lr = by.loc || []; for (i = 0; i < lr.length; i++) { if (!lr[i].off) LOCS[lr[i].who] = lr[i]; }
     SEEDED = false; var cf = by.cfg || []; for (i = 0; i < cf.length; i++) { if (cf[i].id === 'seeded') SEEDED = true; }
     RSNAP = {};
     for (k = 0; k < RECS.length; k++) {
