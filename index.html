@@ -4923,6 +4923,21 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
       document.getElementById('locGo').addEventListener('click', function () { LOCST = { s: 'idle', at: 0, msg: '' }; sendLoc(true); locPaint(); });
     }
     el.style.display = 'flex'; var db0 = document.getElementById('drvBody'); if (db0) db0.style.paddingBottom = LOCST.s === 'ok' ? '70px' : '120px';
+    var row = document.getElementById('locRow');
+    if (!row && db0 && db0.parentNode) {
+      row = document.createElement('div'); row.id = 'locRow';
+      row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:#fff;border-bottom:1px solid #E5E7EB;font:600 16px system-ui,-apple-system,sans-serif;color:#111827';
+      row.innerHTML = '<span id="locRowT"></span><button type="button" id="locSw" role="switch" aria-label="Ubicación" style="position:relative;width:56px;height:32px;border:0;border-radius:99px;padding:0;cursor:pointer;flex:none"><span id="locKnob" style="position:absolute;top:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.35);transition:left .15s"></span></button>';
+      db0.parentNode.insertBefore(row, db0);
+      document.getElementById('locSw').addEventListener('click', function () { locSetOff(!locOff()); });
+    }
+    if (row) {
+      var offNow = locOff(), sw = document.getElementById('locSw');
+      sw.style.background = offNow ? '#9CA3AF' : '#16A34A'; sw.setAttribute('aria-checked', offNow ? 'false' : 'true');
+      document.getElementById('locKnob').style.left = offNow ? '3px' : '27px';
+      document.getElementById('locRowT').textContent = offNow ? 'Ubicación apagada' : 'Compartiendo mi ubicación';
+    }
+    if (locOff() || LOCST.s === 'ok') { el.style.display = 'none'; if (db0) db0.style.paddingBottom = ''; return; }
     if (locOff()) {
       el.style.cssText = 'position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));left:auto;z-index:9000;padding:6px 12px;display:flex;gap:8px;align-items:center;font:600 13px system-ui,-apple-system,sans-serif;border-radius:99px;border:1px solid #D1D5DB;background:#F3F4F6;color:#374151;box-shadow:0 1px 4px rgba(0,0,0,.2)';
       document.getElementById('locTxt').style.flex = '0 0 auto'; document.getElementById('locGo').style.display = 'none';
