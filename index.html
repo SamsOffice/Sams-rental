@@ -1682,7 +1682,7 @@ body.drvmode .app{display:none!important}
     if (d.type === 'RENTAL' || !d.jid) return '';
     var sc = DAPP.scan && DAPP.scan.key === d.key ? DAPP.scan : null, rc = lastRcpt(d.jid);
     if (sc && sc.stage === 'scanning') return '<div class="dascan"><b>Leyendo recibo...</b><p>Espera unos segundos.</p></div>';
-    var btn = function (txt) { return '<label class="dascanbtn" style="cursor:pointer">' + icon('camera') + txt + '<input id="drf_' + d.key + '" type="file" accept="image/*" capture="environment" style="display:none"></label>'; };
+    var btn = function (txt) { return '<label class="dascanbtn" style="cursor:pointer">' + icon('camera') + txt + '<input id="drf_' + d.key + '" type="file" accept="image/*" capture="environment" style="display:none"></label><label class="dascanbtn" style="cursor:pointer;margin-top:10px;background:#fff;color:#1D6FEF;border:2px solid #1D6FEF">' + icon('doc') + 'Adjuntar foto de la galer\u00eda<input id="drg_' + d.key + '" type="file" accept="image/*" style="display:none"></label>'; };
     if (qHas('rcpt', d.key)) return '<div class="dascan"><b>Recibo guardado en el tel&eacute;fono</b><p>Se env&iacute;a a la oficina cuando regrese la se&ntilde;al.</p></div>';
     if (!rc) return btn('Enviar recibo del vertedero');
     if (rc.st === 'new') return '<div class="dascan ok"><b>Recibo enviado a la oficina</b><p>' + invEsc(rc.f.site) + ' &middot; ticket ' + invEsc(rc.f.ticket) + ' &middot; ' + tonsOf(rc.f.lb) + ' toneladas</p><p>Esperando que la oficina lo apruebe.</p></div>';
@@ -1738,7 +1738,7 @@ body.drvmode .app{display:none!important}
   }
   document.getElementById('drvClose').addEventListener('click', closeDrv);
   document.getElementById('drvBody').addEventListener('change', function (e) {
-    var m = /^drf_(.+)$/.exec(e.target.id || ''); if (!m || !e.target.files || !e.target.files[0]) return;
+    var m = /^dr[fg]_(.+)$/.exec(e.target.id || ''); if (!m || !e.target.files || !e.target.files[0]) return;
     var f0 = e.target.files[0], k0 = m[1]; try { e.target.value = ''; } catch (er) { } sendDrvReceipt(k0, f0);
   });
   document.getElementById('drvBody').addEventListener('click', function (e) {
