@@ -45,3 +45,10 @@
       } else fallback();
     } catch (e) { fallback(); }
   }
+  /* ---- office: refresh driver pins every 15 seconds on Dispatch and Drivers ---- */
+  setInterval(function () {
+    if (!ME || isDrv() || (curView !== 'dispatch' && curView !== 'drivers')) return;
+    var ae = document.activeElement; if (ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;
+    var before = JSON.stringify(LOCS), cv = curView;
+    loadRecs().then(function () { if (curView === cv && JSON.stringify(LOCS) !== before) setView(cv); });
+  }, 15000);
