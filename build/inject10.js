@@ -58,3 +58,17 @@
     }
     return PH_BLANK;
   }
+
+  /* receipts follow their job: when a job is deleted, its receipts leave the Receipts list and the badge counts */
+  function vReceipts() {
+    var pend = '', done = '', k, np = 0;
+    for (k = 0; k < RCPTS.length; k++) {
+      var r = RCPTS[k], j = dJob(r.jid);
+      if (!j) continue;
+      if (r.st === 'new') { pend += rcCard(r); np++; }
+      else done += '<div class="li"><span class="ic2">' + icon('receipt') + '</span><div class="grow"><b>#' + r.jid + ' ' + invEsc(j.client) + '</b><span class="sub">' + (r.st === 'approved' ? tonsOf(r.f.lb) + ' tons &middot; overweight ' + money(r.ow || 0) + ' &middot; ticket ' + invEsc(r.f.ticket) : 'Waiting for ' + invEsc(r.who) + ' to send a new photo') + '</span></div>' + (r.st === 'approved' ? pillH('Approved', 'good') + '<button class="invbtn" data-inv="d' + r.jid + '" aria-label="Open invoice">' + icon('receipt') + '</button>' : pillH('Sent back', 'warn')) + '</div>';
+    }
+    return '<div class="vhead"><p>Dump receipts from the drivers show up here already read. Check each one, then approve it.</p><button class="btn primary" data-act="rattach">' + icon('plus') + 'Attach receipt</button></div>' +
+      (pend || '<div class="card"><p class="note" style="padding:18px 16px">Nothing to review. New receipts from the drivers show up here.</p></div>') +
+      (done ? '<div class="card"><header><h2>Already reviewed</h2></header>' + done + '</div>' : '');
+  }
