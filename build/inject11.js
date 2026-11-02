@@ -81,3 +81,38 @@
     setTimeout(function () { updPBadge(); dnDecorate(); }, 50);
   }, true);
   setInterval(function () { try { dnDecorate(); updPBadge(); } catch (e) { } }, 1500);
+  /* ---- Notebook: office notes by date (secretary and owner) ---- */
+  var NOTES = [], NBEDIT = '', NBN = 0;
+  RECS.push({ k: 'note', arr: function () { return NOTES; }, ts: 1 });
+  function nbWho() { return (ME && (ME.full_name || ME.driver_name)) || 'Office'; }
+  function vNotebook() {
+    var today = TODAYISO(), ed = null, k, h = '';
+    for (k = 0; k < NOTES.length; k++) { if (NOTES[k].id === NBEDIT) ed = NOTES[k]; }
+    h += '<div class="card"><header><h2>' + (ed ? 'Edit note' : 'New note') + '</h2></header><div style="padding:14px;display:grid;gap:10px">' +
+      '<label style="display:grid;gap:4px;font-size:13px;color:var(--mut,#6B7280)">Date<input type="date" id="nbDate" value="' + (ed ? ed.iso : today) + '" style="padding:10px;border:1px solid #CBD5E1;border-radius:10px;font:16px system-ui"></label>' +
+      '<textarea id="nbText" rows="4" placeholder="Write what you need to remember for this day..." style="padding:10px;border:1px solid #CBD5E1;border-radius:10px;font:16px system-ui;width:100%;box-sizing:border-box">' + (ed ? invEsc(ed.text) : '') + '</textarea>' +
+      '<div style="display:flex;gap:8px"><button class="btn primary" data-nb="save">' + icon('plus') + (ed ? 'Save changes' : 'Save note') + '</button>' + (ed ? '<button class="btn" data-nb="cancel">Cancel</button>' : '') + '</div></div></div>';
+    var list = NOTES.slice().sort(function (a, b) { return a.iso < b.iso ? 1 : (a.iso > b.iso ? -1 : (b.ts || 0) - (a.ts || 0)); });
+    if (!list.length) return h + '<div class="card"><p class="note" style="padding:14px;margin:0">No notes yet. Write one above and pick its date.</p></div>';
+    var cur = '', open = false;
+    for (k = 0; k < list.length; k++) {
+      var n = list[k];
+      if (n.iso !== cur) { if (open) h += '</div></div>'; cur = n.iso; open = true; var lab = n.iso === today ? 'Today' : (n.iso === TOMOISO() ? 'Tomorrow' : ''); h += '<div class="card"><header><h2>' + invEsc(longD(n.iso)) + '</h2>' + (lab ? pillH(lab, n.iso === today ? 'good' : 'info') : '') + '</header><div>'; }
+      h += '<div style="padding:12px 14px;border-top:1px solid #E5E7EB"><div style="white-space:pre-wrap;font-size:15px">' + invEsc(n.text) + '</div><div style="display:flex;gap:8px;align-items:center;margin-top:8px"><span class="sub" style="flex:1">' + invEsc(n.by || '') + '</span><button class="btn sm" data-nb="edit" data-id="' + n.id + '">Edit</button><button class="btn sm" data-nb="del" data-id="' + n.id + '">Delete</button></div></div>';
+    }
+    if (open) h += '</div></div>';
+    return h;
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-nb]'); if (!b || !ME || isDrv()) return;
+    var a = b.getAttribute('data-nb'), id = b.getAttribute('data-id'), k;
+    if (a === 'save') {
+      var tx = (document.getElementById('nbText').value || '').trim(), dt = document.getElementById('nbDate').value || TODAYISO();
+      if (!tx) { toast('Write the note first'); return; }
+      if (NBEDIT) { for (k = 0; k < NOTES.length; k++) { if (NOTES[k].id === NBEDIT) { NOTES[k].text = tx; NOTES[k].iso = dt; } } NBEDIT = ''; }
+      else { NBN++; NOTES.push({ id: 'N' + Date.now().toString(36) + NBN, iso: dt, text: tx, by: nbWho(), ts: Date.now() }); }
+      setView('notebook'); toast('Note saved');
+    } else if (a === 'edit') { NBEDIT = id; setView('notebook'); window.scrollTo(0, 0); }
+    else if (a === 'cancel') { NBEDIT = ''; setView('notebook'); }
+    else if (a === 'del') { if (b.getAttribute('data-sure') !== '1') { b.setAttribute('data-sure', '1'); b.textContent = 'Tap again to delete'; return; } for (k = 0; k < NOTES.length; k++) { if (NOTES[k].id === id) { NOTES.splice(k, 1); break; } } setView('notebook'); toast('Note deleted'); }
+  }, false);
