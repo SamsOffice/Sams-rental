@@ -72,3 +72,46 @@
       (pend || '<div class="card"><p class="note" style="padding:18px 16px">Nothing to review. New receipts from the drivers show up here.</p></div>') +
       (done ? '<div class="card"><header><h2>Already reviewed</h2></header>' + done + '</div>' : '');
   }
+
+  /* ---- machine nameplate reader (real photo only; no sample button) ---- */
+  function fileToB64(blob) {
+    return new Promise(function (res, rej) { var fr = new FileReader(); fr.onload = function () { res(String(fr.result).replace(/^data:[^,]*,/, '')); }; fr.onerror = function () { rej(new Error('read')); }; fr.readAsDataURL(blob); });
+  }
+  function startRead() {
+    var inp = document.getElementById('scFile'), file = inp && inp.files && inp.files[0];
+    if (!file) return;
+    SC.stage = 'scanning'; SC.n++; SC.ai = ''; SC.msg = '';
+    SC.f = { name: '', make: '', model: '', serial: '', year: '', memo: '' };
+    if (SC.mode !== 'new') { var a0 = assetById(SC.mode); if (a0) SC.f.name = a0.name; }
+    drawScan(); var my = SC.n;
+    var done = function (ai, msg) { if (SC.n !== my || SC.stage !== 'scanning') return; SC.ai = ai; SC.msg = msg || ''; SC.stage = 'review'; drawScan(); };
+    prepPh(file).then(fileToB64).then(function (b64) {
+      return SB.functions.invoke('read-receipt', { body: { kind: 'nameplate', image: b64 } });
+    }).then(function (res) {
+      if (res.error) {
+        var c = res.error.context && res.error.context.json ? res.error.context.json() : Promise.resolve({});
+        c.then(function (b) { done('fail', b && b.error === 'not_configured' ? 'The photo reader is not set up yet. Type the details.' : 'Could not read this photo. Type the details.'); }, function () { done('fail', 'Could not read this photo. Type the details.'); });
+        return;
+      }
+      var d = res.data || {};
+      if (!(d.make || d.model || d.serial)) { done('fail', 'Could not read the plate. Retake the photo closer, or type the details.'); return; }
+      SC.f = { name: SC.f.name || d.name || '', make: d.make || '', model: d.model || '', serial: d.serial || '', year: d.year || '', memo: '' };
+      done('ok', '');
+    }).catch(function () { done('fail', 'Could not read this photo. Type the details.'); });
+  }
+  function drawScan() {
+    var h = '', f = SC.f;
+    var pic = function () { return SC.photo ? '<div style="text-align:center"><img src="' + SC.photo + '" alt="Nameplate photo" style="max-width:100%;max-height:220px;border-radius:10px;border:1px solid var(--line)"></div>' : ''; };
+    if (SC.stage === 'start') {
+      h = '<div style="text-align:center"><span class="ic2" style="margin:0 auto 8px">' + icon('camera') + '</span><b>Take a photo of the machine nameplate</b><p class="note" style="margin-top:6px">Get close to the metal plate so the maker, model and serial number are sharp. Good light helps.</p></div>' +
+        '<label class="btn primary" style="justify-content:center;cursor:pointer">' + icon('camera') + 'Take photo<input id="scFile" type="file" accept="image/*" capture="environment" style="display:none"></label>';
+    } else if (SC.stage === 'scanning') {
+      h = pic() + '<div style="text-align:center"><b>Reading nameplate...</b><p class="note">This takes a few seconds.</p></div>';
+    } else {
+      h = pic() + '<h3 class="fsec">Select data</h3><div class="fgrid">' + fld('scName', 'Machine name', 'text', f.name, 'Example: Mini excavator', true) + fld('scMake', 'Manufacturer', 'text', f.make) + fld('scModel', 'Model #', 'text', f.model) + fld('scSerial', 'Serial #', 'text', f.serial) + fld('scYear', 'Year', 'number', f.year) +
+        '<div class="fld wide"><label for="scMemo">Notes</label><textarea id="scMemo" placeholder="Anything to remember...">' + invEsc(f.memo) + '</textarea></div></div><p class="ferr" id="scErr"></p>' +
+        (SC.ai === 'ok' ? '<p class="note"><b>Read from the photo by the app.</b> Check the maker, model and serial number against the plate before saving. One wrong character in a serial number matters.</p>' : '<p class="note">' + invEsc(SC.msg || 'Type the details from the plate.') + '</p>') +
+        '<div class="actions"><button type="button" class="btn primary" data-sc="save">' + icon('check') + 'Save machine</button><button type="button" class="btn" data-sc="retake">' + icon('refresh') + 'Retake photo</button><button type="button" class="btn" data-sc="cancel">Cancel</button></div>';
+    }
+    document.getElementById('scBody').innerHTML = h; paintIcons(document.getElementById('scBody'));
+  }
