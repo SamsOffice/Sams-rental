@@ -104,6 +104,8 @@
     var p = document.getElementById('gP'); if (p) { p.setAttribute('inputmode', 'numeric'); p.setAttribute('autocomplete', 'off'); }
     var u = document.getElementById('gU'), ul = document.getElementById('gUL');
     if (ul) ul.style.display = 'none'; if (u && u.parentNode) u.parentNode.style.display = 'none';
+    var gn = document.getElementById('gN');
+    if (gn && !document.getElementById('gOffice')) { var lk = document.createElement('a'); lk.id = 'gOffice'; lk.textContent = 'Soy de la oficina / Office staff'; lk.href = location.pathname + '?o=1'; lk.style.cssText = 'display:block;margin-top:18px;font-size:15px;color:#2563EB;text-decoration:underline'; gn.parentNode.insertBefore(lk, gn.nextSibling); }
     if (document.getElementById('gNames') || !ul) return;
     var box = document.createElement('div'); box.id = 'gNames'; box.style.cssText = 'display:flex;flex-direction:column;gap:10px;margin-bottom:6px';
     var names = [['Sams', 'sams'], ['Gustavo', 'gustavo'], ['Jose Luis', 'jose luis']], k;
