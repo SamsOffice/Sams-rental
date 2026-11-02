@@ -242,3 +242,94 @@
       '<div class="actions"><button class="btn primary" data-act="yardadd">Add yard</button></div></div></div>';
     return h;
   }
+
+  /* ---- map icons: yards and drivers get a chosen icon and color ---- */
+  var DICON = {};
+  var ICOLS = ['#7C3AED', '#0D9488', '#D97706', '#DB2777', '#2563EB', '#16A34A', '#DC2626', '#4B5563'];
+  var ICONS = {
+    pin: ['Pin', '<path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/>'],
+    building: ['Building', '<path d="M4 21V4l9-2v6h7v13H4zm3-14v2h2V7H7zm0 4v2h2v-2H7zm0 4v2h2v-2H7zm6-3v2h2v-2h-2zm0 4v2h2v-2h-2z"/>'],
+    dumpster: ['Dumpster', '<path d="M2 7h20l-2.5 12h-15L2 7zm2-3h16v2H4V4z"/>'],
+    tractor: ['Tractor', '<path d="M4 6h7l2 4h3V6h2v6h2v5h-2.2a3 3 0 0 0-5.6 0H9.8A3.5 3.5 0 0 0 3 16V8l1-2z"/><circle cx="6.5" cy="17.5" r="3"/><circle cx="16.5" cy="18" r="2"/>'],
+    star: ['Star', '<path d="M12 2l3 7 7 .6-5.3 4.6 1.7 7.3L12 17.8 5.6 21.5l1.7-7.3L2 9.6 9 9z"/>']
+  };
+  var ICKEYS = ['pin', 'building', 'dumpster', 'tractor', 'star'];
+  function icSvg(k, sz, col) { return '<svg viewBox="0 0 24 24" width="' + sz + '" height="' + sz + '" fill="' + col + '">' + (ICONS[k] || ICONS.pin)[1] + '</svg>'; }
+  function mbIconEl(k, col) {
+    var d = document.createElement('div');
+    d.style.cssText = 'width:34px;height:34px;border-radius:50%;background:' + col + ';border:2px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;cursor:pointer';
+    d.innerHTML = icSvg(k, 20, '#fff'); return d;
+  }
+  function lvDrawMB() {
+    var el = document.getElementById('lvmapL'); if (!el || !window.mapboxgl) return;
+    if (MBMAP && MBMAP.getContainer() !== el) { if (el.parentNode) { el.parentNode.replaceChild(MBMAP.getContainer(), el); el = MBMAP.getContainer(); try { MBMAP.resize(); } catch (e) {} } else { try { MBMAP.remove(); } catch (e2) {} MBMAP = null; MBMARK = {}; MBYM = []; } }
+    if (!MBMAP) {
+      mapboxgl.accessToken = MAPKEY;
+      MBMAP = new mapboxgl.Map({ container: el, style: 'mapbox://styles/mapbox/streets-v12', center: [-73.7949, 40.7282], zoom: 12 });
+      MBMAP.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+      MBMAP.on('error', function (ev) { var st = ev && ev.error && ev.error.status; if (st === 401 || st === 403) lvFail('Mapbox rejected the token. Check it in Settings.'); });
+    }
+    var pts = [], k, n, l, i, y, m, mins;
+    for (i = 0; i < MBYM.length; i++) { try { MBYM[i].remove(); } catch (e3) {} }
+    for (n in MBMARK) { try { MBMARK[n].remove(); } catch (e5) {} }
+    MBYM = []; MBMARK = {};
+    for (i = 0; i < YARDS.length; i++) {
+      y = YARDS[i]; if (typeof y.lat !== 'number') continue;
+      m = new mapboxgl.Marker({ element: mbIconEl(y.icon || 'pin', y.col || YCOL[i % YCOL.length]) }).setLngLat([y.lng, y.lat]).setPopup(new mapboxgl.Popup({ offset: 20, closeButton: false }).setText(y.name)).addTo(MBMAP);
+      MBYM.push(m); pts.push([y.lng, y.lat]);
+    }
+    for (k = 0; k < LNAMES.length; k++) {
+      n = LNAMES[k]; l = LOCS[n]; if (!l || typeof l.lat !== 'number') continue;
+      mins = Math.max(0, Math.round((Date.now() - new Date(l.at).getTime()) / 60000));
+      MBMARK[n] = new mapboxgl.Marker({ element: mbIconEl(DICON[n] || 'tractor', DCOL[n]) }).setLngLat([l.lng, l.lat]).setPopup(new mapboxgl.Popup({ offset: 20, closeButton: false }).setText(n + ' - ' + (mins < 1 ? 'just now' : mins + ' min ago'))).addTo(MBMAP);
+      pts.push([l.lng, l.lat]);
+    }
+    if (pts.length) { var b = new mapboxgl.LngLatBounds(pts[0], pts[0]); for (i = 1; i < pts.length; i++) b.extend(pts[i]); try { MBMAP.fitBounds(b, { padding: 60, maxZoom: 14, duration: 0 }); } catch (e4) {} }
+  }
+  function yardAdd() {
+    var nm = ((document.getElementById('fYName') || {}).value || '').trim(), ad = ((document.getElementById('fYAddr') || {}).value || '').trim();
+    if (!nm || !ad) { toast('Type the yard name and address'); return; }
+    if (!isMB()) { toast('Save a Mapbox token first'); return; }
+    toast('Finding the address...');
+    fetch('https://api.mapbox.com/geocoding/v5/mapbox.places/' + encodeURIComponent(ad) + '.json?limit=1&country=us&proximity=-73.79,40.73&access_token=' + encodeURIComponent(MAPKEY))
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        var f = j && j.features && j.features[0]; if (!f) { toast('Could not find that address'); return; }
+        YARDS.push({ name: nm, addr: ad, lat: f.center[1], lng: f.center[0], icon: 'pin', col: ICOLS[YARDS.length % ICOLS.length] }); toast('Yard added'); setView('settings'); syncSoon();
+      }).catch(function () { toast('Could not look up the address'); });
+  }
+  function mapOpt(t, i, what, v) {
+    if (t === 'y') { if (!YARDS[i]) return; if (what === 'icon') YARDS[i].icon = v; else YARDS[i].col = v; }
+    else { var n = LNAMES[i]; if (!n) return; DICON[n] = v; }
+    MBMAP = null; MBMARK = {}; MBYM = [];
+    setView('settings'); syncSoon();
+  }
+  function icPicker(t, i, cur, curCol, withCol) {
+    var h = '<div style="display:flex;flex-wrap:wrap;gap:6px;padding:4px 14px 8px">', q;
+    for (q = 0; q < ICKEYS.length; q++) h += '<button class="btn sm' + (cur === ICKEYS[q] ? ' primary' : '') + '" data-act="mapopt" data-t="' + t + '" data-i="' + i + '" data-w="icon" data-v="' + ICKEYS[q] + '" aria-label="' + ICONS[ICKEYS[q]][0] + '" style="display:inline-flex;align-items:center;gap:4px">' + icSvg(ICKEYS[q], 16, cur === ICKEYS[q] ? '#fff' : '#2563EB') + ICONS[ICKEYS[q]][0] + '</button>';
+    h += '</div>';
+    if (withCol) {
+      h += '<div style="display:flex;flex-wrap:wrap;gap:8px;padding:0 14px 10px">';
+      for (q = 0; q < ICOLS.length; q++) h += '<button data-act="mapopt" data-t="' + t + '" data-i="' + i + '" data-w="col" data-v="' + ICOLS[q] + '" aria-label="Color" style="all:unset;cursor:pointer;width:28px;height:28px;border-radius:50%;background:' + ICOLS[q] + ';border:3px solid ' + (curCol === ICOLS[q] ? '#111' : '#fff') + ';box-shadow:0 0 0 1px #bbb"></button>';
+      h += '</div>';
+    }
+    return h;
+  }
+  function mapKeyCard() {
+    var kind = !MAPKEY ? '' : (isMB() ? 'Mapbox' : 'Google');
+    var h = '<div class="card"><header><h2>Map</h2></header><div style="padding:0 14px 14px"><p class="note" style="padding:6px 0">' + (MAPKEY ? 'A ' + kind + ' key is saved. The live map uses ' + kind + '.' : 'The live map is using the basic backup map. Paste a Mapbox token (starts with pk.) or a Google map key to switch.') + '</p>' +
+      '<div class="fld"><label for="fMapKey">Map token or key</label><input id="fMapKey" type="password" autocomplete="off" autocapitalize="none" placeholder="' + (MAPKEY ? 'Saved. Paste a new one to replace it.' : 'Paste it here') + '"></div>' +
+      '<div class="actions"><button class="btn primary" data-act="mapkey">Save</button>' + (MAPKEY ? '<button class="btn" data-act="mapkeyrm">Remove</button>' : '') + '</div></div></div>';
+    var rows = '', i, y;
+    for (i = 0; i < YARDS.length; i++) {
+      y = YARDS[i];
+      rows += '<div class="lvrow"><span class="lvdot" style="background:' + (y.col || ICOLS[i % ICOLS.length]) + '"></span><div class="grow"><b>' + invEsc(y.name) + '</b><span class="sub">' + invEsc(y.addr) + '</span></div><button class="btn sm" data-act="yardrm" data-i="' + i + '">Remove</button></div>' + icPicker('y', i, y.icon || 'pin', y.col || ICOLS[i % ICOLS.length], true);
+    }
+    h += '<div class="card"><header><h2>Yards on the map</h2></header>' + rows + '<div style="padding:0 14px 14px"><p class="note" style="padding:6px 0">' + (YARDS.length ? 'Tap an icon or color to change how a yard looks on the map. ' : 'No yards yet. ') + 'Add each yard with its address. It shows as a pin on the Dispatch map (needs a Mapbox token).</p>' +
+      '<div class="fld"><label for="fYName">Yard name</label><input id="fYName" placeholder="Yard 1"></div><div class="fld"><label for="fYAddr">Address</label><input id="fYAddr" placeholder="Street, city"></div>' +
+      '<div class="actions"><button class="btn primary" data-act="yardadd">Add yard</button></div></div></div>';
+    var dr = '', k;
+    for (k = 0; k < LNAMES.length; k++) dr += '<div class="lvrow"><span class="lvdot" style="background:' + DCOL[LNAMES[k]] + '"></span><div class="grow"><b>' + invEsc(LNAMES[k]) + '</b></div></div>' + icPicker('d', k, DICON[LNAMES[k]] || 'tractor', '', false);
+    h += '<div class="card"><header><h2>Driver icons on the map</h2></header>' + dr + '</div>';
+    return h;
+  }
