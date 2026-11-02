@@ -24,8 +24,10 @@ gate = '''<div id="gate" style="position:fixed;inset:0;z-index:9999;background:#
 </div>
 '''
 rep('<div class="app">','</head><body>\n'+gate+'<div class="app">')
+rep('''    user: '<circle cx="12" cy="8" r="4"/>''','''    logout: '<path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5M21 12H9"/>',
+    user: '<circle cx="12" cy="8" r="4"/>''')
 rep('''<button class="nav" data-v="settings"><span data-i="gear"></span>Settings</button>''','''<button class="nav" data-v="settings"><span data-i="gear"></span>Settings</button>
-      <button class="nav" id="signOut"><span data-i="gear"></span>Sign out</button>''')
+      <button class="nav" id="signOut"><span data-i="logout"></span>Sign out</button>''')
 # gate button style when disabled
 rep('</style>','#gB:disabled{background:#F3F4F6!important;color:#B6BCC4!important;cursor:default!important}\n</style>',1) if s.count('</style>')==1 else None
 rep("var TODAY = new Date(2026, 9, 11)","var TODAY = (function () { var d = new Date(); return new Date(d.getFullYear(), d.getMonth(), d.getDate()); })()")
