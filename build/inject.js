@@ -108,7 +108,7 @@
     return p && p.data ? p.data : null;
   }
   async function enter(me) {
-    ME = me; document.getElementById('gate').hidden = true;
+    ME = me; document.getElementById('gate').hidden = true; if (me.role !== 'driver' && /^#(conductores|driver)$/i.test(location.hash || '')) { try { history.replaceState(null, '', location.pathname); } catch (e) {} }
     await loadAll(); paintAll();
     if (me.role === 'driver') obInit(me, function (n) { startDriverMode(me); pinInit(); locNotice(); if (n && navigator.onLine !== false) { NET_OFF = true; goOnline(); setTimeout(syncSoon, 2600); } });
   }
