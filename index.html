@@ -4997,6 +4997,35 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
     var before = JSON.stringify(LOCS), cv = curView;
     loadRecs().then(function () { if (curView === cv && JSON.stringify(LOCS) !== before) setView(cv); });
   }, 15000);
+  /* ---- driver notes: flag on job rows + count on the menu until the office opens the job ---- */
+  function dnSeen() { try { return JSON.parse(localStorage.getItem('sams-dn-seen:' + OBX.slug) || '{}'); } catch (e) { return {}; } }
+  function dnMark(key, text) { var s = dnSeen(); s[key] = text; try { localStorage.setItem('sams-dn-seen:' + OBX.slug, JSON.stringify(s)); } catch (e) { } }
+  function dnUnread(kind) {
+    var s = dnSeen(), n = 0, k, list = kind === 'd' ? JOBS : RENTALS;
+    for (k = 0; k < list.length; k++) { if (list[k].dn && s[kind + list[k].id] !== list[k].dn) n++; }
+    return n;
+  }
+  var badgeCount0 = badgeCount;
+  badgeCount = function (v) { var n = badgeCount0(v); if (!ME || isDrv()) return n; if (v === 'dumping') n += dnUnread('d'); else if (v === 'rentals') n += dnUnread('r'); return n; };
+  function dnDecorate() {
+    if (!ME || isDrv()) return;
+    var s = dnSeen(), rows = document.querySelectorAll('tr[data-id],tr[data-r]'), k, tr, kind, id, list, j, q, has;
+    for (k = 0; k < rows.length; k++) {
+      tr = rows[k]; kind = tr.hasAttribute('data-r') ? 'r' : 'd'; id = tr.getAttribute(kind === 'r' ? 'data-r' : 'data-id'); list = kind === 'r' ? RENTALS : JOBS; j = null;
+      for (q = 0; q < list.length; q++) { if (String(list[q].id) === String(id)) { j = list[q]; break; } }
+      has = j && j.dn && s[kind + j.id] !== j.dn; var old = tr.querySelector('.dnflag');
+      if (has && !old) { var td = tr.querySelector('td'); if (td) { var sp = document.createElement('span'); sp.className = 'dnflag'; sp.style.cssText = 'display:inline-block;margin-left:6px;padding:1px 7px;border-radius:99px;background:#FEF3C7;color:#92400E;font:700 11px system-ui'; sp.textContent = 'Driver note'; td.appendChild(sp); } }
+      else if (!has && old) old.parentNode.removeChild(old);
+    }
+  }
+  document.addEventListener('click', function (e) {
+    if (!ME || isDrv()) return;
+    var tr = e.target.closest && e.target.closest('tr[data-id],tr[data-r]'); if (!tr) return;
+    var kind = tr.hasAttribute('data-r') ? 'r' : 'd', id = tr.getAttribute(kind === 'r' ? 'data-r' : 'data-id'), list = kind === 'r' ? RENTALS : JOBS, q;
+    for (q = 0; q < list.length; q++) { if (String(list[q].id) === String(id) && list[q].dn) { dnMark(kind + list[q].id, list[q].dn); break; } }
+    setTimeout(function () { updPBadge(); dnDecorate(); }, 50);
+  }, true);
+  setInterval(function () { try { dnDecorate(); updPBadge(); } catch (e) { } }, 1500);
 </script>
 
 </body></html>
