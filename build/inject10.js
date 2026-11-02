@@ -157,7 +157,16 @@
       document.body.appendChild(el);
       document.getElementById('locGo').addEventListener('click', function () { LOCST = { s: 'idle', at: 0, msg: '' }; sendLoc(true); locPaint(); });
     }
-    el.style.display = 'flex'; var db0 = document.getElementById('drvBody'); if (db0) db0.style.paddingBottom = '120px';
+    el.style.display = 'flex'; var db0 = document.getElementById('drvBody'); if (db0) db0.style.paddingBottom = LOCST.s === 'ok' ? '70px' : '120px';
+    if (LOCST.s === 'ok') {
+      el.style.cssText = 'position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));left:auto;z-index:9000;padding:6px 12px;display:flex;gap:8px;align-items:center;font:600 13px system-ui,-apple-system,sans-serif;border-radius:99px;border:1px solid #86EFAC;background:#DCFCE7;color:#166534;box-shadow:0 1px 4px rgba(0,0,0,.2)';
+      document.getElementById('locTxt').style.flex = '0 0 auto'; document.getElementById('locGo').style.display = 'none';
+      document.getElementById('locTxt').textContent = '\u25CF Ubicaci\u00f3n activa'; el.onclick = function () { sendLoc(true); };
+      return;
+    }
+    el.onclick = null; document.getElementById('locGo').style.display = '';
+    el.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9000;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;align-items:center;justify-content:space-between;font:15px/1.35 system-ui,-apple-system,sans-serif;border-top:1px solid rgba(0,0,0,.15)';
+    document.getElementById('locTxt').style.flex = '1';
     var t = document.getElementById('locTxt'), bg = '#FEF3C7', fg = '#92400E', tx, btn = document.getElementById('locGo');
     if (LOCST.s === 'ok') { var mn = Math.max(0, Math.round((Date.now() - LOCST.at) / 60000)); tx = 'Ubicación compartida con la oficina (' + (mn < 1 ? 'ahora' : 'hace ' + mn + ' min') + ')'; bg = '#DCFCE7'; fg = '#166534'; btn.textContent = 'Actualizar'; }
     else if (LOCST.s === 'denied') { tx = 'Ubicación bloqueada. En Ajustes del teléfono, activa Ubicación para este navegador y para este sitio. Luego toca el botón.'; bg = '#FEE2E2'; fg = '#991B1B'; btn.textContent = 'Intentar de nuevo'; }

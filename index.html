@@ -2986,7 +2986,7 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
     'Everyone you rent to or dump for.': 'Todos a quienes rentas o les pones contenedor.', 'Add client': 'Agregar cliente', 'Paid up': 'Al corriente', 'Open portal': 'Abrir portal', 'Example only. This opens the new client form.': 'Solo ejemplo. Esto abre el formulario de cliente nuevo.', '← Back to clients': '← Volver a clientes', 'Back to clients': 'Volver a clientes', 'Total billed': 'Total facturado',
     'Good Standing': 'En buen estado', 'Paying Client': 'Cliente que paga', 'Chronically Delinquent': 'Moroso crónico', 'Cash Only': 'Solo efectivo', 'New Client': 'Cliente nuevo', 'Do Not Rent': 'No rentar', 'Payment Plan': 'Plan de pagos', 'Blacklisted': 'Lista negra',
     'Every client graded A to D, from how they pay, how much they spend and how often they order. Tap a client to open them.': 'Cada cliente calificado de A a D, según cómo paga, cuánto gasta y cada cuánto pide. Toca un cliente para abrirlo.', 'Best client': 'Mejor cliente', 'Owes the most': 'Debe más', 'Watch list': 'Lista de vigilancia', 'Grade C or D': 'Calificación C o D', 'Sort by': 'Ordenar por', 'Best grade': 'Mejor calificación', 'Top spender': 'Mayor gasto', 'Owes most': 'Debe más', 'Always paid up': 'Siempre al corriente', 'How the grade works': 'Cómo funciona la calificación',
-    'Out of 100. Up to 60 points for paying on time (late invoices take points off), 20 for how much they spend, and 20 for how often and how recently they order. A is 80 and up, B is 65, C is 50, D is under 50. It uses your jobs and rentals in this demo.': 'Sobre 100. Hasta 60 puntos por pagar a tiempo (las facturas atrasadas restan puntos), 20 por cuánto gastan y 20 por cada cuánto y qué tan reciente piden. A es 80 o más, B es 65, C es 50, D es menos de 50. Usa tus trabajos y rentas de esta demo.',
+    'Out of 100. Up to 60 points for paying on time (late invoices take points off), 20 for how much they spend, and 20 for how often and how recently they order. A is 80 and up, B is 65, C is 50, D is under 50. It uses your jobs and rentals.': 'Sobre 100. Hasta 60 puntos por pagar a tiempo (las facturas atrasadas restan puntos), 20 por cuánto gastan y 20 por cada cuánto y qué tan reciente piden. A es 80 o más, B es 65, C es 50, D es menos de 50. Usa tus trabajos y rentas de esta demo.',
     'Tap an invoice to preview it, then open it full size.': 'Toca una factura para verla y luego ábrela en tamaño completo.', 'New invoice': 'Nueva factura', 'Date': 'Fecha', 'Amount': 'Monto', 'Description': 'Descripción',
     'Example only. This opens the invoice builder.': 'Solo ejemplo. Esto abre el creador de facturas.', 'View all invoices': 'Ver todas las facturas', 'Example only. Downloads the Excel invoice.': 'Solo ejemplo. Descarga la factura en Excel.', 'Example only. Nothing was sent.': 'Solo ejemplo. No se envió nada.',
     'Revenue this month': 'Ingresos este mes', 'All rentals and dumping': 'Todas las rentas y contenedores', 'Rental revenue': 'Ingresos por rentas', 'Dumping revenue': 'Ingresos por contenedores', 'Outstanding': 'Pendiente', 'Top clients this month': 'Mejores clientes este mes', 'Unpaid accounts sorted by how late they are.': 'Cuentas sin pagar ordenadas por atraso.',
@@ -3338,7 +3338,7 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
       '<div class="stat"><div class="row">Watch list<span class="ic">' + icon('clock') + '</span></div><b>' + watch + (watch === 1 ? ' client' : ' clients') + '</b><small>Grade C or D</small></div></section>' +
       '<div class="sortbar"><span class="sub">Sort by</span>' + sb('score', 'Best grade') + sb('spend', 'Top spender') + sb('owed', 'Owes most') + '</div>' +
       '<div class="card"><header><h2>Clients</h2>' + pillH(list.length + ' clients', 'info') + '</header>' + h + '</div>' +
-      '<div class="card"><header><h2>How the grade works</h2></header><p class="note" style="padding:14px;margin:0">Out of 100. Up to 60 points for paying on time (late invoices take points off), 20 for how much they spend, and 20 for how often and how recently they order. A is 80 and up, B is 65, C is 50, D is under 50. It uses your jobs and rentals in this demo.</p></div>';
+      '<div class="card"><header><h2>How the grade works</h2></header><p class="note" style="padding:14px;margin:0">Out of 100. Up to 60 points for paying on time (late invoices take points off), 20 for how much they spend, and 20 for how often and how recently they order. A is 80 and up, B is 65, C is 50, D is under 50. It uses your jobs and rentals.</p></div>';
   }
   /* ---- Dump costs: prices, site rates, dump log, profit ---- */
   var PRICES = [
@@ -3750,7 +3750,7 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
       client_name: j.client, client_phone: digits(j.phone) || null, client_address: j.addr, material_type: j.mat, container_size: j.size, job_type: j.jt || null,
       total_price: j.total, price: j.total - (j.ow || 0) - (j.pf || 0), overweight_charge: j.ow || 0, permit_fee: j.pf || 0,
       assigned_driver: drv && drv !== 'Unassigned' ? drv : null, payment_status: j.pay === 'Paid' ? 'paid' : 'unpaid', payment_method: j.method || null,
-      client_email: j.email || null, notes: j.notes || null, driver_status: DRV_KEY[j.status] || 'pending', date: drop, scheduled_dropoff: dd ? dd.iso : drop, scheduled_dropoff_time: dd ? dd.t : null,
+      client_email: j.email || null, notes: j.notes || null, driver_notes: j.dn || null, driver_status: DRV_KEY[j.status] || 'pending', date: drop, scheduled_dropoff: dd ? dd.iso : drop, scheduled_dropoff_time: dd ? dd.t : null,
       scheduled_pickup: pd ? pd.iso : (j.dueIso || null), scheduled_pickup_time: pd ? pd.t : null, due_date: pd ? pd.iso : (j.dueIso || null)
     };
     return o;
@@ -3767,7 +3767,7 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
       start_date: r.si || null, due_date: r.di || null, price: parseFloat(r.price) || 0, delivery_fee: parseFloat(r.del) || 0, pickup_fee: parseFloat(r.pick) || 0, trailer_fee: parseFloat(r.trailer) || 0, diesel_fee: parseFloat(r.diesel) || 0,
       pickup_type: r.ptype || 'delivery', payment_status: r.pay === 'Paid' ? 'paid' : 'unpaid', payment_method: r.method || null,
       rental_status: r.status === 'Returned' ? 'completed' : (r.status === 'Cancelled' ? 'cancelled' : 'active'), driver_status: key,
-      notes: r.notes || null, delivery_date: (pdv ? pdv.iso : r.sd) || null, delivery_time: (pdv ? pdv.t : r.sdt) || null, pickup_date: (ppu ? ppu.iso : r.sp) || null, pickup_time: (ppu ? ppu.t : r.spt) || null, client_tag: r.tag || null
+      notes: r.notes || null, driver_notes: r.dn || null, delivery_date: (pdv ? pdv.iso : r.sd) || null, delivery_time: (pdv ? pdv.t : r.sdt) || null, pickup_date: (ppu ? ppu.iso : r.sp) || null, pickup_time: (ppu ? ppu.t : r.spt) || null, client_tag: r.tag || null
     };
   }
   function changed(now, snap) { var d = {}, any = false, k; for (k in now) { if (now.hasOwnProperty(k) && JSON.stringify(now[k]) !== JSON.stringify(snap ? snap[k] : undefined)) { d[k] = now[k]; any = true; } } return any ? d : null; }
@@ -4909,7 +4909,16 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
       document.body.appendChild(el);
       document.getElementById('locGo').addEventListener('click', function () { LOCST = { s: 'idle', at: 0, msg: '' }; sendLoc(true); locPaint(); });
     }
-    el.style.display = 'flex'; var db0 = document.getElementById('drvBody'); if (db0) db0.style.paddingBottom = '120px';
+    el.style.display = 'flex'; var db0 = document.getElementById('drvBody'); if (db0) db0.style.paddingBottom = LOCST.s === 'ok' ? '70px' : '120px';
+    if (LOCST.s === 'ok') {
+      el.style.cssText = 'position:fixed;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));left:auto;z-index:9000;padding:6px 12px;display:flex;gap:8px;align-items:center;font:600 13px system-ui,-apple-system,sans-serif;border-radius:99px;border:1px solid #86EFAC;background:#DCFCE7;color:#166534;box-shadow:0 1px 4px rgba(0,0,0,.2)';
+      document.getElementById('locTxt').style.flex = '0 0 auto'; document.getElementById('locGo').style.display = 'none';
+      document.getElementById('locTxt').textContent = '\u25CF Ubicaci\u00f3n activa'; el.onclick = function () { sendLoc(true); };
+      return;
+    }
+    el.onclick = null; document.getElementById('locGo').style.display = '';
+    el.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9000;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;align-items:center;justify-content:space-between;font:15px/1.35 system-ui,-apple-system,sans-serif;border-top:1px solid rgba(0,0,0,.15)';
+    document.getElementById('locTxt').style.flex = '1';
     var t = document.getElementById('locTxt'), bg = '#FEF3C7', fg = '#92400E', tx, btn = document.getElementById('locGo');
     if (LOCST.s === 'ok') { var mn = Math.max(0, Math.round((Date.now() - LOCST.at) / 60000)); tx = 'Ubicación compartida con la oficina (' + (mn < 1 ? 'ahora' : 'hace ' + mn + ' min') + ')'; bg = '#DCFCE7'; fg = '#166534'; btn.textContent = 'Actualizar'; }
     else if (LOCST.s === 'denied') { tx = 'Ubicación bloqueada. En Ajustes del teléfono, activa Ubicación para este navegador y para este sitio. Luego toca el botón.'; bg = '#FEE2E2'; fg = '#991B1B'; btn.textContent = 'Intentar de nuevo'; }

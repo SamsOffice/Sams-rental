@@ -18,7 +18,7 @@
       client_name: j.client, client_phone: digits(j.phone) || null, client_address: j.addr, material_type: j.mat, container_size: j.size, job_type: j.jt || null,
       total_price: j.total, price: j.total - (j.ow || 0) - (j.pf || 0), overweight_charge: j.ow || 0, permit_fee: j.pf || 0,
       assigned_driver: drv && drv !== 'Unassigned' ? drv : null, payment_status: j.pay === 'Paid' ? 'paid' : 'unpaid', payment_method: j.method || null,
-      client_email: j.email || null, notes: j.notes || null, driver_status: DRV_KEY[j.status] || 'pending', date: drop, scheduled_dropoff: dd ? dd.iso : drop, scheduled_dropoff_time: dd ? dd.t : null,
+      client_email: j.email || null, notes: j.notes || null, driver_notes: j.dn || null, driver_status: DRV_KEY[j.status] || 'pending', date: drop, scheduled_dropoff: dd ? dd.iso : drop, scheduled_dropoff_time: dd ? dd.t : null,
       scheduled_pickup: pd ? pd.iso : (j.dueIso || null), scheduled_pickup_time: pd ? pd.t : null, due_date: pd ? pd.iso : (j.dueIso || null)
     };
     return o;
@@ -35,7 +35,7 @@
       start_date: r.si || null, due_date: r.di || null, price: parseFloat(r.price) || 0, delivery_fee: parseFloat(r.del) || 0, pickup_fee: parseFloat(r.pick) || 0, trailer_fee: parseFloat(r.trailer) || 0, diesel_fee: parseFloat(r.diesel) || 0,
       pickup_type: r.ptype || 'delivery', payment_status: r.pay === 'Paid' ? 'paid' : 'unpaid', payment_method: r.method || null,
       rental_status: r.status === 'Returned' ? 'completed' : (r.status === 'Cancelled' ? 'cancelled' : 'active'), driver_status: key,
-      notes: r.notes || null, delivery_date: (pdv ? pdv.iso : r.sd) || null, delivery_time: (pdv ? pdv.t : r.sdt) || null, pickup_date: (ppu ? ppu.iso : r.sp) || null, pickup_time: (ppu ? ppu.t : r.spt) || null, client_tag: r.tag || null
+      notes: r.notes || null, driver_notes: r.dn || null, delivery_date: (pdv ? pdv.iso : r.sd) || null, delivery_time: (pdv ? pdv.t : r.sdt) || null, pickup_date: (ppu ? ppu.iso : r.sp) || null, pickup_time: (ppu ? ppu.t : r.spt) || null, client_tag: r.tag || null
     };
   }
   function changed(now, snap) { var d = {}, any = false, k; for (k in now) { if (now.hasOwnProperty(k) && JSON.stringify(now[k]) !== JSON.stringify(snap ? snap[k] : undefined)) { d[k] = now[k]; any = true; } } return any ? d : null; }
