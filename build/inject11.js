@@ -50,7 +50,7 @@
     if (!ME || isDrv() || (curView !== 'dispatch' && curView !== 'drivers')) return;
     var ae = document.activeElement; if (ae && /INPUT|TEXTAREA|SELECT/.test(ae.tagName)) return;
     var before = JSON.stringify(LOCS), cv = curView;
-    loadRecs().then(function () { if (curView === cv && JSON.stringify(LOCS) !== before) setView(cv); });
+    loadRecs().then(function () { if (curView === cv && JSON.stringify(LOCS) !== before) { AUTOV = true; setView(cv); AUTOV = false; } });
   }, 15000);
   /* ---- driver notes: flag on job rows + count on the menu until the office opens the job ---- */
   function dnSeen() { try { return JSON.parse(localStorage.getItem('sams-dn-seen:' + OBX.slug) || '{}'); } catch (e) { return {}; } }
