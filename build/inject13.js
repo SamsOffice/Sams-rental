@@ -2,6 +2,8 @@
   (function () {
     var st = document.createElement('style');
     st.textContent = 'input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid #1D6FEF !important; outline-offset: 2px; }' +
+      '#gU:focus-visible, #gP:focus-visible { outline: none !important; }' +
+      'div:has(> #gU:focus-visible), div:has(> #gP:focus-visible) { border-color: #1D6FEF !important; box-shadow: 0 0 0 1px #1D6FEF; }' +
       '[data-act][tabindex]:focus-visible { outline: 2px solid #1D6FEF; outline-offset: 2px; }' +
       '@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; } }';
     document.head.appendChild(st);
