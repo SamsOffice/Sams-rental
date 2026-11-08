@@ -227,5 +227,15 @@ R('$146 por tonelada','$140 por tonelada',2)
 R("'<p class=\"note\">Leave both times empty for a day the site is closed.</p>' + fld('fSNote'","'<div style=\"display:flex;gap:18px;flex-wrap:wrap;margin:6px 0 10px\">' + [['fSWx','Mon to Fri',d0.wk],['fSSx','Saturday',d0.sat],['fSUx','Sunday',d0.sun]].map(function (z) { return '<label style=\"display:flex;align-items:center;gap:8px;font-size:15px\"><input type=\"checkbox\" id=\"' + z[0] + '\"' + (z[2] ? '' : ' checked') + ' style=\"width:22px;height:22px\">Closed ' + z[1] + '</label>'; }).join('') + '</div><p class=\"note\">Tick Closed for a day the site is closed.</p>' + fld('fSNote'")
 R("var x = fv(a), y = fv(b); return x && y ? [x, y] : null; };","var x = fv(a), y = fv(b), cx = document.getElementById(a === 'fSWo' ? 'fSWx' : (a === 'fSSo' ? 'fSSx' : 'fSUx')); if (cx && cx.checked) return null; return x && y ? [x, y] : null; };")
 R("if (!lr[i].off) LOCS[lr[i].who] = lr[i];","if (!lr[i].off && (Date.now() - new Date(lr[i].at).getTime()) < 20 * 60000) LOCS[lr[i].who] = lr[i];")
+import base64 as _b64
+_FD='/tmp/fnt/node_modules/@fontsource/metropolis/files/metropolis-latin-%d-normal.woff2'
+_fc=''.join("@font-face{font-family:'Metropolis';font-style:normal;font-weight:%d;font-display:swap;src:url(data:font/woff2;base64,%s) format('woff2')}"%(w,_b64.b64encode(open(_FD%w,'rb').read()).decode()) for w in (400,500,600,700,800))
+assert s.count("'Plus Jakarta Sans'")==3
+s=s.replace("'Plus Jakarta Sans'","'Metropolis'")
+for _l in ('<link rel="preconnect" href="https://fonts.googleapis.com">\n','<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'):
+    assert _l in s; s=s.replace(_l,'',1)
+_i=s.index('<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta'); _j=s.index('>',_i)+1
+s=s[:_i]+'<style>'+_fc+'</style>'+s[_j:]
+assert 'fonts.googleapis' not in s
 open('app.html','w').write(s)
 print(len(s))
