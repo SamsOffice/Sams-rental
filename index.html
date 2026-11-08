@@ -5367,15 +5367,17 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
     }
     function eodData() {
       var t = TODAYISO(), tm = TOMOISO(), k, d, stops = [], done = 0, notDone = [], drv = {}, drvOrd = [], tom = 0, note = '';
-      for (k = 0; k < DISP.length; k++) {
-        d = DISP[k]; var iso = dispISO(d);
-        if (iso === t) {
+      var lj0 = liveJobs();
+      for (k = 0; k < lj0.length; k++) {
+        d = lj0[k];
+        if (ISO[d.id] === t) {
           stops.push(d);
-          if (d.st === 'Delivered') { done++; if (d.driver) { if (!drv[d.driver]) { drv[d.driver] = 0; drvOrd.push(d.driver); } drv[d.driver]++; } }
-          else notDone.push(d);
-          if (d.dn) note = (d.driver ? d.driver + ': ' : '') + d.dn;
-        } else if (iso === tm && d.st !== 'Delivered') tom++;
+          if (d.status === 'Delivered' || d.status === 'Past due') { done++; if (d.driver && d.driver !== 'Unassigned') { if (!drv[d.driver]) { drv[d.driver] = 0; drvOrd.push(d.driver); } drv[d.driver]++; } }
+          else notDone.push({ client: d.client, addr: d.addr, dn: d.dn, st: d.status });
+          if (d.dn) note = (d.driver && d.driver !== 'Unassigned' ? d.driver + ': ' : '') + d.dn;
+        }
       }
+      for (k = 0; k < DISP.length; k++) { if (dispISO(DISP[k]) === tm && DISP[k].st !== 'Delivered') tom++; }
       var bill = {}, billOrd = [], billTot = 0, lj = liveJobs(), lr = liveRentals(), amt;
       function addb(n, v) { if (!n || !(v > 0)) return; if (bill[n] == null) { bill[n] = 0; billOrd.push(n); } bill[n] += v; billTot += v; }
       for (k = 0; k < lj.length; k++) { if (ISO[lj[k].id] === t) addb(lj[k].client, lj[k].total); }
