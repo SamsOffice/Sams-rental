@@ -9,6 +9,7 @@
       'Set where numbering starts. The number must be higher than any already used.': 'Define dónde empieza la numeración. Debe ser mayor que cualquier número ya usado.',
       'Numbers saved': 'Números guardados', 'Could not load the numbers.': 'No se pudieron cargar los números.',
       'Owner and office staff': 'Dueño y personal de oficina', 'One shared login': 'Un solo acceso compartido',
+      'Remind me on this date': 'Recordarme en esta fecha', 'Reminders': 'Recordatorios', 'Reminder': 'Recordatorio', 'Reminder done': 'Recordatorio hecho', 'Mark done': 'Marcar como hecho', 'Done': 'Hecho', 'Overdue': 'Atrasado', 'Due today': 'Para hoy',
       'Accept': 'Aceptar', 'Decline': 'Rechazar', 'Arrived': 'Llegó', 'On The Way': 'En camino', 'Waiting': 'En espera',
       'Attach receipt': 'Adjuntar recibo', 'Change my password': 'Cambiar mi contraseña', 'Closed': 'Cerrado', 'Closed now': 'Cerrado ahora',
       'Right now': 'Ahora mismo', 'Saturday': 'Sábado', 'Sunday': 'Domingo', 'Copy link': 'Copiar enlace',

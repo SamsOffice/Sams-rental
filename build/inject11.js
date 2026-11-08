@@ -91,6 +91,7 @@
     h += '<div class="card"><header><h2>' + (ed ? 'Edit note' : 'New note') + '</h2></header><div style="padding:14px;display:grid;gap:10px">' +
       '<label style="display:grid;gap:4px;font-size:13px;color:var(--mut,#6B7280)">Date<input type="date" id="nbDate" value="' + (ed ? ed.iso : today) + '" style="padding:10px;border:1px solid #CBD5E1;border-radius:10px;font:16px system-ui"></label>' +
       '<textarea id="nbText" rows="4" placeholder="Write what you need to remember for this day..." style="padding:10px;border:1px solid #CBD5E1;border-radius:10px;font:16px system-ui;width:100%;box-sizing:border-box">' + (ed ? invEsc(ed.text) : '') + '</textarea>' +
+      '<label style="display:flex;gap:8px;align-items:center;font-size:15px"><input type="checkbox" id="nbRm"' + (ed && ed.rm ? ' checked' : '') + ' style="width:20px;height:20px">Remind me on this date</label>' +
       '<div style="display:flex;gap:8px"><button class="btn primary" data-nb="save">' + icon('plus') + (ed ? 'Save changes' : 'Save note') + '</button>' + (ed ? '<button class="btn" data-nb="cancel">Cancel</button>' : '') + '</div></div></div>';
     var list = NOTES.slice().sort(function (a, b) { return a.iso < b.iso ? 1 : (a.iso > b.iso ? -1 : (b.ts || 0) - (a.ts || 0)); });
     if (!list.length) return h + '<div class="card"><p class="note" style="padding:14px;margin:0">No notes yet. Write one above and pick its date.</p></div>';
@@ -98,7 +99,7 @@
     for (k = 0; k < list.length; k++) {
       var n = list[k];
       if (n.iso !== cur) { if (open) h += '</div></div>'; cur = n.iso; open = true; var lab = n.iso === today ? 'Today' : (n.iso === TOMOISO() ? 'Tomorrow' : ''); h += '<div class="card"><header><h2>' + invEsc(longD(n.iso)) + '</h2>' + (lab ? pillH(lab, n.iso === today ? 'good' : 'info') : '') + '</header><div>'; }
-      h += '<div style="padding:12px 14px;border-top:1px solid #E5E7EB"><div style="white-space:pre-wrap;font-size:15px">' + invEsc(n.text) + '</div><div style="display:flex;gap:8px;align-items:center;margin-top:8px"><span class="sub" style="flex:1">' + invEsc(n.by || '') + '</span><button class="btn sm" data-nb="edit" data-id="' + n.id + '">Edit</button><button class="btn sm" data-nb="del" data-id="' + n.id + '">Delete</button></div></div>';
+      h += '<div style="padding:12px 14px;border-top:1px solid #E5E7EB"><div style="white-space:pre-wrap;font-size:15px">' + invEsc(n.text) + '</div><div style="display:flex;gap:8px;align-items:center;margin-top:8px"><span class="sub" style="flex:1">' + invEsc(n.by || '') + '</span>' + (n.rm ? pillH(n.done ? 'Done' : 'Reminder', n.done ? 'good' : 'info') : '') + (n.rm && !n.done ? '<button class="btn sm" data-nb="rmdone" data-id="' + n.id + '">Mark done</button>' : '') + '<button class="btn sm" data-nb="edit" data-id="' + n.id + '">Edit</button><button class="btn sm" data-nb="del" data-id="' + n.id + '">Delete</button></div></div>';
     }
     if (open) h += '</div></div>';
     return h;
@@ -109,10 +110,29 @@
     if (a === 'save') {
       var tx = (document.getElementById('nbText').value || '').trim(), dt = document.getElementById('nbDate').value || TODAYISO();
       if (!tx) { toast('Write the note first'); return; }
-      if (NBEDIT) { for (k = 0; k < NOTES.length; k++) { if (NOTES[k].id === NBEDIT) { NOTES[k].text = tx; NOTES[k].iso = dt; } } NBEDIT = ''; }
-      else { NBN++; NOTES.push({ id: 'N' + Date.now().toString(36) + NBN, iso: dt, text: tx, by: nbWho(), ts: Date.now() }); }
+      var rmEl = document.getElementById('nbRm'), rmv = !!(rmEl && rmEl.checked);
+      if (NBEDIT) { for (k = 0; k < NOTES.length; k++) { if (NOTES[k].id === NBEDIT) { NOTES[k].text = tx; NOTES[k].iso = dt; if (rmv && !NOTES[k].rm) NOTES[k].done = false; NOTES[k].rm = rmv; } } NBEDIT = ''; }
+      else { NBN++; NOTES.push({ id: 'N' + Date.now().toString(36) + NBN, iso: dt, text: tx, by: nbWho(), ts: Date.now(), rm: rmv, done: false }); }
       setView('notebook'); toast('Note saved');
     } else if (a === 'edit') { NBEDIT = id; setView('notebook'); window.scrollTo(0, 0); }
     else if (a === 'cancel') { NBEDIT = ''; setView('notebook'); }
+    else if (a === 'rmdone') { for (k = 0; k < NOTES.length; k++) { if (NOTES[k].id === id) NOTES[k].done = true; } setView(curView); toast('Reminder done'); }
     else if (a === 'del') { if (b.getAttribute('data-sure') !== '1') { b.setAttribute('data-sure', '1'); b.textContent = 'Tap again to delete'; return; } for (k = 0; k < NOTES.length; k++) { if (NOTES[k].id === id) { NOTES.splice(k, 1); break; } } setView('notebook'); toast('Note deleted'); }
   }, false);
+
+  /* ---- Reminders on the dashboard: notes marked "Remind me" that are due today or overdue ---- */
+  function remCard() {
+    if (!ME || isDrv()) return '';
+    var t = TODAYISO(), list = [], k, h = '';
+    for (k = 0; k < NOTES.length; k++) { if (NOTES[k].rm && !NOTES[k].done && NOTES[k].iso <= t) list.push(NOTES[k]); }
+    if (!list.length) return '';
+    list.sort(function (a, b) { return a.iso < b.iso ? -1 : (a.iso > b.iso ? 1 : 0); });
+    for (k = 0; k < list.length; k++) {
+      var n = list[k], late = n.iso < t;
+      h += '<div style="padding:12px 14px;border-top:1px solid #E5E7EB;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap"><div style="flex:1 1 220px;min-width:0"><div style="white-space:pre-wrap;font-size:15px">' + invEsc(n.text) + '</div><div class="sub">' + invEsc(longD(n.iso)) + '</div></div>' +
+        pillH(late ? 'Overdue' : 'Due today', late ? 'bad' : 'info') + '<button class="btn sm" data-nb="rmdone" data-id="' + n.id + '">Mark done</button></div>';
+    }
+    return '<div class="card"><header><h2>Reminders</h2>' + pillH(String(list.length), 'info') + '</header>' + h + '</div>';
+  }
+  var vOverview0 = vOverview;
+  vOverview = function () { return remCard() + vOverview0(); };
