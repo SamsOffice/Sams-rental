@@ -2136,7 +2136,7 @@ body.drvmode .app{display:none!important}
       var d0 = S0 || { name: '', addr: '', ph: '', wk: ['06:00', '16:00'], sat: null, sun: null, note: '' };
       h = '<div class="fgrid">' + fld('fSName', 'Dump site name', 'text', d0.name, 'Example: Brooklyn Transfer Station', true) + fld('fSAddr', 'Address', 'text', d0.addr, '', false) + fld('fSPh', 'Phone', 'tel', d0.ph, '', false) + '</div>' +
         '<div class="fgrid">' + fld('fSWo', 'Mon to Fri opens', 'time', d0.wk ? d0.wk[0] : '') + fld('fSWc', 'Mon to Fri closes', 'time', d0.wk ? d0.wk[1] : '') + fld('fSSo', 'Saturday opens', 'time', d0.sat ? d0.sat[0] : '') + fld('fSSc', 'Saturday closes', 'time', d0.sat ? d0.sat[1] : '') + fld('fSUo', 'Sunday opens', 'time', d0.sun ? d0.sun[0] : '') + fld('fSUc', 'Sunday closes', 'time', d0.sun ? d0.sun[1] : '') + '</div>' +
-        '<p class="note">Leave both times empty for a day the site is closed.</p>' + fld('fSNote', 'Notes (holidays, what they accept)', 'text', d0.note, '', false) + '<p class="ferr" id="fErr"></p>' +
+        '<div style="display:flex;gap:18px;flex-wrap:wrap;margin:6px 0 10px">' + [['fSWx','Mon to Fri',d0.wk],['fSSx','Saturday',d0.sat],['fSUx','Sunday',d0.sun]].map(function (z) { return '<label style="display:flex;align-items:center;gap:8px;font-size:15px"><input type="checkbox" id="' + z[0] + '"' + (z[2] ? '' : ' checked') + ' style="width:22px;height:22px">Closed ' + z[1] + '</label>'; }).join('') + '</div><p class="note">Tick Closed for a day the site is closed.</p>' + fld('fSNote', 'Notes (holidays, what they accept)', 'text', d0.note, '', false) + '<p class="ferr" id="fErr"></p>' +
         '<div class="actions"><button type="submit" class="btn primary">' + icon('check') + 'Save dump site</button><button type="button" class="btn" data-fa="close">Cancel</button></div>';
     } else if (kind === 'remind') {
       REMC = ctx; t = 'Payment reminder';
@@ -2305,7 +2305,7 @@ body.drvmode .app{display:none!important}
     }
     if (FKIND === 'site') {
       var sn = fv('fSName').trim(); if (!sn) { err.textContent = 'Type the dump site name.'; return; }
-      var hr = function (a, b) { var x = fv(a), y = fv(b); return x && y ? [x, y] : null; };
+      var hr = function (a, b) { var x = fv(a), y = fv(b), cx = document.getElementById(a === 'fSWo' ? 'fSWx' : (a === 'fSSo' ? 'fSSx' : 'fSUx')); if (cx && cx.checked) return null; return x && y ? [x, y] : null; };
       var sv = { name: sn, addr: fv('fSAddr').trim(), ph: fv('fSPh').trim(), wk: hr('fSWo', 'fSWc'), sat: hr('fSSo', 'fSSc'), sun: hr('fSUo', 'fSUc'), note: fv('fSNote').trim() };
       if (SEID) { for (var si = 0; si < SITES.length; si++) { if (SITES[si].id === SEID) { sv.id = SEID; SITES[si] = sv; } } } else { SCN++; sv.id = 'S' + SCN; SITES.push(sv); }
       closeForm(); setView('sites'); toast('Dump site saved'); return;
