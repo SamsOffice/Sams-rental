@@ -5488,6 +5488,8 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
       if (busy || standalone()) return;
       var el = document.getElementById('locBar'); if (!el) return;
       busy = true;
+      var bgc = (el.style.background || el.style.backgroundColor || '').replace(/\s/g, '').toLowerCase();
+      if (bgc.indexOf('#fef3c7') >= 0 || bgc.indexOf('rgb(254,243,199)') >= 0) { el.style.display = 'none'; busy = false; return; }
       var full = el.style.left === '0px' || el.style.left === '0';
       el.style.bottom = 'calc(' + LIFT + 'px + env(safe-area-inset-bottom,0px))';
       if (full) { el.style.left = '12px'; el.style.right = '12px'; el.style.borderRadius = '16px'; el.style.border = '1px solid rgba(0,0,0,.15)'; el.style.paddingBottom = '10px'; }
