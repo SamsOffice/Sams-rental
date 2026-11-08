@@ -5480,6 +5480,28 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
     }
     put(); window.addEventListener('hashchange', put);
   })();
+  /* ---- Driver app: lift the location bar above Safari's floating toolbar so its text and button stay visible ---- */
+  (function () {
+    var LIFT = 76, busy = false;
+    function standalone() { try { return !!(window.navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)); } catch (x) { return false; } }
+    function fix() {
+      if (busy || standalone()) return;
+      var el = document.getElementById('locBar'); if (!el) return;
+      busy = true;
+      var full = el.style.left === '0px' || el.style.left === '0';
+      el.style.bottom = 'calc(' + LIFT + 'px + env(safe-area-inset-bottom,0px))';
+      if (full) { el.style.left = '12px'; el.style.right = '12px'; el.style.borderRadius = '16px'; el.style.border = '1px solid rgba(0,0,0,.15)'; el.style.paddingBottom = '10px'; }
+      var db = document.getElementById('drvBody'); if (db) db.style.paddingBottom = '190px';
+      busy = false;
+    }
+    function watch() {
+      var el = document.getElementById('locBar');
+      if (!el) { setTimeout(watch, 800); return; }
+      new MutationObserver(function () { setTimeout(fix, 0); }).observe(el, { attributes: true, attributeFilter: ['style'] });
+      fix();
+    }
+    watch();
+  })();
 </script>
 
 </body></html>
