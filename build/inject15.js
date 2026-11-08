@@ -102,9 +102,9 @@
         tile('clock', D.over.length, 'Out over 7 days', 'red', t3) + tile('wallet', fm(D.owe), 'Still owed', 'red', t4) + '</div>' +
         '<div class="emore">' + more + '</div><button type="button" class="ebtn" id="eodBtn"><span class="elbl">' + (open ? 'Show less' : 'Show more') + '</span><span class="etg">&#9662;</span></button></div></div>';
     }
-    var css = '.eod{margin-bottom:18px;border-radius:22px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}' +
-      '.eod .ebanner{background:linear-gradient(120deg,#1D6FEF,#1553b8);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}' +
-      '.eod .et{font-size:21px;font-weight:700}.eod .es{font-size:13px;opacity:.85;margin-top:2px}.eod .er{text-align:right}.eod .ebig{font-size:28px;font-weight:700;line-height:1.1}' +
+    var css = '.eod,.eod *{-webkit-text-size-adjust:100%;text-size-adjust:100%}.eod{margin-bottom:18px;border-radius:22px;overflow:hidden;border:1px solid var(--line);background:var(--surface)}' +
+      '.eod .ebanner{background:linear-gradient(120deg,#1D6FEF,#1553b8);color:#fff;padding:13px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}' +
+      '.eod .et{font-size:19px;font-weight:700}.eod .es{font-size:13px;opacity:.85;margin-top:2px}.eod .er{text-align:right}.eod .ebig{font-size:24px;font-weight:700;line-height:1.1}' +
       '.eod .ebar{height:10px;background:var(--tint)}.eod .ebar i{display:block;height:100%;background:linear-gradient(90deg,#e03a3a,#1D6FEF)}' +
       '.eod .epad{padding:14px 16px}.eod .etiles{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:stretch}' +
       '.eod .etile{background:var(--surface);border:2px solid var(--blue);border-radius:18px;padding:14px;min-width:0}.eod .etile.red{border-color:var(--bad)}' +
