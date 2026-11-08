@@ -40,3 +40,9 @@
     }
     watch();
   })();
+  /* ---- Driver screen never scrolls sideways (prevents Safari zooming the page out) ---- */
+  (function () {
+    var st = document.createElement('style');
+    st.textContent = 'body.drvmode, body.drvmode html { overflow-x: hidden; } body.drvmode #drvApp { max-width: 100vw; overflow-x: hidden; }';
+    document.head.appendChild(st);
+  })();

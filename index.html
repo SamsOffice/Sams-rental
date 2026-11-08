@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,viewport-fit=cover">
 <script>(function(){var h=location.hash;if(/^#\/(book|portal|dump|combined|driver)(\/|$)/.test(h)){location.replace('/Sams-rental/legacy.html'+h);}})();</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -5503,6 +5503,12 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
       fix();
     }
     watch();
+  })();
+  /* ---- Driver screen never scrolls sideways (prevents Safari zooming the page out) ---- */
+  (function () {
+    var st = document.createElement('style');
+    st.textContent = 'body.drvmode, body.drvmode html { overflow-x: hidden; } body.drvmode #drvApp { max-width: 100vw; overflow-x: hidden; }';
+    document.head.appendChild(st);
   })();
 </script>
 
