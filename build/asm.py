@@ -238,6 +238,7 @@ _i=s.index('<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta');
 s=s[:_i]+'<style>'+_fc+'</style>'+s[_j:]
 assert 'fonts.googleapis' not in s
 # phone fit: stop iOS from zooming the page out; keep the driver screen from scrolling sideways
+exec(open('eqpatch.py').read())
 s=s.replace('<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">','<meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,viewport-fit=cover">')
 assert 'minimum-scale=1' in s
 s=s.replace('</style>','body.drvmode { overflow-x: hidden; max-width: 100vw; }\n</style>',1) if False else s

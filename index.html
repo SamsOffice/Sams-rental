@@ -1991,6 +1991,26 @@ body.drvmode .app{display:none!important}
   ];
   var MATS = ['Clean concrete', 'Mixed debris', 'Dirt', 'Heavy debris', 'Clean wood', 'Roofing shingles'];
   var RFILE = '', made = { rent: 0, dump: 0, unpaid: 0 }, FKIND = '', ERID = '', EDID = 0, DCNT = 0, SEND = null, RCNT = 0, BASEURL = 'https://samsoffice.github.io/Sams-rental/';
+  function eqRates(e) {
+    var r = { d: Number(e.d) || 0, w: Number(e.w) || 0, w2: Number(e.w2) || 0 };
+    if (!r.d && !r.w && !r.w2 && e.p) { if (e.u === 'day') r.d = Number(e.p); else if (e.u === 'week') r.w = Number(e.p); else r.w2 = Number(e.p); }
+    return r;
+  }
+  function eqTxt(e) {
+    var r = eqRates(e), a = [];
+    if (r.d) a.push('$' + invMoney(r.d).replace('.00', '') + ' per day');
+    if (r.w) a.push('$' + invMoney(r.w).replace('.00', '') + ' per week');
+    if (r.w2) a.push('$' + invMoney(r.w2).replace('.00', '') + ' per 2 weeks');
+    return a.length ? a.join('  \u00b7  ') : 'No price yet';
+  }
+  function eqCalc(e, days) {
+    var r = eqRates(e); days = Math.max(1, days || 1);
+    var tiers = [[r.d, 1], [r.w, 7], [r.w2, 14]], want = days < 7 ? 0 : (days < 14 ? 1 : 2), i, t = null;
+    if (tiers[want][0]) t = tiers[want];
+    else { for (i = 0; i < 3; i++) { if (tiers[i][0]) { t = tiers[i]; break; } } }
+    if (!t) return '';
+    return Math.round(t[0] * days / t[1]);
+  }
   var PRESET_M = [];
   var PRESET_T = [];
   var CLIENT_TAGS = ['Good Standing', 'Paying Client', 'Chronically Delinquent', 'Cash Only', 'New Client', 'VIP Client', 'Do Not Rent', 'Payment Plan', 'Blacklisted'];
@@ -2022,7 +2042,7 @@ body.drvmode .app{display:none!important}
     FKIND = kind; ERID = ''; EDID = 0;
     var f = document.getElementById('theForm'), h = '', t = '';
     if (kind === 'rental') {
-      var R0 = id ? rentalById(id) : null; ERID = R0 ? R0.id : '';
+      var R0 = id ? rentalById(id) : null; ERID = R0 ? R0.id : ''; window.__eqpick = 0; window.__pe = 0;
       var E0 = { n: '', p: '' };
       var d0 = R0 || { asset: E0.n, client: '', phone: '', email: '', addr: '', tag: 'New Client', si: TODAYISO(), di: addDays(TODAYISO(), 1), price: E0.p, del: '', pick: '', trailer: '', diesel: '', ptype: 'delivery', pay: 'Unpaid', method: '', status: 'Active', driver: 'Sams', notes: '', sd: '', sdt: '', sp: '', spt: '' };
       var days0 = Math.max(1, Math.round((invParse(d0.di) - invParse(d0.si)) / 86400000));
@@ -2035,13 +2055,14 @@ body.drvmode .app{display:none!important}
       opts += '</optgroup><optgroup label="Tools">';
       for (kq = 0; kq < PRESET_T.length; kq++) { if (!seen[PRESET_T[kq]]) opts += '<option' + (PRESET_T[kq] === d0.asset ? ' selected' : '') + '>' + PRESET_T[kq] + '</option>'; }
       opts += '</optgroup>';
+      var eqDl = ''; for (kq = 0; kq < EQUIP.length; kq++) eqDl += '<option value="' + invEsc(EQUIP[kq].n) + '"></option>';
       var dl = '<datalist id="fClients">'; for (kq = 0; kq < CLIENTS.length; kq++) dl += '<option value="' + invEsc(CLIENTS[kq].n) + '"></option>'; dl += '</datalist>';
       var ph0 = String(d0.phone || '');
       h = '<h3 class="fsec">Client information</h3><div class="fgrid">' +
         '<div class="fld wide"><label for="fSearch">Search existing client</label><input id="fSearch" list="fClients" type="text" placeholder="Start typing a name" autocomplete="off">' + dl + '</div>' +
         fld('fClient', 'Client name', 'text', d0.client, 'Who is renting', true) + fld('fPhone', 'Phone', 'tel', ph0, '+1 (718) 555-0100') + fld('fEmail', 'Email', 'email', d0.email, 'name@email.com') + fld('fAddr', 'Address', 'text', d0.addr, 'Street, City') +
         selF('fTag', 'Client tag', CLIENT_TAGS, d0.tag) + '</div>' +
-        '<h3 class="fsec">Equipment and driver</h3>' + (EQUIP.length || R0 ? '' : '<p class="note" style="grid-column:1/-1">You have not added any equipment yet. Close this, tap Equipment, add your machines, then come back.</p>') + '<div class="fgrid"><div class="fld"><label for="fAsset">Equipment *</label><select id="fAsset">' + opts + '</select></div>' +
+        '<h3 class="fsec">Equipment and driver</h3>' + '<div class="fgrid"><div class="fld"><label for="fAsset">Equipment *</label><input id="fAsset" type="text" list="fAssetL" autocomplete="off" placeholder="Type the machine name" value="' + invEsc(d0.asset) + '"><datalist id="fAssetL">' + eqDl + '</datalist></div>' +
         selF('fDrv', 'Driver', ['Sams', 'Gustavo', 'Jose Luis'], d0.driver) + '<div class="fld wide"><label for="fMach">Specific machine (optional)</label><select id="fMach">' + machOpts(d0.mid) + '</select></div>' +
         '<div class="fld wide"><label for="fNotes">Notes for driver</label><textarea id="fNotes" placeholder="Special delivery instructions...">' + invEsc(d0.notes) + '</textarea></div></div>' +
         '<h3 class="fsec">Timeframe</h3><div class="fgrid">' + fld('fStart', 'Start date', 'date', d0.si, '', true) + fld('fDays', 'Duration (days)', 'number', days0, '', true) + fld('fDue', 'Due date (auto)', 'date', d0.di) + '</div>' +
@@ -2168,12 +2189,12 @@ body.drvmode .app{display:none!important}
     } else {
       t = 'Equipment';
       var list = '';
-      for (var q = 0; q < EQUIP.length; q++) list += '<div class="eqrow"><span class="ic2">' + icon('box') + '</span><div class="grow"><b>' + invEsc(EQUIP[q].n) + '</b><div class="sub">$' + invMoney(EQUIP[q].p) + (EQUIP[q].u ? ' per ' + invEsc(EQUIP[q].u) : ' usual price') + '</div></div><button type="button" class="btn sm" data-fa="eqed" data-ix="' + q + '">Change price</button> <button type="button" class="btn sm" data-fa="rm" data-ix="' + q + '">Remove</button></div>';
+      for (var q = 0; q < EQUIP.length; q++) list += '<div class="eqrow"><span class="ic2">' + icon('box') + '</span><div class="grow"><b>' + invEsc(EQUIP[q].n) + '</b><div class="sub">' + eqTxt(EQUIP[q]) + '</div></div><button type="button" class="btn sm" data-fa="eqed" data-ix="' + q + '">Change prices</button> <button type="button" class="btn sm" data-fa="rm" data-ix="' + q + '">Remove</button></div>';
       if (!list) list = '<p class="note">No equipment added yet. Type the name and price of a machine below and tap Add equipment.</p>';
       var sg = '', sq, have = {}; for (sq = 0; sq < EQUIP.length; sq++) have[EQUIP[sq].n] = 1;
       for (sq = 0; sq < PRESET_M.length; sq++) { if (!have[PRESET_M[sq]]) sg += '<button type="button" class="btn sm" style="margin:3px" data-fa="sugg" data-n="' + invEsc(PRESET_M[sq]) + '">' + invEsc(PRESET_M[sq]) + '</button>'; }
       for (sq = 0; sq < PRESET_T.length; sq++) { if (!have[PRESET_T[sq]]) sg += '<button type="button" class="btn sm" style="margin:3px" data-fa="sugg" data-n="' + invEsc(PRESET_T[sq]) + '">' + invEsc(PRESET_T[sq]) + '</button>'; }
-      h = '<div><b>Your equipment (' + EQUIP.length + ')</b>' + list + '</div>' + (sg ? '<div style="margin-top:14px"><b>Tap one to add it</b><div class="sub">Then type the price and tap Add equipment.</div><div style="margin-top:6px">' + sg + '</div></div>' : '') + '<div class="fgrid">' + fld('fEq', 'New equipment name', 'text', '', 'Example: Dump trailer', false) + fld('fEqP', 'Usual price ($)', 'number', '') + '<input type="hidden" id="fEqU" value="">' + '</div><p class="ferr" id="fErr"></p>' +
+      h = '<div><b>Your equipment (' + EQUIP.length + ')</b>' + list + '</div>' + (sg ? '<div style="margin-top:14px"><b>Tap one to add it</b><div class="sub">Then type the price and tap Add equipment.</div><div style="margin-top:6px">' + sg + '</div></div>' : '') + '<div class="fgrid">' + fld('fEq', 'New equipment name', 'text', '', 'Example: Dump trailer', false) + fld('fEqD', 'Price per day ($)', 'number', '') + fld('fEqW', 'Price per week ($)', 'number', '') + fld('fEqW2', 'Price per 2 weeks ($)', 'number', '') + '</div><p class="sub">Fill in only the prices you charge. Leave the others empty.</p><p class="ferr" id="fErr"></p>' +
         '<div class="actions"><button type="submit" class="btn primary">' + icon('plus') + 'Add equipment</button><button type="button" class="btn" data-fa="close">Done</button></div>';
     }
     f.innerHTML = h;
@@ -2201,10 +2222,12 @@ body.drvmode .app{display:none!important}
     else if (a === 'dorm') { doRemove(b.getAttribute('data-id')); closeForm(); setView('schedule'); toast('Day turned back on'); }
     else if (a === 'sugg') { var fe = document.getElementById('fEq'); if (fe) { fe.value = b.getAttribute('data-n'); var fp = document.getElementById('fEqP'); if (fp) fp.focus(); } }
     else if (a === 'prrm') { var pi0 = parseInt(b.getAttribute('data-ix'), 10); var kp; for (kp = 0; kp < PRICES.length; kp++) { var e1 = document.getElementById('fPr' + kp), e2 = document.getElementById('fTn' + kp); if (e1) PRICES[kp][2] = parseFloat(e1.value) || 0; if (e2) PRICES[kp][3] = parseFloat(e2.value) || 0; } PRICES.splice(pi0, 1); openForm('prices'); toast('Price removed'); }
-    else if (a === 'eqed') { var ei = parseInt(b.getAttribute('data-ix'), 10), fe2 = document.getElementById('fEq'); if (fe2 && EQUIP[ei]) { fe2.value = EQUIP[ei].n; document.getElementById('fEqP').value = EQUIP[ei].p; document.getElementById('fEqU').value = EQUIP[ei].u; document.getElementById('fEqP').focus(); } }
+    else if (a === 'eqed') { var ei = parseInt(b.getAttribute('data-ix'), 10), fe2 = document.getElementById('fEq'); if (fe2 && EQUIP[ei]) { var er = eqRates(EQUIP[ei]); fe2.value = EQUIP[ei].n; document.getElementById('fEqD').value = er.d || ''; document.getElementById('fEqW').value = er.w || ''; document.getElementById('fEqW2').value = er.w2 || ''; document.getElementById('fEqD').focus(); } }
     else if (a === 'rm') { EQUIP.splice(parseInt(b.getAttribute('data-ix'), 10), 1); openForm('equip'); toast('Equipment removed'); }
   });
-  document.getElementById('theForm').addEventListener('input', function () {
+  document.getElementById('theForm').addEventListener('input', function (ev) {
+    if (ev && ev.target && ev.target.id === 'fPrice') window.__pe = 1;
+    if (FKIND === 'rental' && ev && ev.target && ev.target.id === 'fDays' && window.__eqpick && !window.__pe) { var ae = document.getElementById('fAsset'), pz = document.getElementById('fPrice'); if (ae && pz) { for (var kz = 0; kz < EQUIP.length; kz++) { if (EQUIP[kz].n === ae.value) pz.value = eqCalc(EQUIP[kz], parseInt(fv('fDays'), 10) || 1); } } }
     if (FKIND === 'mailfb') { mailUpd(); return; }
     if (FKIND === 'remind') { remUpdate(false); return; }
     if (FKIND === 'send') { sendUpdate(false); return; }
@@ -2213,7 +2236,7 @@ body.drvmode .app{display:none!important}
     t.textContent = '$' + invMoney(FKIND === 'dump' ? dumpTotal() : fn('fPrice') + fn('fDel') + fn('fPick') + fn('fTrl') + fn('fDie'));
   });
   document.getElementById('theForm').addEventListener('change', function (e) {
-    if (e.target.id === 'fAsset') { var pr = ''; for (var k = 0; k < EQUIP.length; k++) { if (EQUIP[k].n === e.target.value) pr = EQUIP[k].p; } document.getElementById('fPrice').value = pr; document.getElementById('fTot').textContent = '$' + invMoney(fn('fPrice') + fn('fDel') + fn('fPick') + fn('fTrl') + fn('fDie')); }
+    if (e.target.id === 'fAsset') { var pr = null; window.__eqpick = 1; window.__pe = 0; for (var k = 0; k < EQUIP.length; k++) { if (EQUIP[k].n === e.target.value.trim()) pr = eqCalc(EQUIP[k], parseInt(fv('fDays'), 10) || 1); } if (pr !== null) document.getElementById('fPrice').value = pr; document.getElementById('fTot').textContent = '$' + invMoney(fn('fPrice') + fn('fDel') + fn('fPick') + fn('fTrl') + fn('fDie')); }
     if (e.target.id === 'fSearch') { var nm0 = e.target.value; for (var q = 0; q < CLIENTS.length; q++) { if (CLIENTS[q].n.toLowerCase() === nm0.toLowerCase()) { document.getElementById('fClient').value = CLIENTS[q].n; document.getElementById('fPhone').value = CLIENTS[q].ph === '-' ? '' : CLIENTS[q].ph; document.getElementById('fAddr').value = clientAddr(CLIENTS[q].n); } } }
     if (e.target.id === 'fSL') { if (FKIND === 'remind') remUpdate(true); else sendUpdate(true); }
     if (e.target.id === 'fRFile') { RFILE = ''; if (e.target.files && e.target.files[0]) { RFILE = e.target.files[0]; } }
@@ -2234,8 +2257,11 @@ body.drvmode .app{display:none!important}
     if (FKIND === 'equip') {
       var nm = fv('fEq').trim(); if (!nm) { err.textContent = 'Type the equipment name.'; return; }
       var ex0 = -1, xq; for (xq = 0; xq < EQUIP.length; xq++) { if (EQUIP[xq].n === nm) ex0 = xq; }
-      if (ex0 >= 0) { EQUIP[ex0].p = fn('fEqP'); EQUIP[ex0].u = fv('fEqU'); openForm('equip'); toast(nm + ' updated'); return; }
-      EQUIP.push({ n: nm, p: fn('fEqP'), u: fv('fEqU') }); openForm('equip'); toast(nm + ' added to your equipment'); return;
+      var qd = fn('fEqD'), qw = fn('fEqW'), qw2 = fn('fEqW2');
+      if (!qd && !qw && !qw2) { err.textContent = 'Type at least one price: day, week or 2 weeks.'; return; }
+      var qp = qw2 || qw || qd, qu = qw2 ? '2 weeks' : (qw ? 'week' : 'day');
+      if (ex0 >= 0) { EQUIP[ex0].d = qd; EQUIP[ex0].w = qw; EQUIP[ex0].w2 = qw2; EQUIP[ex0].p = qp; EQUIP[ex0].u = qu; openForm('equip'); toast(nm + ' updated'); return; }
+      EQUIP.push({ n: nm, d: qd, w: qw, w2: qw2, p: qp, u: qu }); openForm('equip'); toast(nm + ' added to your equipment'); return;
     }
     if (FKIND === 'rattach') {
       var jm = /^#(\d+)/.exec(fv('fRJob')); if (!jm) return; var jj = parseInt(jm[1], 10);
@@ -2312,7 +2338,7 @@ body.drvmode .app{display:none!important}
     if (FKIND === 'rental') {
       var st = fv('fStart'), nd = parseInt(fv('fDays'), 10) || 1;
       if (!st) { err.textContent = 'Pick the start date.'; return; }
-      if (!fv('fAsset')) { err.textContent = 'Choose the equipment.'; return; }
+      if (!fv('fAsset').trim()) { err.textContent = 'Type the equipment name.'; return; }
       var di = addDays(st, nd), stt = fv('fStat'), pay = fv('fPay');
       var rec = { asset: fv('fAsset'), client: client, phone: fv('fPhone'), email: fv('fEmail'), addr: fv('fAddr'), tag: fv('fTag'), si: st, di: di, price: fn('fPrice'), del: fn('fDel'), pick: fn('fPick'), trailer: fn('fTrl'), diesel: fn('fDie'), ptype: fv('fPType'), pay: pay, method: fv('fMeth') === '-' ? '' : fv('fMeth'), driver: fv('fDrv'), mid: fv('fMach'), notes: fv('fNotes'), sd: fv('fSD'), sdt: fv('fSDT'), sp: fv('fSP'), spt: fv('fSPT'), dl: shortD(di) };
       var status = stt === 'Completed' ? 'Returned' : (stt === 'Cancelled' ? 'Cancelled' : (invParse(di) < TODAY ? 'Overdue' : 'Active'));
