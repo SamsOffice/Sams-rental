@@ -1,11 +1,12 @@
 # --- equipment with day / week / 2-week prices ---
 rep("  var PRESET_M = [];\n", """  function eqRates(e) {
     var r = { d: Number(e.d) || 0, w: Number(e.w) || 0, w2: Number(e.w2) || 0 };
-    if (!r.d && !r.w && !r.w2 && e.p) { if (e.u === 'day') r.d = Number(e.p); else if (e.u === 'week') r.w = Number(e.p); else r.w2 = Number(e.p); }
+    if (!r.d && !r.w && !r.w2 && e.p) { if (e.u === 'day') r.d = Number(e.p); else if (e.u === 'week') r.w = Number(e.p); else if (e.u === '2 weeks') r.w2 = Number(e.p); else r.flat = Number(e.p); }
     return r;
   }
   function eqTxt(e) {
     var r = eqRates(e), a = [];
+    if (r.flat) return '$' + invMoney(r.flat).replace('.00', '') + ' usual price';
     if (r.d) a.push('$' + invMoney(r.d).replace('.00', '') + ' per day');
     if (r.w) a.push('$' + invMoney(r.w).replace('.00', '') + ' per week');
     if (r.w2) a.push('$' + invMoney(r.w2).replace('.00', '') + ' per 2 weeks');
@@ -13,6 +14,7 @@ rep("  var PRESET_M = [];\n", """  function eqRates(e) {
   }
   function eqCalc(e, days) {
     var r = eqRates(e); days = Math.max(1, days || 1);
+    if (r.flat) return r.flat;
     var tiers = [[r.d, 1], [r.w, 7], [r.w2, 14]], want = days < 7 ? 0 : (days < 14 ? 1 : 2), i, t = null;
     if (tiers[want][0]) t = tiers[want];
     else { for (i = 0; i < 3; i++) { if (tiers[i][0]) { t = tiers[i]; break; } } }
@@ -44,3 +46,9 @@ rep("if (!fv('fAsset')) { err.textContent = 'Choose the equipment.'; return; }",
 rep("var pr = ''; window.__eqpick = 1; window.__pe = 0;", "var pr = null; window.__eqpick = 1; window.__pe = 0;")
 rep("var pr = null; window.__eqpick = 1; window.__pe = 0; for (var k = 0; k < EQUIP.length; k++) { if (EQUIP[k].n === e.target.value) pr = eqCalc(EQUIP[k], parseInt(fv('fDays'), 10) || 1); } document.getElementById('fPrice').value = pr;",
     "var pr = null; window.__eqpick = 1; window.__pe = 0; for (var k = 0; k < EQUIP.length; k++) { if (EQUIP[k].n === e.target.value.trim()) pr = eqCalc(EQUIP[k], parseInt(fv('fDays'), 10) || 1); } if (pr !== null) document.getElementById('fPrice').value = pr;")
+# --- New invoice: up to 6 lines, each with its own date (for several days on one invoice) ---
+rep("""'<div class="fgrid">' + fld('fXD1', 'What is it for (line 1)', 'text', '', 'Example: Dump fee', true) + fld('fXA1', 'Amount ($)', 'number', '') + fld('fXD2', 'Line 2 (optional)', 'text', '', '', false) + fld('fXA2', 'Amount ($)', 'number', '') + fld('fXD3', 'Line 3 (optional)', 'text', '', '', false) + fld('fXA3', 'Amount ($)', 'number', '') + '</div>' +""",
+    """(function () { var o = '', n; for (n = 1; n <= 6; n++) o += '<div class="fgrid">' + fld('fXD' + n, n === 1 ? 'What is it for (line 1)' : 'Line ' + n + ' (optional)', 'text', '', n === 1 ? 'Example: Dump - Dirt (20 yd)' : '', n === 1) + fld('fXT' + n, 'Day', 'date', '') + fld('fXA' + n, 'Amount ($)', 'number', '') + '</div>'; return o + '<p class="sub">One line for each day or charge. Leave the day empty to use the invoice date.</p>'; })() +""")
+rep("for (xi = 1; xi <= 3; xi++) { xd = fv('fXD' + xi).trim(); xa = fn('fXA' + xi); if (xd || xa) { xit.push([xd || 'Service', xa]); xs += xa; } }",
+    "for (xi = 1; xi <= 6; xi++) { xd = fv('fXD' + xi).trim(); xa = fn('fXA' + xi); if (xd || xa) { xit.push([xd || 'Service', xa, fv('fXT' + xi) || '']); xs += xa; } }")
+rep("amount: v.items[k][1] });", "amount: v.items[k][1] });\n    for (var k2 = 0; k2 < items.length; k2++) { if (v.items[k2][2]) items[k2].date = v.items[k2][2]; }")

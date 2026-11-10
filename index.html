@@ -1846,6 +1846,7 @@ body.drvmode .app{display:none!important}
   function dataFromInv(v) {
     var j = (v.ph !== undefined) ? { addr: v.addr, phone: v.ph } : jobByClient(v.client), sp = j ? addrParts(j.addr || '') : ['', ''], items = [];
     for (var k = 0; k < v.items.length; k++) items.push({ desc: v.items[k][0], date: k === 0 ? ISO[v.no] : '', amount: v.items[k][1] });
+    for (var k2 = 0; k2 < items.length; k2++) { if (v.items[k2][2]) items[k2].date = v.items[k2][2]; }
     return { invNo: String(v.no), invDate: ISO[v.no], billTo: v.client, addr1: sp[0], addr2: sp[1], phone: j ? j.phone : '', items: items, paid: v.st === 'Paid' };
   }
   function fitInv() {
@@ -1993,11 +1994,12 @@ body.drvmode .app{display:none!important}
   var RFILE = '', made = { rent: 0, dump: 0, unpaid: 0 }, FKIND = '', ERID = '', EDID = 0, DCNT = 0, SEND = null, RCNT = 0, BASEURL = 'https://samsoffice.github.io/Sams-rental/';
   function eqRates(e) {
     var r = { d: Number(e.d) || 0, w: Number(e.w) || 0, w2: Number(e.w2) || 0 };
-    if (!r.d && !r.w && !r.w2 && e.p) { if (e.u === 'day') r.d = Number(e.p); else if (e.u === 'week') r.w = Number(e.p); else r.w2 = Number(e.p); }
+    if (!r.d && !r.w && !r.w2 && e.p) { if (e.u === 'day') r.d = Number(e.p); else if (e.u === 'week') r.w = Number(e.p); else if (e.u === '2 weeks') r.w2 = Number(e.p); else r.flat = Number(e.p); }
     return r;
   }
   function eqTxt(e) {
     var r = eqRates(e), a = [];
+    if (r.flat) return '$' + invMoney(r.flat).replace('.00', '') + ' usual price';
     if (r.d) a.push('$' + invMoney(r.d).replace('.00', '') + ' per day');
     if (r.w) a.push('$' + invMoney(r.w).replace('.00', '') + ' per week');
     if (r.w2) a.push('$' + invMoney(r.w2).replace('.00', '') + ' per 2 weeks');
@@ -2005,6 +2007,7 @@ body.drvmode .app{display:none!important}
   }
   function eqCalc(e, days) {
     var r = eqRates(e); days = Math.max(1, days || 1);
+    if (r.flat) return r.flat;
     var tiers = [[r.d, 1], [r.w, 7], [r.w2, 14]], want = days < 7 ? 0 : (days < 14 ? 1 : 2), i, t = null;
     if (tiers[want][0]) t = tiers[want];
     else { for (i = 0; i < 3; i++) { if (tiers[i][0]) { t = tiers[i]; break; } } }
@@ -2167,7 +2170,7 @@ body.drvmode .app{display:none!important}
       t = 'New invoice';
       var ncl = ['Type a new client below'], nq; for (nq = 0; nq < CLIENTS.length; nq++) ncl.push(CLIENTS[nq].n);
       h = '<div class="fgrid">' + selF('fXCl', 'Existing client', ncl, ncl.length > 1 ? ncl[1] : ncl[0]) + fld('fXNew', 'Or type a new client name', 'text', '', '', false) + fld('fXPh', 'Phone', 'tel', '', '', false) + fld('fXEm', 'Email', 'email', '', '', false) + fld('fXAd', 'Address (street, city state zip)', 'text', '', '', false) + fld('fXDate', 'Invoice date', 'date', TODAYISO()) + '</div>' +
-        '<div class="fgrid">' + fld('fXD1', 'What is it for (line 1)', 'text', '', 'Example: Dump fee', true) + fld('fXA1', 'Amount ($)', 'number', '') + fld('fXD2', 'Line 2 (optional)', 'text', '', '', false) + fld('fXA2', 'Amount ($)', 'number', '') + fld('fXD3', 'Line 3 (optional)', 'text', '', '', false) + fld('fXA3', 'Amount ($)', 'number', '') + '</div>' +
+        (function () { var o = '', n; for (n = 1; n <= 6; n++) o += '<div class="fgrid">' + fld('fXD' + n, n === 1 ? 'What is it for (line 1)' : 'Line ' + n + ' (optional)', 'text', '', n === 1 ? 'Example: Dump - Dirt (20 yd)' : '', n === 1) + fld('fXT' + n, 'Day', 'date', '') + fld('fXA' + n, 'Amount ($)', 'number', '') + '</div>'; return o + '<p class="sub">One line for each day or charge. Leave the day empty to use the invoice date.</p>'; })() +
         selF('fXPaid', 'Payment', ['Unpaid', 'Paid'], 'Unpaid') + '<p class="ferr" id="fErr"></p><div class="actions"><button type="submit" class="btn primary">' + icon('check') + 'Create invoice</button><button type="button" class="btn" data-fa="close">Cancel</button></div>';
     } else if (kind === 'newclient') {
       t = 'Add client';
@@ -2305,7 +2308,7 @@ body.drvmode .app{display:none!important}
     if (FKIND === 'newinv') {
       var xcl = fv('fXCl'), xn = fv('fXNew').trim() || (xcl === 'Type a new client below' ? '' : xcl); if (!xn) { err.textContent = 'Pick the client or type a new name.'; return; }
       var xit = [], xi, xs = 0, xd, xa, xph = fv('fXPh').trim(), xq;
-      for (xi = 1; xi <= 3; xi++) { xd = fv('fXD' + xi).trim(); xa = fn('fXA' + xi); if (xd || xa) { xit.push([xd || 'Service', xa]); xs += xa; } }
+      for (xi = 1; xi <= 6; xi++) { xd = fv('fXD' + xi).trim(); xa = fn('fXA' + xi); if (xd || xa) { xit.push([xd || 'Service', xa, fv('fXT' + xi) || '']); xs += xa; } }
       if (!xit.length || !xs) { err.textContent = 'Type what it is for and the amount.'; return; }
       if (!xph) { for (xq = 0; xq < CLIENTS.length; xq++) { if (CLIENTS[xq].n === xn) xph = CLIENTS[xq].ph; } }
       makeXInv({ client: xn, ph: xph, em: fv('fXEm').trim(), addr: fv('fXAd').trim(), date: fv('fXDate') || TODAYISO(), items: xit, amt: xs, paid: fv('fXPaid') === 'Paid' });
