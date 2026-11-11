@@ -48,7 +48,30 @@ rep("var pr = null; window.__eqpick = 1; window.__pe = 0; for (var k = 0; k < EQ
     "var pr = null; window.__eqpick = 1; window.__pe = 0; for (var k = 0; k < EQUIP.length; k++) { if (EQUIP[k].n === e.target.value.trim()) pr = eqCalc(EQUIP[k], parseInt(fv('fDays'), 10) || 1); } if (pr !== null) document.getElementById('fPrice').value = pr;")
 # --- New invoice: up to 6 lines, each with its own date (for several days on one invoice) ---
 rep("""'<div class="fgrid">' + fld('fXD1', 'What is it for (line 1)', 'text', '', 'Example: Dump fee', true) + fld('fXA1', 'Amount ($)', 'number', '') + fld('fXD2', 'Line 2 (optional)', 'text', '', '', false) + fld('fXA2', 'Amount ($)', 'number', '') + fld('fXD3', 'Line 3 (optional)', 'text', '', '', false) + fld('fXA3', 'Amount ($)', 'number', '') + '</div>' +""",
-    """(function () { var o = '', n; for (n = 1; n <= 6; n++) o += '<div class="fgrid">' + fld('fXD' + n, n === 1 ? 'What is it for (line 1)' : 'Line ' + n + ' (optional)', 'text', '', n === 1 ? 'Example: Dump - Dirt (20 yd)' : '', n === 1) + fld('fXT' + n, 'Day', 'date', '') + fld('fXA' + n, 'Amount ($)', 'number', '') + '</div>'; return o + '<p class="sub">One line for each day or charge. Leave the day empty to use the invoice date.</p>'; })() +""")
+    """(function () { var o = '', n; for (n = 1; n <= 6; n++) o += '<div class="fgrid" id="fXL' + n + '"' + (n > 1 ? ' style="display:none"' : '') + '>' + fld('fXD' + n, n === 1 ? 'What is it for' : 'Line ' + n + ': what is it for', 'text', '', n === 1 ? 'Example: Dump - Dirt (20 yd)' : '', n === 1) + fld('fXT' + n, 'Day', 'date', '') + fld('fXA' + n, 'Amount ($)', 'number', '') + (n > 1 ? '<div style="grid-column:1/-1"><button type="button" class="btn sm" data-fa="xlrm" data-n="' + n + '">Remove this line</button></div>' : '') + '</div>'; return o + '<div style="margin:2px 0 10px"><button type="button" class="btn" id="fXAdd" data-fa="xladd">+ Add another day</button></div>'; })() +""")
+rep("else if (a === 'sugg') {", """else if (a === 'xladd') { var xn2, xl2, xs2 = 0; for (xn2 = 2; xn2 <= 6; xn2++) { xl2 = document.getElementById('fXL' + xn2); if (xl2 && xl2.style.display === 'none') { xl2.style.display = ''; var xf2 = document.getElementById('fXD' + xn2); if (xf2) xf2.focus(); break; } } for (xn2 = 2; xn2 <= 6; xn2++) { xl2 = document.getElementById('fXL' + xn2); if (xl2 && xl2.style.display === 'none') xs2 = 1; } if (!xs2) b.style.display = 'none'; }
+    else if (a === 'xlrm') { var xr = b.getAttribute('data-n'), xe, xm; for (xe = 0; xe < 3; xe++) { xm = document.getElementById(['fXD', 'fXT', 'fXA'][xe] + xr); if (xm) xm.value = ''; } xm = document.getElementById('fXL' + xr); if (xm) xm.style.display = 'none'; xm = document.getElementById('fXAdd'); if (xm) xm.style.display = ''; }
+    else if (a === 'sugg') {""")
 rep("for (xi = 1; xi <= 3; xi++) { xd = fv('fXD' + xi).trim(); xa = fn('fXA' + xi); if (xd || xa) { xit.push([xd || 'Service', xa]); xs += xa; } }",
     "for (xi = 1; xi <= 6; xi++) { xd = fv('fXD' + xi).trim(); xa = fn('fXA' + xi); if (xd || xa) { xit.push([xd || 'Service', xa, fv('fXT' + xi) || '']); xs += xa; } }")
 rep("amount: v.items[k][1] });", "amount: v.items[k][1] });\n    for (var k2 = 0; k2 < items.length; k2++) { if (v.items[k2][2]) items[k2].date = v.items[k2][2]; }")
+# --- hand-made invoices: count in the Dashboard Unpaid box and in each client's balance; plain send message ---
+rep("    for (k = 0; k < DBROWS.inv.length; k++) { if (DBROWS.inv[k].kind === 'container') cont += DBROWS.inv[k].total_qty || 0; }\n    document.getElementById('sAD')",
+    "    for (k = 0; k < XINVS.length; k++) { if (!XINVS[k].paid) un += parseFloat(XINVS[k].amt) || 0; }\n    for (k = 0; k < DBROWS.inv.length; k++) { if (DBROWS.inv[k].kind === 'container') cont += DBROWS.inv[k].total_qty || 0; }\n    document.getElementById('sAD')")
+rep("  function makeXInv(o) {", """  function xBal() {
+    var i, k, c;
+    for (i = 0; i < CLIENTS.length; i++) { c = CLIENTS[i]; c.bal = (c.bal || 0) - (c.xb || 0); c.xb = 0; }
+    for (k = 0; k < XINVS.length; k++) {
+      if (XINVS[k].paid) continue;
+      for (i = 0; i < CLIENTS.length; i++) { if (CLIENTS[i].n === XINVS[k].client) { CLIENTS[i].bal = (CLIENTS[i].bal || 0) + (parseFloat(XINVS[k].amt) || 0); CLIENTS[i].xb = (CLIENTS[i].xb || 0) + (parseFloat(XINVS[k].amt) || 0); } }
+    }
+    try { updateStats(); } catch (e) { }
+  }
+  function makeXInv(o) {""")
+rep("    if (!invSel || !INVS.length) invSel = INVS.length ? INVS[0].no : 0;\n  }\n  function xBal()", "    if (!invSel || !INVS.length) invSel = INVS.length ? INVS[0].no : 0;\n    xBal();\n  }\n  function xBal()")
+rep("    invSel = rec.no;\n  }", "    invSel = rec.no; xBal();\n  }")
+rep("x.paid = !x.paid;", "x.paid = !x.paid; xBal();")
+rep("openForm('send', null, { name: d.billTo, ph: ph, email: email, what: 'invoice #' + d.invNo, es: 'factura #' + d.invNo, link: link });",
+    "var xin = false, xt = 0; for (k = 0; k < XINVS.length; k++) { if (XINVS[k].no === no) xin = true; } for (k = 0; k < (d.items || []).length; k++) xt += parseFloat(d.items[k].amount) || 0;\n    openForm('send', null, { name: d.billTo, ph: ph, email: email, what: 'invoice #' + d.invNo, es: 'factura #' + d.invNo, link: link, noLink: xin, tot: xt });")
+rep("    if (rebuild) ta.value = es ? ('Hola '", """    if (rebuild && SEND.noLink) ta.value = es ? ('Hola ' + SEND.name + ', le enviamos su ' + SEND.es + ' de Sams Construction Services LTD por ' + money(SEND.tot) + '. Preguntas? Llame al +1 (917) 663-6369.') : ('Hi ' + SEND.name + ', here is your ' + SEND.what + ' from Sams Construction Services LTD for ' + money(SEND.tot) + '. Questions? Call +1 (917) 663-6369.');
+    else if (rebuild) ta.value = es ? ('Hola '""")

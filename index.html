@@ -2170,7 +2170,7 @@ body.drvmode .app{display:none!important}
       t = 'New invoice';
       var ncl = ['Type a new client below'], nq; for (nq = 0; nq < CLIENTS.length; nq++) ncl.push(CLIENTS[nq].n);
       h = '<div class="fgrid">' + selF('fXCl', 'Existing client', ncl, ncl.length > 1 ? ncl[1] : ncl[0]) + fld('fXNew', 'Or type a new client name', 'text', '', '', false) + fld('fXPh', 'Phone', 'tel', '', '', false) + fld('fXEm', 'Email', 'email', '', '', false) + fld('fXAd', 'Address (street, city state zip)', 'text', '', '', false) + fld('fXDate', 'Invoice date', 'date', TODAYISO()) + '</div>' +
-        (function () { var o = '', n; for (n = 1; n <= 6; n++) o += '<div class="fgrid">' + fld('fXD' + n, n === 1 ? 'What is it for (line 1)' : 'Line ' + n + ' (optional)', 'text', '', n === 1 ? 'Example: Dump - Dirt (20 yd)' : '', n === 1) + fld('fXT' + n, 'Day', 'date', '') + fld('fXA' + n, 'Amount ($)', 'number', '') + '</div>'; return o + '<p class="sub">One line for each day or charge. Leave the day empty to use the invoice date.</p>'; })() +
+        (function () { var o = '', n; for (n = 1; n <= 6; n++) o += '<div class="fgrid" id="fXL' + n + '"' + (n > 1 ? ' style="display:none"' : '') + '>' + fld('fXD' + n, n === 1 ? 'What is it for' : 'Line ' + n + ': what is it for', 'text', '', n === 1 ? 'Example: Dump - Dirt (20 yd)' : '', n === 1) + fld('fXT' + n, 'Day', 'date', '') + fld('fXA' + n, 'Amount ($)', 'number', '') + (n > 1 ? '<div style="grid-column:1/-1"><button type="button" class="btn sm" data-fa="xlrm" data-n="' + n + '">Remove this line</button></div>' : '') + '</div>'; return o + '<div style="margin:2px 0 10px"><button type="button" class="btn" id="fXAdd" data-fa="xladd">+ Add another day</button></div>'; })() +
         selF('fXPaid', 'Payment', ['Unpaid', 'Paid'], 'Unpaid') + '<p class="ferr" id="fErr"></p><div class="actions"><button type="submit" class="btn primary">' + icon('check') + 'Create invoice</button><button type="button" class="btn" data-fa="close">Cancel</button></div>';
     } else if (kind === 'newclient') {
       t = 'Add client';
@@ -2223,6 +2223,8 @@ body.drvmode .app{display:none!important}
     else if (a === 'dooff') openForm('dayoff', null, { iso: b.getAttribute('data-iso') });
     else if (a === 'doedit') openForm('dayoff', null, { id: b.getAttribute('data-id') });
     else if (a === 'dorm') { doRemove(b.getAttribute('data-id')); closeForm(); setView('schedule'); toast('Day turned back on'); }
+    else if (a === 'xladd') { var xn2, xl2, xs2 = 0; for (xn2 = 2; xn2 <= 6; xn2++) { xl2 = document.getElementById('fXL' + xn2); if (xl2 && xl2.style.display === 'none') { xl2.style.display = ''; var xf2 = document.getElementById('fXD' + xn2); if (xf2) xf2.focus(); break; } } for (xn2 = 2; xn2 <= 6; xn2++) { xl2 = document.getElementById('fXL' + xn2); if (xl2 && xl2.style.display === 'none') xs2 = 1; } if (!xs2) b.style.display = 'none'; }
+    else if (a === 'xlrm') { var xr = b.getAttribute('data-n'), xe, xm; for (xe = 0; xe < 3; xe++) { xm = document.getElementById(['fXD', 'fXT', 'fXA'][xe] + xr); if (xm) xm.value = ''; } xm = document.getElementById('fXL' + xr); if (xm) xm.style.display = 'none'; xm = document.getElementById('fXAdd'); if (xm) xm.style.display = ''; }
     else if (a === 'sugg') { var fe = document.getElementById('fEq'); if (fe) { fe.value = b.getAttribute('data-n'); var fp = document.getElementById('fEqP'); if (fp) fp.focus(); } }
     else if (a === 'prrm') { var pi0 = parseInt(b.getAttribute('data-ix'), 10); var kp; for (kp = 0; kp < PRICES.length; kp++) { var e1 = document.getElementById('fPr' + kp), e2 = document.getElementById('fTn' + kp); if (e1) PRICES[kp][2] = parseFloat(e1.value) || 0; if (e2) PRICES[kp][3] = parseFloat(e2.value) || 0; } PRICES.splice(pi0, 1); openForm('prices'); toast('Price removed'); }
     else if (a === 'eqed') { var ei = parseInt(b.getAttribute('data-ix'), 10), fe2 = document.getElementById('fEq'); if (fe2 && EQUIP[ei]) { var er = eqRates(EQUIP[ei]); fe2.value = EQUIP[ei].n; document.getElementById('fEqD').value = er.d || ''; document.getElementById('fEqW').value = er.w || ''; document.getElementById('fEqW2').value = er.w2 || ''; document.getElementById('fEqD').focus(); } }
@@ -2480,7 +2482,8 @@ body.drvmode .app{display:none!important}
   function sendUpdate(rebuild) {
     var ta = document.getElementById('fMsg'); if (!ta || !SEND) return;
     var es = fv('fSL') === 'Espanol';
-    if (rebuild) ta.value = es ? ('Hola ' + SEND.name + ', le enviamos su ' + SEND.es + ' y factura de Sams Construction Services LTD. Abra este enlace: ' + SEND.link + ' Preguntas? Llame al +1 (917) 663-6369.') : ('Hi ' + SEND.name + ', here is your ' + SEND.what + ' and invoice from Sams Construction Services LTD. Open this link: ' + SEND.link + ' Questions? Call +1 (917) 663-6369.');
+    if (rebuild && SEND.noLink) ta.value = es ? ('Hola ' + SEND.name + ', le enviamos su ' + SEND.es + ' de Sams Construction Services LTD por ' + money(SEND.tot) + '. Preguntas? Llame al +1 (917) 663-6369.') : ('Hi ' + SEND.name + ', here is your ' + SEND.what + ' from Sams Construction Services LTD for ' + money(SEND.tot) + '. Questions? Call +1 (917) 663-6369.');
+    else if (rebuild) ta.value = es ? ('Hola ' + SEND.name + ', le enviamos su ' + SEND.es + ' y factura de Sams Construction Services LTD. Abra este enlace: ' + SEND.link + ' Preguntas? Llame al +1 (917) 663-6369.') : ('Hi ' + SEND.name + ', here is your ' + SEND.what + ' and invoice from Sams Construction Services LTD. Open this link: ' + SEND.link + ' Questions? Call +1 (917) 663-6369.');
     var body = encodeURIComponent(ta.value), ph = String(SEND.ph || '').replace(/[^0-9]/g, '');
     document.getElementById('fSms').href = 'sms:' + ph + '?&body=' + body;
     document.getElementById('fMail').href = 'mailto:' + (SEND.email || '') + '?subject=' + encodeURIComponent('Sams Construction Services LTD') + '&body=' + body;
@@ -3708,6 +3711,7 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
     var ad = 0, ar = 0, un = 0, pd = 0, k, cont = 0, out = 0;
     for (k = 0; k < JOBS.length; k++) { if (JOBS[k].status !== 'Delivered' && JOBS[k].pay !== 'Paid' || JOBS[k].status === 'Scheduled' || JOBS[k].status === 'On the way' || JOBS[k].status === 'Arrived') { } if (JOBS[k].status === 'Scheduled' || JOBS[k].status === 'On the way' || JOBS[k].status === 'Arrived') ad++; if (JOBS[k].pay !== 'Paid') { un += JOBS[k].total; if (JOBS[k].tone === 'bad') pd++; } }
     for (k = 0; k < RENTALS.length; k++) { if (RENTALS[k].status !== 'Returned' && RENTALS[k].status !== 'Cancelled') ar++; if (RENTALS[k].pay !== 'Paid' && RENTALS[k].status !== 'Cancelled') { un += rTotal(RENTALS[k]); if (RENTALS[k].tone === 'bad') pd++; } }
+    for (k = 0; k < XINVS.length; k++) { if (!XINVS[k].paid) un += parseFloat(XINVS[k].amt) || 0; }
     for (k = 0; k < DBROWS.inv.length; k++) { if (DBROWS.inv[k].kind === 'container') cont += DBROWS.inv[k].total_qty || 0; }
     document.getElementById('sAD').textContent = ad; document.getElementById('sAR').textContent = ar;
     document.getElementById('sCA').textContent = Math.max(0, cont - ad);
@@ -4088,6 +4092,16 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
       if (!have) CLIENTS.push({ n: x.name, ph: x.ph, jobs: 0, bal: 0 });
     }
     if (!invSel || !INVS.length) invSel = INVS.length ? INVS[0].no : 0;
+    xBal();
+  }
+  function xBal() {
+    var i, k, c;
+    for (i = 0; i < CLIENTS.length; i++) { c = CLIENTS[i]; c.bal = (c.bal || 0) - (c.xb || 0); c.xb = 0; }
+    for (k = 0; k < XINVS.length; k++) {
+      if (XINVS[k].paid) continue;
+      for (i = 0; i < CLIENTS.length; i++) { if (CLIENTS[i].n === XINVS[k].client) { CLIENTS[i].bal = (CLIENTS[i].bal || 0) + (parseFloat(XINVS[k].amt) || 0); CLIENTS[i].xb = (CLIENTS[i].xb || 0) + (parseFloat(XINVS[k].amt) || 0); } }
+    }
+    try { updateStats(); } catch (e) { }
   }
   function makeXInv(o) {
     XN++; var rec = { id: 'X' + XN, no: 900 + XN, client: o.client, ph: o.ph, em: o.em, addr: o.addr, date: o.date, items: o.items, amt: o.amt, paid: o.paid };
@@ -4096,7 +4110,7 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
     INVS.push({ no: rec.no, client: rec.client, date: longD(rec.date), amt: rec.amt, st: rec.paid ? 'Paid' : 'Unpaid', tone: rec.paid ? 'good' : 'warn', items: rec.items, addr: rec.addr, ph: rec.ph });
     var have = false, i; for (i = 0; i < CLIENTS.length; i++) { if (CLIENTS[i].n === rec.client) have = true; }
     if (!have) { XC++; XCLIS.push({ id: 'C' + XC, name: rec.client, ph: rec.ph, em: rec.em, addr: rec.addr }); CLIENTS.push({ n: rec.client, ph: rec.ph, jobs: 0, bal: 0 }); }
-    invSel = rec.no;
+    invSel = rec.no; xBal();
   }
   function makeXCli(o) { XC++; XCLIS.push({ id: 'C' + XC, name: o.name, ph: o.ph, em: o.em, addr: o.addr }); CLIENTS.push({ n: o.name, ph: o.ph, jobs: 0, bal: 0 }); }
   function vClients() {
@@ -4149,7 +4163,8 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
     for (k = 0; k < JOBS.length; k++) { if (JOBS[k].id - 710 === no) { j = JOBS[k]; link = BASEURL + '#/dump/' + (j.token || ''); email = j.email; } }
     for (k = 0; k < RENTALS.length; k++) { if (RENTALS[k].inv === no) { r = RENTALS[k]; link = BASEURL + '#/portal/' + (r.token || ''); email = r.email; } }
     for (k = 0; k < XINVS.length; k++) { if (XINVS[k].no === no) email = XINVS[k].em; }
-    openForm('send', null, { name: d.billTo, ph: ph, email: email, what: 'invoice #' + d.invNo, es: 'factura #' + d.invNo, link: link });
+    var xin = false, xt = 0; for (k = 0; k < XINVS.length; k++) { if (XINVS[k].no === no) xin = true; } for (k = 0; k < (d.items || []).length; k++) xt += parseFloat(d.items[k].amount) || 0;
+    openForm('send', null, { name: d.billTo, ph: ph, email: email, what: 'invoice #' + d.invNo, es: 'factura #' + d.invNo, link: link, noLink: xin, tot: xt });
   }
   document.addEventListener('click', function (e) {
     var b = e.target.closest('[data-act="xlsinv"],[data-act="sendinv"],[data-act="xinvpaid"],#invXls,#invSend,#chgPw,#signBtn');
@@ -4161,7 +4176,7 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
     else if (a === 'invSend') sendInvoice(CURINV);
     else if (a === 'xinvpaid') {
       var k, x; for (k = 0; k < XINVS.length; k++) { if (XINVS[k].no === invSel) x = XINVS[k]; }
-      if (x) { x.paid = !x.paid; for (k = 0; k < INVS.length; k++) { if (INVS[k].no === x.no) { INVS[k].st = x.paid ? 'Paid' : 'Unpaid'; INVS[k].tone = x.paid ? 'good' : 'warn'; } } setView('invoice'); toast(x.paid ? 'Marked paid' : 'Marked unpaid'); }
+      if (x) { x.paid = !x.paid; xBal(); for (k = 0; k < INVS.length; k++) { if (INVS[k].no === x.no) { INVS[k].st = x.paid ? 'Paid' : 'Unpaid'; INVS[k].tone = x.paid ? 'good' : 'warn'; } } setView('invoice'); toast(x.paid ? 'Marked paid' : 'Marked unpaid'); }
     } else if (a === 'signBtn') { SB.auth.signOut().then(function () { location.reload(); }); }
     else if (a === 'chgPw') { changePw(); }
   }, false);
