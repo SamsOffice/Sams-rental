@@ -92,3 +92,20 @@ rep("""e.target.closest('[data-act="xlsinv"],""", """e.target.closest('[data-act
 rep("    if (a === 'xlsinv') downloadXls(curInvData());", "    if (a === 'pdfinv') downloadPdf(curInvData());\n    else if (a === 'invPdf') downloadPdf(CURINV);\n    else if (a === 'xlsinv') downloadXls(curInvData());")
 
 rep("  function curInvData() { var k; for", "\n  function downloadPdf(d) {\n    if (!d) return;\n    if (!window.jspdf || !window.jspdf.jsPDF) { toast('PDF tool did not load. Refresh the page and try again.'); return; }\n    if (!window.html2canvas) { downloadPdfPlain(d); return; }\n    var box = document.createElement('div'); box.style.cssText = 'position:fixed;left:-10000px;top:0;width:816px;background:#fff'; box.innerHTML = invSheet(d); document.body.appendChild(box);\n    var sh = box.firstChild; sh.style.zoom = '1'; sh.style.boxShadow = 'none';\n    toast('Making PDF...');\n    window.html2canvas(sh, { scale: 2, backgroundColor: '#ffffff', useCORS: true }).then(function (cv) {\n      document.body.removeChild(box);\n      var doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'letter' }), pw = 612, ph = 792, w = pw, h = cv.height * pw / cv.width;\n      if (h > ph) { w = pw * ph / h; h = ph; }\n      doc.addImage(cv.toDataURL('image/jpeg', 0.95), 'JPEG', (pw - w) / 2, 0, w, h);\n      doc.save('Invoice-' + d.invNo + '.pdf'); toast('PDF invoice downloaded');\n    }, function () { try { document.body.removeChild(box); } catch (e) {} downloadPdfPlain(d); });\n  }\n  function curInvData() { var k; for")
+
+rep("doc.save('Invoice-' + d.invNo + '.pdf'); toast('PDF invoice downloaded');", "pdfDone(doc, d.invNo);", 2)
+rep("  function downloadPdfPlain(d) {", """  function pdfDone(doc, no) {
+    var name = 'Invoice-' + no + '.pdf', url;
+    try { url = URL.createObjectURL(doc.output('blob')); } catch (e) { try { doc.save(name); toast('PDF invoice downloaded'); } catch (e2) { toast('Could not make the PDF. Refresh and try again.'); } return; }
+    var blobF = doc.output('blob'), canShare = false, file = null;
+    try { file = new File([blobF], name, { type: 'application/pdf' }); canShare = !!(navigator.canShare && navigator.share && navigator.canShare({ files: [file] })); } catch (e) { canShare = false; }
+    var old = document.getElementById('pdfBar'); if (old) old.remove();
+    var bar = document.createElement('div'); bar.id = 'pdfBar';
+    bar.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:99999;background:#111827;color:#fff;border-radius:14px;padding:12px 14px;display:flex;gap:10px;white-space:nowrap;align-items:center;box-shadow:0 6px 24px rgba(0,0,0,.35);font:600 14px var(--font),system-ui,sans-serif;max-width:96vw';
+    bar.innerHTML = '<span>PDF ready</span>' + (canShare ? '<button id="pdfShare" style="background:#059669;color:#fff;border:0;padding:10px 16px;border-radius:10px;font:700 15px var(--font),system-ui,sans-serif;cursor:pointer">Share</button>' : '') + '<a id="pdfOpen" href="' + url + '" target="_blank" rel="noopener" download="' + name + '" style="background:#2563EB;color:#fff;padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:700">Open PDF</a><button id="pdfX" style="background:transparent;border:0;color:#9CA3AF;font-size:22px;line-height:1;padding:0 4px;cursor:pointer" aria-label="Close">&times;</button>';
+    document.body.appendChild(bar);
+    document.getElementById('pdfX').onclick = function () { bar.remove(); };
+    var sb2 = document.getElementById('pdfShare'); if (sb2) sb2.onclick = function () { navigator.share({ files: [file], title: name }).then(function () { bar.remove(); }, function () {}); };
+    document.getElementById('pdfOpen').onclick = function () { setTimeout(function () { bar.remove(); }, 800); };
+  }
+  function downloadPdfPlain(d) {""")
