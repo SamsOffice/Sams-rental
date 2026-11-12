@@ -4404,6 +4404,71 @@ function BookingPage() {
 }
 
 
+function InvoicePortal(_ref) {
+  var token = _ref.token;
+  var _s = React.useState(null), inv = _s[0], setInv = _s[1];
+  var _s2 = React.useState(true), loading = _s2[0], setLoading = _s2[1];
+  var _s4 = React.useState('en'), lang = _s4[0], setLang = _s4[1];
+  var es = lang === 'es';
+  React.useEffect(function() {
+    sb.rpc('portal_invoice', { p_token: token }).then(function(res) {
+      if (res.data) setInv(res.data); else setInv(null);
+      setLoading(false);
+    }, function() { setLoading(false); });
+  }, [token]);
+  function money(n){ return '$' + Number(n||0).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 }); }
+  function fmtD(d){ if(!d) return ''; var x=new Date(d+'T00:00:00'); if (isNaN(x.getTime())) return d; return x.toLocaleDateString(es ? 'es-US' : 'en-US',{month:'short',day:'numeric',year:'numeric'}); }
+  if (loading) return React.createElement('div', { style:{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center' } }, React.createElement('div', { className:'spinner' }));
+  if (!inv) return React.createElement('div', { style:{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:10, fontFamily:'system-ui' } },
+    React.createElement('div', { style:{ fontSize:40 } }, '🔍'),
+    React.createElement('div', { style:{ fontSize:16, fontWeight:700 } }, es ? 'Factura no encontrada' : 'Invoice not found'),
+    React.createElement('div', { style:{ fontSize:13, color:'#6B7280' } }, es ? 'Este enlace puede ser incorrecto.' : 'This link may be invalid.')
+  );
+  var zelle = '+1 (917) 663-6369';
+  var items = inv.items || [];
+  var total = 0;
+  items.forEach(function(it) { total += parseFloat(it[1]) || 0; });
+  if (!total) total = parseFloat(inv.amt) || 0;
+  var paid = !!inv.paid;
+  var card = { background:'#fff', borderRadius:16, padding:22, border:'1px solid #E5E7EB', boxShadow:'0 2px 12px rgba(0,0,0,0.08)', marginBottom:16 };
+  var lb = function(on) { return { flex:1, padding:'14px', borderRadius:10, fontSize:17, fontWeight:800, cursor:'pointer', border:'3px solid '+(on?'#2563EB':'#E5E7EB'), background:on?'#2563EB':'#fff', color:on?'#fff':'#374151' }; };
+  return React.createElement('div', { style:{ minHeight:'100vh', background:'#F9FAFB', padding:'20px 16px', fontFamily:'system-ui' } },
+    React.createElement('div', { style:{ maxWidth:460, margin:'0 auto' } },
+      React.createElement('div', { style:{ display:'flex', gap:10, marginBottom:16 } },
+        React.createElement('button', { onClick:function(){ setLang('en'); }, style:lb(lang==='en') }, 'English'),
+        React.createElement('button', { onClick:function(){ setLang('es'); }, style:lb(lang==='es') }, 'Español')
+      ),
+      React.createElement('div', { style:card },
+        React.createElement('div', { style:{ fontSize:13, fontWeight:700, color:'#6B7280', textTransform:'uppercase', marginBottom:6 } }, 'Sams Construction Services LTD'),
+        React.createElement('h2', { style:{ fontSize:22, fontWeight:800, color:'#111827', margin:'0 0 4px' } }, (es ? 'Factura #' : 'Invoice #') + inv.no),
+        React.createElement('div', { style:{ fontSize:14, color:'#6B7280', marginBottom:16 } }, inv.client || '', inv.date ? ' · ' + fmtD(inv.date) : ''),
+        React.createElement('div', { style:{ background: paid ? '#ECFDF5' : '#EFF6FF', borderRadius:10, padding:16, marginBottom:16, textAlign:'center' } },
+          React.createElement('div', { style:{ fontSize:13, color:'#6B7280', marginBottom:4 } }, paid ? (es ? 'Pagado' : 'Paid') : (es ? 'Total a pagar' : 'Total due')),
+          React.createElement('div', { style:{ fontSize:34, fontWeight:900, color: paid ? '#059669' : '#2563EB' } }, money(total))
+        ),
+        React.createElement('div', { style:{ fontSize:12, fontWeight:700, color:'#6B7280', textTransform:'uppercase', marginBottom:8 } }, es ? 'Detalle' : 'Details'),
+        items.map(function(it, i) {
+          return React.createElement('div', { key:i, style:{ display:'flex', justifyContent:'space-between', gap:12, padding:'10px 0', borderBottom:'1px solid #F3F4F6', fontSize:14, color:'#111827' } },
+            React.createElement('div', null,
+              React.createElement('div', { style:{ fontWeight:600 } }, it[0] || ''),
+              it[2] ? React.createElement('div', { style:{ fontSize:12, color:'#6B7280' } }, fmtD(it[2])) : null
+            ),
+            React.createElement('div', { style:{ fontWeight:700, whiteSpace:'nowrap' } }, money(it[1]))
+          );
+        }),
+        React.createElement('div', { style:{ display:'flex', justifyContent:'space-between', padding:'12px 0 0', fontSize:16, fontWeight:800 } },
+          React.createElement('span', null, 'Total'), React.createElement('span', null, money(total)))
+      ),
+      !paid && React.createElement('div', { style:card },
+        React.createElement('div', { style:{ fontSize:12, fontWeight:700, color:'#6B7280', textTransform:'uppercase', marginBottom:8 } }, es ? 'Cómo pagar' : 'How to pay'),
+        React.createElement('div', { style:{ fontSize:14, color:'#374151', lineHeight:1.7 } }, es ? 'Zelle: ' : 'Zelle: ', React.createElement('strong', null, zelle)),
+        React.createElement('div', { style:{ fontSize:14, color:'#374151', lineHeight:1.7 } }, es ? 'O pague en efectivo o cheque al chofer.' : 'Or pay the driver by cash or check.')
+      ),
+      React.createElement('div', { style:{ textAlign:'center', fontSize:13, color:'#6B7280' } }, (es ? 'Preguntas? Llame al ' : 'Questions? Call '), React.createElement('a', { href:'tel:+19176636369', style:{ color:'#2563EB', fontWeight:700 } }, zelle))
+    )
+  );
+}
+
 function App() {
   const hash = window.location.hash.slice(1);
   if (hash === '/book' || hash === '/book/') return /*#__PURE__*/React.createElement(BookingPage, null);
@@ -4411,6 +4476,8 @@ function App() {
   if (portalMatch) return /*#__PURE__*/React.createElement(ClientPortal, {token: portalMatch[1]});
   const dumpPortalMatch = hash.match(/^\/dump\/([^/]+)$/);
   if (dumpPortalMatch) return /*#__PURE__*/React.createElement(DumpClientPortal, {token: dumpPortalMatch[1]});
+  const invMatch = hash.match(/^\/invoice\/([^/]+)$/);
+  if (invMatch) return /*#__PURE__*/React.createElement(InvoicePortal, {token: invMatch[1]});
   const combinedMatch = hash.match(/^\/combined\/([^/]+)\/([^/]+)$/);
   if (combinedMatch) return /*#__PURE__*/React.createElement(CombinedPortal, {rentalToken: combinedMatch[1], dumpToken: combinedMatch[2]});
   const dumpMatch = hash.match(/^\/dump\/(.+)$/);

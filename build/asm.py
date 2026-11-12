@@ -4,7 +4,7 @@ def rep(a,b,cnt=1):
     global s
     assert s.count(a)==cnt,(s.count(a),a[:70]); s=s.replace(a,b)
 # supabase lib
-s='<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>\n'+s+'\n</body></html>'
+s='<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>\n<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>\n<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>\n'+s+'\n</body></html>'
 # guard
 rep("function invPaper(v) {","function invPaper(v) {\n    if (!v) return '<div class=\"sub\" style=\"padding:20px\">No invoices yet.</div>';",1) if "function invPaper(v) {" in s else None
 # gate
@@ -51,7 +51,7 @@ import re as _re
 s=_re.sub(r"<button class=\"daundo\" data-d=\"wskip\" data-k=\"' \+ d.key \+ '\">Demo: sumar 15 min</button>","",s)
 s=_re.sub(r"<button class=\"daundo\" data-d=\"rcsample\" data-k=\"' \+ d.key \+ '\">[^<]*</button>","",s)
 s=s.replace("link: BASEURL + '#/dump/demo-' + sj.id","link: BASEURL + '#/dump/' + (sj.token || '')").replace("link: BASEURL + '#/portal/demo-' + r.id","link: BASEURL + '#/portal/' + (r.token || '')")
-route="<script>(function(){var h=location.hash;if(/^#\\/(book|portal|dump|combined|driver)(\\/|$)/.test(h)){location.replace('/Sams-rental/legacy.html'+h);}})();</script>"
+route="<script>(function(){var h=location.hash;if(/^#\\/(book|portal|dump|combined|invoice|driver)(\\/|$)/.test(h)){location.replace('/Sams-rental/legacy.html'+h);}})();</script>"
 s=s.replace('<script src="https://cdn.jsdelivr',route+'\n<script src="https://cdn.jsdelivr',1)
 
 def R(a,b,cnt=1):
