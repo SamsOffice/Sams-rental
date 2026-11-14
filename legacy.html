@@ -10,11 +10,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>@font-face{font-family:'Metropolis';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/metropolis-latin-400-normal.woff2) format('woff2')}@font-face{font-family:'Metropolis';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/metropolis-latin-400-normal.woff2) format('woff2')}@font-face{font-family:'Metropolis';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/metropolis-latin-600-normal.woff2) format('woff2')}@font-face{font-family:'Metropolis';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/metropolis-latin-700-normal.woff2) format('woff2')}@font-face{font-family:'Metropolis';font-style:normal;font-weight:800;font-display:swap;src:url(fonts/metropolis-latin-700-normal.woff2) format('woff2')}@font-face{font-family:'Metropolis';font-style:normal;font-weight:900;font-display:swap;src:url(fonts/metropolis-latin-700-normal.woff2) format('woff2')}</style>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'DM Sans',sans-serif;background:#F9FAFB;color:#111827;}
-input,select,textarea,button{font-family:'DM Sans',sans-serif;}
+body{font-family:'Metropolis',sans-serif;background:#F9FAFB;color:#111827;}
+input,select,textarea,button{font-family:'Metropolis',sans-serif;}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .spinner{width:32px;height:32px;border:3px solid #E5E7EB;border-top-color:#2563EB;border-radius:50%;animation:spin 1s linear infinite;}
@@ -23,7 +23,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;}
 </head>
 <body>
 <div id="root"></div>
-<div id="polfoot" style="text-align:center;padding:18px 16px 28px;font:14px/1.5 system-ui,sans-serif;color:#374151"><a href="privacy.html" style="color:#1D4ED8">Privacy Policy / Pol&iacute;tica de privacidad</a> &nbsp;|&nbsp; <a href="terms.html" style="color:#1D4ED8">Terms / T&eacute;rminos</a></div>
+<div id="polfoot" style="text-align:center;padding:18px 16px 28px;font:14px/1.5 'Metropolis',system-ui,sans-serif;color:#374151"><a href="privacy.html" style="color:#1D4ED8">Privacy Policy / Pol&iacute;tica de privacidad</a> &nbsp;|&nbsp; <a href="terms.html" style="color:#1D4ED8">Terms / T&eacute;rminos</a></div>
 <script>
 const {
   useState,
@@ -3231,7 +3231,7 @@ function DumpClientPortal(_ref) {
   };
 
   if (loading) return React.createElement('div', { style:{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center' } }, React.createElement('div', { className:'spinner' }));
-  if (!job) return React.createElement('div', { style:{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:10, fontFamily:'system-ui' } },
+  if (!job) return React.createElement('div', { style:{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:10, fontFamily:"'Metropolis',system-ui,sans-serif" } },
     React.createElement('div', { style:{ fontSize:40 } }, '\uD83D\uDD0D'),
     React.createElement('div', { style:{ fontSize:16, fontWeight:700 } }, 'Job not found'),
     React.createElement('div', { style:{ fontSize:13, color:'#6B7280' } }, 'This link may be invalid or expired.')
@@ -3264,7 +3264,7 @@ function DumpClientPortal(_ref) {
 
   // ===== CONFIRM GATE (mirror rental) =====
   if (!confirmed && !isPaid) {
-    return React.createElement('div', { style:{ minHeight:'100vh', background:'#F9FAFB', padding:'20px 16px', fontFamily:'system-ui' } },
+    return React.createElement('div', { style:{ minHeight:'100vh', background:'#F9FAFB', padding:'20px 16px', fontFamily:"'Metropolis',system-ui,sans-serif" } },
       React.createElement('div', { style:{ maxWidth:460, margin:'0 auto' } },
         React.createElement('div', { style:{ background:'#fff', borderRadius:14, padding:'16px', marginBottom:20, border:'1px solid #E5E7EB', boxShadow:'0 2px 8px rgba(0,0,0,0.06)', textAlign:'center' } },
           React.createElement('div', { style:{ fontSize:14, fontWeight:600, color:'#6B7280', marginBottom:12 } }, '\uD83C\uDF10 Choose Your Language / Elija su Idioma'),
@@ -3304,7 +3304,7 @@ function DumpClientPortal(_ref) {
   }
 
   // ===== MAIN PORTAL (mirror rental) =====
-  return React.createElement('div', { style:{ minHeight:'100vh', background:'#F9FAFB', fontFamily:'system-ui' } },
+  return React.createElement('div', { style:{ minHeight:'100vh', background:'#F9FAFB', fontFamily:"'Metropolis',system-ui,sans-serif" } },
     React.createElement('div', { style:{ background:'#111827', padding:'18px 20px', display:'flex', justifyContent:'space-between', alignItems:'center' } },
       React.createElement('div', null,
         React.createElement('div', { style:{ color:'#fff', fontWeight:800, fontSize:15 } }, 'SAMS CONSTRUCTION SERVICES LTD'),
@@ -4349,7 +4349,7 @@ function BookingPage() {
     setSubmitted(true);
   };
   if (submitted) {
-    return React.createElement('div', { style:{ minHeight:'100vh', background:'#F0FDF4', display:'flex', alignItems:'center', justifyContent:'center', padding:20, fontFamily:'system-ui,sans-serif' } },
+    return React.createElement('div', { style:{ minHeight:'100vh', background:'#F0FDF4', display:'flex', alignItems:'center', justifyContent:'center', padding:20, fontFamily:"'Metropolis',system-ui,sans-serif" } },
       React.createElement('div', { style:{ background:'#fff', borderRadius:16, padding:'40px 32px', maxWidth:440, textAlign:'center', boxShadow:'0 10px 40px rgba(0,0,0,0.1)' } },
         React.createElement('div', { style:{ fontSize:52, marginBottom:12 } }, '\u2705'),
         React.createElement('h1', { style:{ fontSize:22, fontWeight:800, color:'#065F46', marginBottom:10 } }, t('Request Received!','Solicitud Recibida!')),
@@ -4358,7 +4358,7 @@ function BookingPage() {
       )
     );
   }
-  return React.createElement('div', { style:{ minHeight:'100vh', background:'#F9FAFB', padding:'0 0 40px', fontFamily:'system-ui,sans-serif' } },
+  return React.createElement('div', { style:{ minHeight:'100vh', background:'#F9FAFB', padding:'0 0 40px', fontFamily:"'Metropolis',system-ui,sans-serif" } },
     React.createElement('div', { style:{ background:'#1D4ED8', color:'#fff', padding:'24px 20px', textAlign:'center', position:'relative' } },
       React.createElement('button', { onClick:function(){ setEs(!es); }, style:{ position:'absolute', top:14, right:14, background:'#fff', color:'#1D4ED8', border:'3px solid #fff', borderRadius:14, padding:'14px 24px', fontSize:20, fontWeight:800, cursor:'pointer', boxShadow:'0 4px 14px rgba(0,0,0,0.25)', display:'flex', alignItems:'center', gap:8 } }, es ? '\uD83C\uDDFA\uD83C\uDDF8 English' : '\uD83C\uDDF2\uD83C\uDDFD Espanol'),
       React.createElement('div', { style:{ fontSize:22, fontWeight:800, letterSpacing:0.5 } }, 'SAMS CONSTRUCTION SERVICES LTD'),
@@ -4419,7 +4419,7 @@ function InvoicePortal(_ref) {
   function money(n){ return '$' + Number(n||0).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 }); }
   function fmtD(d){ if(!d) return ''; var x=new Date(d+'T00:00:00'); if (isNaN(x.getTime())) return d; return x.toLocaleDateString(es ? 'es-US' : 'en-US',{month:'short',day:'numeric',year:'numeric'}); }
   if (loading) return React.createElement('div', { style:{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center' } }, React.createElement('div', { className:'spinner' }));
-  if (!inv) return React.createElement('div', { style:{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:10, fontFamily:'system-ui' } },
+  if (!inv) return React.createElement('div', { style:{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:10, fontFamily:"'Metropolis',system-ui,sans-serif" } },
     React.createElement('div', { style:{ fontSize:40 } }, '🔍'),
     React.createElement('div', { style:{ fontSize:16, fontWeight:700 } }, es ? 'Factura no encontrada' : 'Invoice not found'),
     React.createElement('div', { style:{ fontSize:13, color:'#6B7280' } }, es ? 'Este enlace puede ser incorrecto.' : 'This link may be invalid.')
@@ -4432,7 +4432,7 @@ function InvoicePortal(_ref) {
   var paid = !!inv.paid;
   var card = { background:'#fff', borderRadius:16, padding:22, border:'1px solid #E5E7EB', boxShadow:'0 2px 12px rgba(0,0,0,0.08)', marginBottom:16 };
   var lb = function(on) { return { flex:1, padding:'14px', borderRadius:10, fontSize:17, fontWeight:800, cursor:'pointer', border:'3px solid '+(on?'#2563EB':'#E5E7EB'), background:on?'#2563EB':'#fff', color:on?'#fff':'#374151' }; };
-  return React.createElement('div', { style:{ minHeight:'100vh', background:'#F9FAFB', padding:'20px 16px', fontFamily:'system-ui' } },
+  return React.createElement('div', { style:{ minHeight:'100vh', background:'#F9FAFB', padding:'20px 16px', fontFamily:"'Metropolis',system-ui,sans-serif" } },
     React.createElement('div', { style:{ maxWidth:460, margin:'0 auto' } },
       React.createElement('div', { style:{ display:'flex', gap:10, marginBottom:16 } },
         React.createElement('button', { onClick:function(){ setLang('en'); }, style:lb(lang==='en') }, 'English'),
