@@ -2560,7 +2560,7 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
     else if (a === 'calday') openForm('calday', null, { iso: b.getAttribute('data-iso') });
     else if (a === 'dayoffadd') openForm('dayoff');
     else if (a === 'caledit') openForm('calev', null, { id: b.getAttribute('data-id') });
-    else if (a === 'dowoff') { var wdx = parseInt(b.getAttribute('data-d'), 10); DOWOFF[wdx] = !DOWOFF[wdx]; setView('schedule'); }
+    else if (a === 'dowoff') { var wdx = parseInt(b.getAttribute('data-d'), 10); DOWOFF[wdx] = !DOWOFF[wdx]; DOTOUCH = true; setView('schedule'); }
     else if (a === 'dooedit') openForm('dayoff', null, { id: b.getAttribute('data-id') });
     else if (a === 'doorm') { doRemove(b.getAttribute('data-id')); setView('schedule'); toast('Day turned back on'); }
     else if (a === 'calrm') { calRemove(b.getAttribute('data-id')); setView('schedule'); toast('Removed from the calendar'); }
@@ -3462,13 +3462,14 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
     var mins = m[3] ? (parseInt(m[3], 10) % 12) * 60 + parseInt(m[4], 10) + (/p/i.test(m[5]) ? 720 : 0) : 0; return (mi * 100 + parseInt(m[2], 10)) * 10000 + mins;
   }
   /* ---- Days off, editable calendar items ---- */
+  var DOTOUCH = false;
   var DAYOFF = [], DOWOFF = [false, false, false, false, false, false, false], DON = 0, CEID = '', DOEID = '', DMV = 0;
   function offRec(iso) { for (var k = 0; k < DAYOFF.length; k++) { if (iso >= DAYOFF[k].from && iso <= DAYOFF[k].to) return DAYOFF[k]; } return null; }
   function offById(id) { for (var k = 0; k < DAYOFF.length; k++) { if (DAYOFF[k].id === id) return DAYOFF[k]; } return null; }
   function isOff(iso) { var d = invParse(iso); return !!offRec(iso) || (d ? !!DOWOFF[d.getDay()] : false); }
   function offWhy(iso) { var r = offRec(iso); return r ? r.why : ''; }
-  function doSave(id, from, to, why) { var r = id ? offById(id) : null; if (r) { r.from = from; r.to = to; r.why = why; } else { DON++; DAYOFF.push({ id: 'O' + DON, from: from, to: to, why: why }); } }
-  function doRemove(id) { for (var k = DAYOFF.length - 1; k >= 0; k--) { if (DAYOFF[k].id === id) DAYOFF.splice(k, 1); } }
+  function doSave(id, from, to, why) { DOTOUCH = true; var r = id ? offById(id) : null; if (r) { r.from = from; r.to = to; r.why = why; } else { DON++; DAYOFF.push({ id: 'O' + DON, from: from, to: to, why: why }); } }
+  function doRemove(id) { DOTOUCH = true; for (var k = DAYOFF.length - 1; k >= 0; k--) { if (DAYOFF[k].id === id) DAYOFF.splice(k, 1); } }
   function calById(id) { for (var k = 0; k < CALX.length; k++) { if (CALX[k].id === id) return CALX[k]; } return null; }
   function calUpdate(id, title, iso, tm, note) {
     var x = calById(id); if (!x) return; x.title = title; x.iso = iso; x.tm = tm; x.note = note;
@@ -3859,7 +3860,7 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
     for (n in DMSG) { if (DMSG.hasOwnProperty(n)) { a = DMSG[n]; for (k = 0; k < a.length; k++) { a[k].who = n; if (!a[k].ts) a[k].ts = Date.now() - k; o.push(a[k]); } } }
     return o;
   }
-  function cfgList() { return [{ id: 'prices', rows: PRICES }, { id: 'equip', rows: EQUIP }, { id: 'maps', key: MAPKEY }, { id: 'yards', rows: YARDS }, { id: 'dicons', map: DICON }, { id: 'priv', jobs: Object.keys(PRIV).filter(function (q) { return PRIV[q]; }) }, { id: 'rem', on: REM.on, log: REM.log }].concat(Object.keys(CICON).length ? [{ id: 'cicons', map: CICON }] : []); }
+  function cfgList() { return [{ id: 'prices', rows: PRICES }, { id: 'equip', rows: EQUIP }, { id: 'maps', key: MAPKEY }, { id: 'yards', rows: YARDS }, { id: 'dicons', map: DICON }, { id: 'priv', jobs: Object.keys(PRIV).filter(function (q) { return PRIV[q]; }) }, { id: 'rem', on: REM.on, log: REM.log }].concat(Object.keys(CICON).length ? [{ id: 'cicons', map: CICON }] : []).concat(DOTOUCH ? [{ id: 'dayoff', rows: DAYOFF, w: DOWOFF, n: DON }] : []); }
   var RECS = [
     { k: 'wait', arr: function () { return WAITS; }, drv: 1 },
     { k: 'rcpt', arr: function () { return RCPTS; }, drv: 1 },
@@ -3897,6 +3898,7 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
           if (rows[i].id === 'yards') { YARDS = rows[i].rows || []; }
           if (rows[i].id === 'dicons') { DICON = rows[i].map || {}; }
           if (rows[i].id === 'cicons') { CICON = rows[i].map || {}; }
+          if (rows[i].id === 'dayoff') { DAYOFF = rows[i].rows || []; DOWOFF = rows[i].w || [false, false, false, false, false, false, false]; DON = Math.max(DON, rows[i].n || 0); DOTOUCH = true; }
           if (rows[i].id === 'equip' && rows[i].rows) { EQUIP.length = 0; for (mx = 0; mx < rows[i].rows.length; mx++) EQUIP.push(rows[i].rows[mx]); }
           if (rows[i].id === 'rem') { REM.on = rows[i].on !== false; REM.log = rows[i].log || {}; }
           RSNAP['cfg|' + rows[i].id] = JSON.stringify(rows[i]);
