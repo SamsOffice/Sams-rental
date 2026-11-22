@@ -75,7 +75,8 @@
   .stat small { color: var(--muted); }
   .stat.alert .ic { background: var(--bad-bg); color: var(--bad); }
 
-  .work { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  .work { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  .work:has(#detail[hidden]) { grid-template-columns: minmax(0, 1fr); }
   .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; min-width: 0; }
   .card > header { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
   .card > header h2 { margin: 0; font-size: 15px; font-weight: 600; margin-right: auto; }
@@ -500,7 +501,7 @@
   .paper2 th { background: #CCECF8; color: #111; border: 1px solid #808080; }
   .paper2 td { border: 1px solid #808080; background: #F0F0F0; font-style: italic; }
   .paper2 .tot { margin-top: 10px; background: #CCECF8; border-top: 1px solid #808080; border-bottom: 3px double #808080; display: flex; justify-content: flex-end; gap: 24px; padding: 6px 10px; font-weight: 700; }
-  @media (max-width: 960px) { .work { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 1100px) { .work { grid-template-columns: minmax(0, 1fr); } }
   @media (max-width: 760px) {
     .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
     .side { flex-direction: row; overflow-x: auto; padding: 8px 16px; gap: 4px; border-right: 0; border-bottom: 1px solid var(--line); }
