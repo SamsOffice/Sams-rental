@@ -199,6 +199,7 @@
   .itotal { display: grid; grid-template-columns: 60.8% 18.9% 20.3%; background: #CCECF8; border-top: 1px solid #808080; border-bottom: 3px double #808080; height: 32px; align-items: center; margin-top: 23px; }
   .itotal .il { grid-column: 2; text-align: right; padding-right: 34px; }
   .itotal .iv { grid-column: 3; text-align: right; padding-right: 9px; font-size: 21px; font-weight: 700; }
+  .izel { margin-top: 12px; text-align: right; font-size: 14px; color: #111827; }
   .ipaid { margin-top: 12px; text-align: right; font-weight: 700; color: #065F46; font-size: 18px; }
   .inum { font-variant-numeric: tabular-nums; }
 
@@ -1801,7 +1802,7 @@ body.drvmode .app{display:none!important}
   function vSettings() {
     function row(a, b) { return '<div class="formrow"><span>' + a + '</span><b>' + b + '</b></div>'; }
     return '<div class="card"><header><h2>Company</h2></header>' + row('Name', 'Sams Construction Services LTD') + row('Address', '188-16 Woodhull Ave, Hollis NY 11423') + row('Phone', '+1 (917) 663-6369') + row('BIC', 'BIC#4376') + '</div>' +
-      '<div class="card"><header><h2>Equipment and prices</h2><button class="btn sm" data-act="form" data-f="equip">' + icon('gear') + 'Edit</button></header>' + eqRows() + row('Dump container 20 yd', '$650 and up') + row('Dump container 30 yd', '$820 and up') + '</div>' +
+      zelCard() + '<div class="card"><header><h2>Equipment and prices</h2><button class="btn sm" data-act="form" data-f="equip">' + icon('gear') + 'Edit</button></header>' + eqRows() + row('Dump container 20 yd', '$650 and up') + row('Dump container 30 yd', '$820 and up') + '</div>' +
       '<div class="card"><header><h2>People</h2></header>' + row('Keilah', 'Owner') + row('Office', 'Secretary') + row('Sams, Gustavo, Jose Luis', 'Drivers') + '</div>';
   }
 
@@ -1811,6 +1812,15 @@ body.drvmode .app{display:none!important}
   function applyCO() {
     var ci = CO.addr.indexOf(','), a1 = ci < 0 ? CO.addr : CO.addr.slice(0, ci), a2 = ci < 0 ? '' : CO.addr.slice(ci + 1).trim();
     INV_CO.name = CO.name.toUpperCase(); INV_CO.addr1 = a1.trim().toUpperCase(); INV_CO.addr2 = a2; INV_CO.phone = CO.phone; INV_CO.bic = CO.bic;
+  }
+  var ZELS = [], ZELSAVED = false;
+  function zelKey(n) { return String(n || '').toLowerCase().replace(/\s+/g, ' ').trim(); }
+  function zelFor(n) { var k = zelKey(n), q; if (!k) return ''; for (q = 0; q < ZELS.length; q++) { if (zelKey(ZELS[q].n) === k && ZELS[q].z) return ZELS[q].z; } return ''; }
+  function zelCard() {
+    var h = '', q;
+    for (q = 0; q < ZELS.length; q++) h += '<div class="formrow"><span>' + invEsc(ZELS[q].n) + '</span><b>' + invEsc(ZELS[q].z) + ' <button class="btn sm" data-act="zdel" data-i="' + q + '">Remove</button></b></div>';
+    if (!h) h = '<p class="note" style="padding:14px">Every client pays to ' + invEsc(ZEL) + '. Tap Add to give one client a different Zelle number.</p>';
+    return '<div class="card"><header><h2>Zelle numbers</h2><button class="btn sm" data-act="form" data-f="zelle">' + icon('gear') + 'Add</button></header>' + h + '</div>';
   }
   var INV_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   var ISO = { 1042: '2026-10-09', 1041: '2026-10-08', 1040: TOMOISO(), 1039: '2026-09-28', 1038: '2026-10-06', 1037: '2026-10-03', 1036: '2026-10-01', 1035: '2026-09-24', 327: '2026-10-03', 326: '2026-10-01', 325: '2026-09-24', 332: '2026-10-09', 331: '2026-10-08', 330: '2026-09-28', 329: '2026-10-06' };
@@ -1839,6 +1849,7 @@ body.drvmode .app{display:none!important}
     h += '</div><div class="itail"><div class="ilabs"><div>Sales Tax</div><div>Other</div></div><div class="ivals inum"><div>$' + invMoney(sub) + '</div><div></div><div></div></div></div>';
     h += '<div class="itotal"><div class="il">TOTAL</div><div class="iv inum">$' + invMoney(sub) + '</div></div>';
     if (d.paid) h += '<div class="ipaid">PAID</div>';
+    else if (d.zelle) h += '<div class="izel">Pay by Zelle: <b>' + invEsc(d.zelle) + '</b></div>';
     return '<div class="isheet" id="isheet">' + h + '</div>';
   }
   var EXTRA = [];
@@ -1850,13 +1861,13 @@ body.drvmode .app{display:none!important}
     var items = [{ desc: 'Dump - ' + j.mat + ' (' + j.size + ')', date: iso, amount: j.total - ow - pf }];
     if (ow) items.push({ desc: 'Overweight Charge', date: '', amount: ow });
     if (pf) items.push({ desc: 'Permit Fee', date: '', amount: pf });
-    return { invNo: String(j.id - 710), invDate: iso, billTo: j.client, addr1: sp[0], addr2: sp[1], phone: j.phone, items: items, paid: j.pay === 'Paid' };
+    return { invNo: String(j.id - 710), invDate: iso, billTo: j.client, addr1: sp[0], addr2: sp[1], phone: j.phone, items: items, paid: j.pay === 'Paid', zelle: zelFor(j.client) };
   }
   function dataFromInv(v) {
     var j = (v.ph !== undefined) ? { addr: v.addr, phone: v.ph } : jobByClient(v.client), sp = j ? addrParts(j.addr || '') : ['', ''], items = [];
     for (var k = 0; k < v.items.length; k++) items.push({ desc: v.items[k][0], date: k === 0 ? ISO[v.no] : '', amount: v.items[k][1] });
     for (var k2 = 0; k2 < items.length; k2++) { if (v.items[k2][2]) items[k2].date = v.items[k2][2]; }
-    return { invNo: String(v.no), invDate: ISO[v.no], billTo: v.client, addr1: sp[0], addr2: sp[1], phone: j ? j.phone : '', items: items, paid: v.st === 'Paid' };
+    return { invNo: String(v.no), invDate: ISO[v.no], billTo: v.client, addr1: sp[0], addr2: sp[1], phone: j ? j.phone : '', items: items, paid: v.st === 'Paid', zelle: zelFor(v.client) };
   }
   function fitInv() {
     var sh = document.getElementById('isheet'), w = document.getElementById('invBody');
@@ -1946,7 +1957,7 @@ body.drvmode .app{display:none!important}
       var payInfo;
       if (!PS.pay) payInfo = '<div class="pnote" style="font-size:13px">' + pT('Select a payment method above', 'Seleccione un metodo de pago arriba') + '</div>';
       else if (PS.pay === 'zelle') payInfo = '<div class="pzel"><h4>' + icon('bolt') + pT('Pay via Zelle', 'Pagar por Zelle') + '</h4><div style="font-size:14px">' + pT('Amount: ', 'Monto: ') + '<b>' + money(j.total) + '</b></div>' +
-        '<div style="font-size:15px">' + pT('Send to: ', 'Enviar a: ') + '<b>' + telA() + '</b></div><button class="pbtn" data-p="copyz" style="padding:14px;font-size:15px">' + icon('clipboard') + pT('Copy Zelle Number', 'Copiar Numero de Zelle') + '</button>' +
+        '<div style="font-size:15px">' + pT('Send to: ', 'Enviar a: ') + '<b>' + (zelFor(j.client) ? '<a class="ptel" href="tel:' + zelFor(j.client).replace(/[^0-9+]/g, '') + '">' + invEsc(zelFor(j.client)) + '</a>' : telA()) + '</b></div><button class="pbtn" data-p="copyz" style="padding:14px;font-size:15px">' + icon('clipboard') + pT('Copy Zelle Number', 'Copiar Numero de Zelle') + '</button>' +
         '<div class="pnote">' + pT('After sending, call to confirm: ', 'Despues de enviar, llame para confirmar: ') + telA() + '</div></div>';
       else if (PS.pay === 'cash') payInfo = '<div style="text-align:center;font-size:13px;color:#6B7280">' + pT('Pay cash to driver or call to arrange:', 'Pague en efectivo al conductor o llame para coordinar:') + '<br><b style="font-size:18px">' + telA() + '</b></div>';
       else payInfo = '<div style="text-align:center;font-size:13px;color:#6B7280">' + pT('Call the office to arrange this payment:', 'Llame a la oficina para coordinar este pago:') + '<br><b style="font-size:18px">' + telA() + '</b></div>';
@@ -1989,7 +2000,7 @@ body.drvmode .app{display:none!important}
     else if (a === 'pay') { PS.pay = PS.pay === b.getAttribute('data-k') ? '' : b.getAttribute('data-k'); drawPortal(); }
     else if (a === 'invoice') openInv(PS.job.kind === 'rental' ? dataFromRental(PS.job.r) : dataFromJob(PS.job));
     else if (a === 'copyz') {
-      try { navigator.clipboard.writeText(ZEL).then(function () { toast(pT('Zelle number copied', 'Numero de Zelle copiado')); }, function () { toast(pT('Zelle number: ', 'Numero de Zelle: ') + ZEL); }); } catch (err) { toast(pT('Zelle number: ', 'Numero de Zelle: ') + ZEL); }
+      try { navigator.clipboard.writeText(zelFor(PS.job.client) || ZEL).then(function () { toast(pT('Zelle number copied', 'Numero de Zelle copiado')); }, function () { toast(pT('Zelle number: ', 'Numero de Zelle: ') + ZEL); }); } catch (err) { toast(pT('Zelle number: ', 'Numero de Zelle: ') + ZEL); }
     }
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && document.getElementById('invModal').hidden) closePortal(); });
@@ -2192,6 +2203,11 @@ body.drvmode .app{display:none!important}
       if (!pl) pl = '<p class="note">No prices yet. Add one below.</p>';
       h = '<div><b>Your container prices</b><div class="sub">Change any price, then tap Save prices.</div>' + pl + '</div><div style="margin-top:14px"><b>Add a price</b></div><div class="fgrid">' + fld('fNM', 'Material', 'text', '', 'Example: Dirt / mix', false) + fld('fNS', 'Container size', 'text', '', 'Example: 20 yd', false) + fld('fNP', 'Price ($)', 'number', '') + fld('fNT', 'Tons included', 'number', '0') + '</div><p class="ferr" id="fErr"></p>' +
         '<div class="actions"><button type="submit" class="btn primary">' + icon('check') + 'Save prices</button><button type="button" class="btn" data-fa="close">Cancel</button></div>';
+    } else if (kind === 'zelle') {
+      t = 'Zelle number for a client';
+      var zn = [], zq; for (zq = 0; zq < CLIENTS.length; zq++) { if (CLIENTS[zq].n) zn.push(CLIENTS[zq].n); }
+      h = '<div class="sub">Pick the client, then type the Zelle number they should pay to. Their payment page, invoice and reminder texts will show it. Clients without one use ' + invEsc(ZEL) + '.</div><div class="fgrid">' + (zn.length ? selF('fZC', 'Client', zn, zn[0]) : fld('fZC', 'Client name', 'text', '', '', true)) + fld('fZN', 'Zelle number', 'tel', '', 'Example: (718) 555-0100', true) + '</div><p class="ferr" id="fErr"></p>' +
+        '<div class="actions"><button type="submit" class="btn primary">' + icon('check') + 'Save</button><button type="button" class="btn" data-fa="close">Cancel</button></div>';
     } else if (kind === 'company') {
       t = 'Company details';
       h = '<div class="sub">These show in Settings and on your invoices. Tap Save when you are done.</div><div class="fgrid">' + fld('fCoN', 'Company name', 'text', CO.name, '', true) + fld('fCoA', 'Address (street, then city)', 'text', CO.addr, 'Example: 188-16 Woodhull Ave, Hollis NY 11423') + fld('fCoP', 'Phone', 'tel', CO.phone) + fld('fCoB', 'BIC', 'text', CO.bic) + '</div>' +
@@ -2266,6 +2282,12 @@ body.drvmode .app{display:none!important}
   document.getElementById('theForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var err = document.getElementById('fErr'), client = fv('fClient').trim();
+    if (FKIND === 'zelle') {
+      var zc = fv('fZC').trim(), zz = fv('fZN').trim(), zi, zf = false; if (!zc || !zz) { err.textContent = 'Pick the client and type the number.'; return; }
+      for (zi = 0; zi < ZELS.length; zi++) { if (zelKey(ZELS[zi].n) === zelKey(zc)) { ZELS[zi].z = zz; zf = true; } }
+      if (!zf) ZELS.push({ n: zc, z: zz });
+      ZELSAVED = true; closeForm(); setView('settings'); toast('Zelle number saved'); syncSoon(); return;
+    }
     if (FKIND === 'company') {
       var cn = fv('fCoN').trim(); if (!cn) { err.textContent = 'Type the company name.'; return; }
       CO.name = cn; CO.addr = fv('fCoA').trim(); CO.phone = fv('fCoP').trim(); CO.bic = fv('fCoB').trim(); COSAVED = true; applyCO();
@@ -2603,6 +2625,7 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
     else if (a === 'dadv') { drvMove(b.getAttribute('data-key'), 1); refreshAll(); toast('Status updated. The office and client see it right away.'); }
     else if (a === 'adv') { var id3 = parseInt(b.getAttribute('data-id'), 10); var nx = { 'Scheduled': 'On the way', 'On the way': 'Arrived', 'Arrived': 'Delivered' }; for (var k3 = 0; k3 < DISP.length; k3++) { if (DISP[k3].id === id3) DISP[k3].st = nx[DISP[k3].st]; } setView('drivers'); toast('Status updated. The office and client see it right away.'); }
     else if (a === 'cal') { var dd = parseInt(b.getAttribute('data-d'), 10); if (dd === 0) { CAL.y = TODAY.getFullYear(); CAL.m = TODAY.getMonth(); } else { CAL.m += dd; if (CAL.m < 0) { CAL.m = 11; CAL.y--; } if (CAL.m > 11) { CAL.m = 0; CAL.y++; } } setView('schedule'); }
+    else if (a === 'zdel') { ZELS.splice(parseInt(b.getAttribute('data-i'), 10), 1); ZELSAVED = true; setView('settings'); toast('Zelle number removed'); syncSoon(); }
     else if (a === 'form') openForm(b.getAttribute('data-f'));
     else if (a === 'portal') { var rr0 = b.getAttribute('data-r'); if (rr0) openPortal(rentalAsJob(rentalById(rr0))); else openPortal(jobByClient(b.getAttribute('data-c'))); }
     else if (a === 'inv') { invSel = parseInt(b.getAttribute('data-no'), 10); setView('invoice'); }
@@ -2664,12 +2687,12 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
   function remMsg(c, es) {
     var s = remStage(c.days), a = money(c.amt), L = BASEURL + '#/portal/' + c.name.toLowerCase().replace(/[^a-z]+/g, '-'), ph = '+1 (917) 663-6369', n = c.name;
     if (es) {
-      if (s === 0) return 'Hola ' + n + ', un recordatorio amable de Sams Construction: su saldo de ' + a + ' vence pronto. Puede pagar en efectivo, cheque o Zelle al ' + ph + '. Su factura: ' + L + ' Gracias!';
+      if (s === 0) return 'Hola ' + n + ', un recordatorio amable de Sams Construction: su saldo de ' + a + ' vence pronto. Puede pagar en efectivo, cheque o Zelle al ' + (zelFor(n) || ph) + '. Su factura: ' + L + ' Gracias!';
       if (s === 1) return 'Hola ' + n + ', su saldo de ' + a + ' ya esta vencido (' + c.days + (c.days === 1 ? ' dia' : ' dias') + '). Por favor pague hoy para evitar cargos extra. Factura: ' + L + ' Preguntas? Llame al ' + ph + '.';
       if (s === 2) return 'Hola ' + n + ', este es un segundo aviso. Su saldo de ' + a + ' tiene ' + c.days + ' dias vencido. Llamenos hoy al ' + ph + ' para coordinar el pago. Factura: ' + L;
       return 'AVISO FINAL. ' + n + ', su saldo de ' + a + ' tiene ' + c.days + ' dias vencido. Segun el acuerdo que usted acepto, el saldo impago puede resultar en el retiro del equipo o contenedor, un gravamen sobre la propiedad y costos de cobranza. Llame hoy al ' + ph + '. Factura: ' + L;
     }
-    if (s === 0) return 'Hi ' + n + ', a friendly reminder from Sams Construction: your balance of ' + a + ' is due soon. You can pay by cash, check or Zelle at ' + ph + '. Your invoice: ' + L + ' Thank you!';
+    if (s === 0) return 'Hi ' + n + ', a friendly reminder from Sams Construction: your balance of ' + a + ' is due soon. You can pay by cash, check or Zelle at ' + (zelFor(n) || ph) + '. Your invoice: ' + L + ' Thank you!';
     if (s === 1) return 'Hi ' + n + ', your balance of ' + a + ' is now ' + c.days + (c.days === 1 ? ' day' : ' days') + ' past due. Please pay today to avoid extra charges. Invoice: ' + L + ' Questions? Call ' + ph + '.';
     if (s === 2) return 'Hi ' + n + ', this is a second notice. Your balance of ' + a + ' is ' + c.days + ' days past due. Please call us today at ' + ph + ' to arrange payment. Invoice: ' + L;
     return 'FINAL NOTICE. ' + n + ', your balance of ' + a + ' is ' + c.days + ' days past due. Under the agreement you accepted, unpaid balances can lead to removal of the equipment or container, a lien on the property and collection costs. Please call us today at ' + ph + '. Invoice: ' + L;
@@ -3044,7 +3067,7 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
     'Each client gets a text in their language with their invoice link. Demo only: nothing is sent yet. Real automatic sending needs Supabase Pro. You can still tap Remind on any client below.': 'Cada cliente recibe un texto en su idioma con el enlace de su factura. Solo demo: todavía no se envía nada. El envío automático real necesita Supabase Pro. Aún puedes tocar Recordar en cualquier cliente de abajo.',
     'Not due': 'No vencido', 'Remind': 'Recordar', 'Final notice': 'Aviso final', 'Lien stage': 'Etapa de gravamen',
     'Total unpaid': 'Total sin pagar', 'Collected this month': 'Cobrado este mes', 'Who owes you': 'Quién te debe', 'Due this week': 'Vence esta semana', 'Example only. Reminder not sent.': 'Solo ejemplo. Recordatorio no enviado.',
-    'Company': 'Empresa', 'Company details': 'Datos de la empresa', 'These show in Settings and on your invoices. Tap Save when you are done.': 'Esto se muestra en Configuración y en sus facturas. Toque Guardar cuando termine.', 'Company name': 'Nombre de la empresa', 'Company name *': 'Nombre de la empresa *', 'Address (street, then city)': 'Dirección (calle y luego ciudad)', 'Type the company name.': 'Escriba el nombre de la empresa.', 'Company details saved': 'Datos de la empresa guardados', 'Name': 'Nombre', 'Equipment and prices': 'Equipos y precios', 'Dump container 20 yd': 'Contenedor de descarga 20 yd', 'Dump container 30 yd': 'Contenedor de descarga 30 yd', 'People': 'Personas', 'Owner': 'Dueño', 'Office': 'Oficina', 'Secretary': 'Secretaria',
+    'Company': 'Empresa', 'Zelle numbers': 'Numeros de Zelle', 'Add': 'Agregar', 'Remove': 'Quitar', 'Zelle number for a client': 'Numero de Zelle para un cliente', 'Client': 'Cliente', 'Zelle number': 'Numero de Zelle', 'Pick the client and type the number.': 'Elija el cliente y escriba el numero.', 'Zelle number saved': 'Numero de Zelle guardado', 'Zelle number removed': 'Numero de Zelle quitado', 'Company details': 'Datos de la empresa', 'These show in Settings and on your invoices. Tap Save when you are done.': 'Esto se muestra en Configuración y en sus facturas. Toque Guardar cuando termine.', 'Company name': 'Nombre de la empresa', 'Company name *': 'Nombre de la empresa *', 'Address (street, then city)': 'Dirección (calle y luego ciudad)', 'Type the company name.': 'Escriba el nombre de la empresa.', 'Company details saved': 'Datos de la empresa guardados', 'Name': 'Nombre', 'Equipment and prices': 'Equipos y precios', 'Dump container 20 yd': 'Contenedor de descarga 20 yd', 'Dump container 30 yd': 'Contenedor de descarga 30 yd', 'People': 'Personas', 'Owner': 'Dueño', 'Office': 'Oficina', 'Secretary': 'Secretaria',
     'Your equipment': 'Tu equipo', 'New equipment name': 'Nombre del equipo nuevo', 'Price ($)': 'Precio ($)', 'Per': 'Por', 'Usual price ($)': 'Precio normal ($)', 'Add to the calendar': 'Agregar al calendario', 'Note (optional)': 'Nota (opcional)', 'Receipts and documents': 'Recibos y documentos', 'Save to calendar': 'Guardar en el calendario', 'Show it to a driver too?': '¿Mostrárselo también a un chofer?', 'Time (optional)': 'Hora (opcional)', 'What is it? *': '¿Qué es? *', 'dumps on the road or scheduled': 'descargas en la calle o programadas', 'out with clients now': 'con clientes ahora', 'Anything to remember...': 'Algo que recordar...', 'Example: Dump site inspection, call the owner back': 'Ejemplo: Inspección del sitio de descarga, llamar al dueño', 'Last day off (leave empty for one day)': 'Último día libre (déjalo vacío para un solo día)', 'These days show as OFF on the calendar. Clients cannot pick them on the booking page.': 'Estos días aparecen como LIBRES en el calendario. Los clientes no pueden elegirlos en la página de reservas.', 'Example: Holiday, yard closed, truck repair': 'Ejemplo: Feriado, patio cerrado, reparación del camión', 'How did you pay the site': '¿Cómo le pagaste al sitio?', 'Save dump': 'Guardar descarga', 'Tons (leave empty for a flat price)': 'Toneladas (déjalo vacío si es precio fijo)', 'What the dump site charged ($) *': 'Lo que cobró el sitio de descarga ($) *', 'What was in the container': 'Qué había en el contenedor', 'Where did you dump': '¿Dónde descargaste?', 'Which client was it for? *': '¿Para cuál cliente fue? *', 'Note for Sams': 'Nota para Sams', 'Sams sees this at the top of the driver app, in Spanish letters he can read, with an "Entendido" button.': 'Sams ve esto arriba en la app del chofer, en letras que puede leer, con un botón "Entendido".', 'Send note': 'Enviar nota', 'Example: Call Hollis before you go. The gate code changed.': 'Ejemplo: Llama a Hollis antes de ir. Cambió el código del portón.', 'Gate code, where to place the container...': 'Código del portón, dónde poner el contenedor...', 'Change price': 'Cambiar precio', 'Permit number': 'Número de permiso', 'Save permit': 'Guardar permiso', 'Valid for (days)': 'Válido por (días)', 'Which job is this permit for?': '¿Para cuál trabajo es este permiso?', 'Number on the paper permit': 'Número en el permiso de papel', 'Add a price': 'Agregar un precio', 'Change any price, then tap Save prices.': 'Cambia cualquier precio y luego toca Guardar precios.', 'Price $': 'Precio $', 'Save prices': 'Guardar precios', 'Example: 20 yd': 'Ejemplo: 20 yd', 'Example: Dirt / mix': 'Ejemplo: Tierra / mezcla', 'Attach and read': 'Adjuntar y leer', 'Attach the photo. The receipt then shows up in Receipts and you type in the numbers from the ticket.': 'Adjunta la foto. El recibo aparece en Recibos y escribes los números del ticket.', 'Receipt photo': 'Foto del recibo', 'Which job is this receipt for?': '¿Para cuál trabajo es este recibo?', 'Dump site name *': 'Nombre del sitio de descarga *', 'Leave both times empty for a day the site is closed.': 'Deja ambas horas vacías para un día en que el sitio está cerrado.', 'Mon to Fri closes': 'Lun a Vie cierra', 'Mon to Fri opens': 'Lun a Vie abre', 'Notes (holidays, what they accept)': 'Notas (feriados, lo que aceptan)', 'Save dump site': 'Guardar sitio de descarga', 'Example: Brooklyn Transfer Station': 'Ejemplo: Brooklyn Transfer Station', 'Dirt and sand': 'Tierra y arena', 'Mixed and garbage': 'Mezcla y basura', 'Add dump site': 'Agregar sitio de descarga', 'Add yard': 'Agregar patio', 'All bills match your rates': 'Todas las facturas coinciden con tus tarifas', 'Driver icons on the map': 'Íconos de choferes en el mapa', 'Dump container prices': 'Precios de contenedores', 'Dump log': 'Registro de descargas', 'Dump receipts from the drivers show up here already read. Check each one, then approve it.': 'Los recibos de descarga de los choferes aparecen aquí ya leídos. Revisa cada uno y luego apruébalo.', 'Each client gets a text in their language with their invoice link. Automatic sending is not turned on yet. Tap Remind on any client below and send it from your own phone.': 'Cada cliente recibe un texto en su idioma con el enlace de su factura. El envío automático todavía no está activado. Toca Recordar en cualquier cliente de abajo y envíalo desde tu propio teléfono.', 'Each driver shares their place while the driver app is open on their phone. Pins update about every minute.': 'Cada chofer comparte su ubicación mientras la app del chofer está abierta en su teléfono. Los pines se actualizan cada minuto aproximadamente.', 'Edit prices': 'Editar precios', 'Google has no hours listed. Call them and enter the hours. Construction and demolition debris.': 'Google no muestra horario. Llámalos y anota el horario. Escombros de construcción y demolición.', 'Google shows 5 AM to 10 PM on weekdays. Weekend hours not confirmed. Dirt, rocks, bricks, concrete.': 'Google muestra de 5 AM a 10 PM entre semana. Horario de fin de semana sin confirmar. Tierra, piedras, ladrillos, concreto.', 'Google shows it opens at 6 AM. Closing time and weekend hours are a guess, enter the real ones. Business office: 170 Cabot St, West Babylon.': 'Google muestra que abre a las 6 AM. La hora de cierre y el horario de fin de semana son un cálculo, anota los reales. Oficina: 170 Cabot St, West Babylon.', 'Google shows it opens at 6 AM. Closing time is a guess, enter the real one. Takes garbage, C&D debris and organic.': 'Google muestra que abre a las 6 AM. La hora de cierre es un cálculo, anota la real. Recibe basura, escombros de construcción y orgánico.', 'Hours for the places you dump at, so a driver never drives to a closed site. These are example hours, enter your real ones.': 'Horarios de los lugares donde descargas, para que un chofer nunca vaya a un sitio cerrado. Son horarios de ejemplo, anota los reales.', 'Mon to Fri': 'Lun a Vie', 'New Lead': 'Cliente nuevo', 'No active jobs': 'Sin trabajos activos', 'No drivers sharing right now. Pins show up here when a driver signs in and taps Entendido.': 'Ningún chofer está compartiendo ahora. Los pines aparecen aquí cuando un chofer inicia sesión y toca Entendido.', 'No jobs this month yet.': 'Todavía no hay trabajos este mes.', 'No permits yet.': 'Todavía no hay permisos.', 'No yards yet. Add each yard with its address. It shows as a pin on the Dispatch map (needs a Mapbox token).': 'Todavía no hay patios. Agrega cada patio con su dirección. Aparece como un pin en el mapa de Despacho (necesita un token de Mapbox).', 'Notes': 'Notas', 'Nothing to review. New receipts from the drivers show up here.': 'Nada que revisar. Los recibos nuevos de los choferes aparecen aquí.', 'Only the client can confirm, from their own link. Tap a row to see that client portal.': 'Solo el cliente puede confirmar, desde su propio enlace. Toca una fila para ver el portal de ese cliente.', 'Open Driver App →': 'Abrir app del chofer →', 'Open booking page': 'Abrir página de reservas', 'Open now': 'Abierto ahora', 'Paid to dump sites': 'Pagado a sitios de descarga', 'Paste the copied message into a text. Give each driver their PIN in a separate message, never in the same one as the link.': 'Pega el mensaje copiado en un texto. Dale a cada chofer su PIN en un mensaje aparte, nunca en el mismo que el enlace.', 'Requests that came in from the online booking page.': 'Solicitudes que llegaron de la página de reservas en línea.', 'Save': 'Guardar', 'Send the driver app': 'Enviar la app del chofer', 'The check uses these. If a site changes its price, tell me and I will update it.': 'La revisión usa estos precios. Si un sitio cambia su precio, avísame y lo actualizo.', 'The live map is using the basic backup map. Paste a Mapbox token (starts with pk.) or a Google map key to switch.': 'El mapa en vivo está usando el mapa básico de respaldo. Pega un token de Mapbox (empieza con pk.) o una clave de mapa de Google para cambiar.', 'What each dump costs you, what you billed the client, and what is left. If a dump site charges more than your rate, it shows up below.': 'Lo que te cuesta cada descarga, lo que le cobraste al cliente y lo que queda. Si un sitio de descarga cobra más que tu tarifa, aparece abajo.', 'What you charge the client. Dirt does not go to 30 yd. Garbage includes the tons shown.': 'Lo que le cobras al cliente. La tierra no va en contenedores de 30 yd. La basura incluye las toneladas indicadas.', 'Where the drivers are': 'Dónde están los choferes', 'Yard name': 'Nombre del patio', 'Yards on the map': 'Patios en el mapa', '← Back to dashboard': '← Volver al panel', '← Back to invoices': '← Volver a facturas',  'Notebook': 'Cuaderno', 'New note': 'Nota nueva', 'Edit note': 'Editar nota', 'Save note': 'Guardar nota', 'Save changes': 'Guardar cambios', 'Tap again to delete': 'Toca otra vez para eliminar', 'No notes yet. Write one above and pick its date.': 'Aun no hay notas. Escribe una arriba y elige su fecha.', 'Note saved': 'Nota guardada', 'Note deleted': 'Nota eliminada', 'Write the note first': 'Escribe la nota primero', ' usual price': ' precio normal', 'day': 'día', 'week': 'semana', '2 weeks': '2 semanas', 'month': 'mes', 'Add equipment': 'Agregar equipo', 'Done': 'Listo', 'Example: Dump trailer': 'Ejemplo: Remolque de volteo',
     'Client information': 'Información del cliente', 'Search existing client': 'Buscar cliente existente', 'Client name *': 'Nombre del cliente *', 'Equipment and driver': 'Equipo y chofer', 'Equipment *': 'Equipo *',
     'Caterpillar Excavator CAT 320': 'Excavadora Caterpillar CAT 320', 'Caterpillar Excavator CAT 336': 'Excavadora Caterpillar CAT 336', 'Mini Excavator': 'Miniexcavadora', 'Kubota Skid Steer': 'Minicargador Kubota', 'Bobcat Skid Steer': 'Minicargador Bobcat', 'Backhoe Loader': 'Retroexcavadora', 'Wheel Loader': 'Cargadora de ruedas', 'Bulldozer D6': 'Bulldozer D6', 'Dump Truck': 'Camión de volteo',
@@ -3803,7 +3826,7 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
     var first = dr || pk; if (first && first.driver !== undefined) drv = first.driver || 'Unassigned';
     var pd = pk ? parseDisp(pk.time) : null, dd = dr ? parseDisp(dr.time) : null;
     var o = {
-      client_name: j.client, client_phone: digits(j.phone) || null, client_address: j.addr, material_type: j.mat, container_size: j.size, job_type: j.jt || null,
+      client_name: j.client, zelle: zelFor(j.client) || null, client_phone: digits(j.phone) || null, client_address: j.addr, material_type: j.mat, container_size: j.size, job_type: j.jt || null,
       total_price: j.total, price: j.total - (j.ow || 0) - (j.pf || 0), overweight_charge: j.ow || 0, permit_fee: j.pf || 0,
       assigned_driver: drv && drv !== 'Unassigned' ? drv : null, payment_status: j.pay === 'Paid' ? 'paid' : 'unpaid', payment_method: j.method || null,
       client_email: j.email || null, notes: j.notes || null, driver_notes: j.dn || null, driver_status: DRV_KEY[j.status] || 'pending', date: drop, scheduled_dropoff: dd ? dd.iso : drop, scheduled_dropoff_time: dd ? dd.t : null,
@@ -3819,7 +3842,7 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
     var pdv = dv ? parseDisp(dv.time) : null, ppu = pu ? parseDisp(pu.time) : null;
     var key = r.step >= 5 || r.status === 'Returned' ? 'delivered' : (RSTEP_KEY[r.step] || 'assigned');
     return {
-      client_name: r.client, client_phone: digits(r.phone) || null, client_email: r.email || null, client_address: r.addr, asset: r.asset, assigned_driver: drv0 && drv0 !== 'Unassigned' ? drv0 : null,
+      client_name: r.client, zelle: zelFor(r.client) || null, client_phone: digits(r.phone) || null, client_email: r.email || null, client_address: r.addr, asset: r.asset, assigned_driver: drv0 && drv0 !== 'Unassigned' ? drv0 : null,
       start_date: r.si || null, due_date: r.di || null, price: parseFloat(r.price) || 0, delivery_fee: parseFloat(r.del) || 0, pickup_fee: parseFloat(r.pick) || 0, trailer_fee: parseFloat(r.trailer) || 0, diesel_fee: parseFloat(r.diesel) || 0,
       pickup_type: r.ptype || 'delivery', payment_status: r.pay === 'Paid' ? 'paid' : 'unpaid', payment_method: r.method || null,
       rental_status: r.status === 'Returned' ? 'completed' : (r.status === 'Cancelled' ? 'cancelled' : 'active'), driver_status: key,
@@ -3875,7 +3898,7 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
     for (n in DMSG) { if (DMSG.hasOwnProperty(n)) { a = DMSG[n]; for (k = 0; k < a.length; k++) { a[k].who = n; if (!a[k].ts) a[k].ts = Date.now() - k; o.push(a[k]); } } }
     return o;
   }
-  function cfgList() { return [{ id: 'prices', rows: PRICES }, { id: 'equip', rows: EQUIP }, { id: 'maps', key: MAPKEY }, { id: 'yards', rows: YARDS }, { id: 'dicons', map: DICON }, { id: 'priv', jobs: Object.keys(PRIV).filter(function (q) { return PRIV[q]; }) }, { id: 'rem', on: REM.on, log: REM.log }].concat(Object.keys(CICON).length ? [{ id: 'cicons', map: CICON }] : []).concat(DOTOUCH ? [{ id: 'dayoff', rows: DAYOFF, w: DOWOFF, n: DON }] : []).concat(COSAVED ? [{ id: 'company', co: CO }] : []); }
+  function cfgList() { return [{ id: 'prices', rows: PRICES }, { id: 'equip', rows: EQUIP }, { id: 'maps', key: MAPKEY }, { id: 'yards', rows: YARDS }, { id: 'dicons', map: DICON }, { id: 'priv', jobs: Object.keys(PRIV).filter(function (q) { return PRIV[q]; }) }, { id: 'rem', on: REM.on, log: REM.log }].concat(Object.keys(CICON).length ? [{ id: 'cicons', map: CICON }] : []).concat(DOTOUCH ? [{ id: 'dayoff', rows: DAYOFF, w: DOWOFF, n: DON }] : []).concat(COSAVED ? [{ id: 'company', co: CO }] : []).concat(ZELSAVED ? [{ id: 'zelle', rows: ZELS }] : []); }
   var RECS = [
     { k: 'wait', arr: function () { return WAITS; }, drv: 1 },
     { k: 'rcpt', arr: function () { return RCPTS; }, drv: 1 },
@@ -3911,6 +3934,7 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
           if (rows[i].id === 'priv' && rows[i].jobs) { var pk; for (pk in PRIV) { if (PRIV.hasOwnProperty(pk)) delete PRIV[pk]; } for (mx = 0; mx < rows[i].jobs.length; mx++) PRIV[rows[i].jobs[mx]] = true; }
           if (rows[i].id === 'maps') { MAPKEY = rows[i].key || ''; }
           if (rows[i].id === 'company' && rows[i].co) { var cq; for (cq in CO) { if (CO.hasOwnProperty(cq) && typeof rows[i].co[cq] === 'string') CO[cq] = rows[i].co[cq]; } COSAVED = true; applyCO(); }
+          if (rows[i].id === 'zelle' && rows[i].rows) { ZELS = rows[i].rows; ZELSAVED = true; }
           if (rows[i].id === 'yards') { YARDS = rows[i].rows || []; }
           if (rows[i].id === 'dicons') { DICON = rows[i].map || {}; }
           if (rows[i].id === 'cicons') { CICON = rows[i].map || {}; }
@@ -4153,7 +4177,7 @@ else if (a === 'yardrm') { yardRm(parseInt(b.getAttribute('data-i'), 10)); }
     for (k = 0; k < PRICES.length; k++) { var key = PRICES[k][1]; if (!seen[key] || PRICES[k][2] < seen[key]) seen[key] = PRICES[k][2]; }
     for (k in seen) { if (seen.hasOwnProperty(k)) pr += row('Dump container ' + k, money(seen[k]) + ' and up'); }
     return '<div class="card"><header><h2>Company</h2><button class="btn sm" data-act="form" data-f="company">' + icon('gear') + 'Edit</button></header>' + row('Name', invEsc(CO.name)) + row('Address', invEsc(CO.addr)) + row('Phone', invEsc(CO.phone)) + row('BIC', invEsc(CO.bic)) + '</div>' +
-      '<div class="card"><header><h2>Equipment and prices</h2><button class="btn sm" data-act="form" data-f="equip">' + icon('gear') + 'Edit</button></header>' + (eqRows() || '<p class="note" style="padding:14px">No equipment yet. Tap Edit to add what you rent out.</p>') + '</div>' +
+      zelCard() + '<div class="card"><header><h2>Equipment and prices</h2><button class="btn sm" data-act="form" data-f="equip">' + icon('gear') + 'Edit</button></header>' + (eqRows() || '<p class="note" style="padding:14px">No equipment yet. Tap Edit to add what you rent out.</p>') + '</div>' +
       '<div class="card"><header><h2>Dump container prices</h2><button class="btn sm" data-act="form" data-f="prices">' + icon('gear') + 'Edit prices</button></header>' + (PRICES.length ? PRICES.map(function (p) { return row(invEsc(p[0]) + ' ' + invEsc(p[1]) + (p[3] ? ' (' + p[3] + ' tons incl.)' : ''), money(p[2])); }).join('') : '<p class="note" style="padding:14px">No prices yet. Tap Edit prices to add them.</p>') + '</div>' +
       '<div class="card"><header><h2>People</h2></header>' + row('Keilah', 'Owner') + row('Office', 'Secretary') + row('Sams, Gustavo, Jose Luis', 'Drivers') + '</div>' +
       driverLinkCard() + mapKeyCard() +

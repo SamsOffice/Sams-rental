@@ -3237,7 +3237,7 @@ function DumpClientPortal(_ref) {
     React.createElement('div', { style:{ fontSize:13, color:'#6B7280' } }, 'This link may be invalid or expired.')
   );
 
-  var zelle = '+1 (917) 663-6369';
+  var zelle = (job.zelle && String(job.zelle).trim()) || '+1 (917) 663-6369';
   var officePhone = '+19176636369';
   var officeEmail = 'samsconstructionltd23@outlook.com';
   var base = parseFloat(job.price) || 0;
@@ -3767,8 +3767,8 @@ function CombinedPortal(props) {
       !allPaid&&React.createElement('div',{style:{background:'#fff',borderRadius:12,padding:'14px 16px',border:'1px solid #F3F4F6'}},
         React.createElement('div',{style:{fontWeight:700,marginBottom:8}},es?'Pagar por Zelle:':'Pay via Zelle:'),
         React.createElement('div',{style:{background:'#EFF6FF',borderRadius:8,padding:10,marginBottom:8}},
-          React.createElement('div',{style:{fontWeight:700,color:'#1D4ED8',marginBottom:4}},'+1 (917) 663-6369'),
-          React.createElement('button',{onClick:function(){navigator.clipboard.writeText('+1 (917) 663-6369').catch(function(){});},style:{width:'100%',padding:8,borderRadius:7,border:'none',background:'#2563EB',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer'}},es?'Copiar Numero':'Copy Number')
+          React.createElement('div',{style:{fontWeight:700,color:'#1D4ED8',marginBottom:4}},((rental&&rental.zelle)||(dump&&dump.zelle)||'+1 (917) 663-6369')),
+          React.createElement('button',{onClick:function(){navigator.clipboard.writeText((rental&&rental.zelle)||(dump&&dump.zelle)||'+1 (917) 663-6369').catch(function(){});},style:{width:'100%',padding:8,borderRadius:7,border:'none',background:'#2563EB',color:'#fff',fontSize:13,fontWeight:700,cursor:'pointer'}},es?'Copiar Numero':'Copy Number')
         ),
         React.createElement('a',{href:'tel:+19176636369',style:{display:'block',padding:10,borderRadius:8,background:'#111827',color:'#fff',textDecoration:'none',fontSize:13,fontWeight:700,textAlign:'center'}},'('+(es?'Llamar para Pagar':'Call to Pay')+')')
       ),
@@ -6041,7 +6041,7 @@ function ClientPortal({
   const stepIdx = STEPS.findIndex(x => x.key === rental.driver_status);
   const step = STEPS[stepIdx] || STEPS[0];
   const ccTotal = Math.round(rental.price * 1.035 * 100) / 100;
-  const zelle = localStorage.getItem('sams_zelle') || PHONE;
+  const zelle = (rental.zelle && String(rental.zelle).trim()) || localStorage.getItem('sams_zelle') || PHONE;
   const noticeLevel = od === 0 ? 'none' : od < 7 ? 'warning' : od < 14 ? 'final' : od < 30 ? 'legal' : 'blacklist';
   const openInvoice = () => {
     if (!rental.invoice_data) return;
